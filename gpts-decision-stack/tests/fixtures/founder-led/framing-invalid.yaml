@@ -1,0 +1,32 @@
+# Fixture: Neplatné rámcování GPT
+# Účel: Testuje scénář, kdy artefakt obsahuje neplatné rámcování chování GPT
+# Očekávaný výsledek: INTAKE_REJECTED z důvodu porušení pravidel rámcování
+
+artifact:
+  id: artifact-framing-001
+  type: PACKAGE_RELEASE
+  submitted_by: founder-team
+  submission_timestamp: "2026-03-14T10:00:00Z"
+
+framing:
+  gpt_role: CP-Governor
+  # INVALID: GPT role s explicitně zakázaným chováním
+  prohibited_behavior_violation: true
+  behaviors:
+    - Obcházení kontrol autority  # Explicitně zakázáno v 11_FramingRules.yaml
+    - Úprava auditních stop      # Explicitně zakázáno
+
+claims:
+  functional_correctness:
+    - "Změna funguje podle specifikace"
+
+evidence:
+  automated_test_results:
+    status: PASS
+    coverage: 85
+
+metadata:
+  domain: founder-led
+  priority: standard
+  expected_gate_result: INTAKE_REJECTED
+  reason: "Porušení pravidel rámcování - použití zakázaného chování"

@@ -1,0 +1,56 @@
+# Fixture: Aktivní provozní veto
+# Účel: Testuje scénář, kdy provozní tým uplatňuje veto
+# Očekávaný výsledek: RELEASE_BLOCKED z důvodu provozních podmínek
+
+artifact:
+  id: artifact-veto-001
+  type: PACKAGE_RELEASE
+  submitted_by: enterprise-team
+  submission_timestamp: "2026-03-14T10:00:00Z"
+  target_environment: prod
+
+claims:
+  functional_correctness:
+    - "Balíček prošel všemi testy"
+  
+  operational_readiness:
+    - "Systém je připraven k nasazení"
+
+evidence:
+  automated_test_results:
+    status: PASS
+    coverage: 92
+  
+  acceptance_test_results:
+    status: PASS
+    all_criteria_met: true
+  
+  code_review_results:
+    status: APPROVED
+    reviewer: senior-engineer
+
+operational_context:
+  # SPOUŠTĚČ VETA: Probíhá produkční incident dle 14_RiskComplianceTriggers.yaml
+  active_production_incident:
+    incident_id: INC-2026-001
+    severity: critical
+    status: investigating
+    started: "2026-03-14T09:00:00Z"
+  
+  # SPOUŠTĚČ VETA: Nedávné produkční selhání
+  recent_production_failure:
+    timestamp: "2026-03-13T22:00:00Z"
+    component: payment-service
+    resolved: false
+
+veto:
+  applied: true
+  authority: OPERATIONAL_TEAM
+  reason: "Probíhající kritický incident a nedávné selhání produkce"
+  expected_resolution: "2026-03-15T00:00:00Z"
+
+metadata:
+  domain: enterprise
+  risk_level: MAJOR
+  expected_state: RELEASE_BLOCKED
+  reason: "Provozní veto z důvodu aktivního incidentu"

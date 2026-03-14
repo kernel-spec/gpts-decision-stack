@@ -1,0 +1,31 @@
+# Fixture: Chybějící důkazy tvrzení
+# Účel: Testuje scénář, kdy tvrzení jsou uvedena, ale zcela chybí důkazy
+# Očekávaný výsledek: CLAIMS_INSUFFICIENT
+
+artifact:
+  id: artifact-missing-evidence-001
+  type: PACKAGE_RELEASE
+  submitted_by: founder-team
+  submission_timestamp: "2026-03-14T10:00:00Z"
+
+claims:
+  functional_correctness:
+    - "Nová funkce je plně implementována"
+    - "Všechny požadavky jsou splněny"
+    - "Kritéria akceptace projdou"
+  
+  quality_assurance:
+    - "Kód je udržovatelný"
+    - "Výkon je adekvátní"
+  
+  security:
+    - "Bezpečnostní kontroly projdou"
+
+# CHYBÍ: Veškeré důkazy (evidence sekce zcela chybí nebo je prázdná)
+evidence: {}
+
+metadata:
+  domain: founder-led
+  priority: standard
+  expected_state: CLAIMS_INSUFFICIENT
+  reason: "Tvrzení uvedena, ale žádné důkazy poskytnuty"

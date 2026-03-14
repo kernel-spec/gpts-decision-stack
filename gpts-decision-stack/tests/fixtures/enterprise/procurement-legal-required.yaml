@@ -1,0 +1,58 @@
+# Fixture: Vyžadována právní kontrola
+# Účel: Testuje scénář spouštěče právní kontroly pro podnikové nasazení
+# Očekávaný výsledek: REVIEW_REQUIRED s právní kontrolou
+
+artifact:
+  id: artifact-legal-001
+  type: PACKAGE_RELEASE
+  submitted_by: enterprise-team
+  submission_timestamp: "2026-03-14T10:00:00Z"
+  target_environment: prod
+
+changes:
+  # SPOUŠTĚČ: Změny zásad ochrany osobních údajů dle 14_RiskComplianceTriggers.yaml
+  privacy_policy_changes:
+    - "Aktualizace doby uchovávání dat uživatele"
+    - "Nová politika sdílení dat s třetími stranami"
+  
+  # SPOUŠTĚČ: Přenos dat přes hranice
+  data_transfer:
+    regions:
+      - EU
+      - US
+    cross_border: true
+    data_types:
+      - personal_information
+      - transaction_history
+
+claims:
+  functional_correctness:
+    - "Změny implementovány správně"
+  
+  legal_compliance:
+    - "Splňuje GDPR požadavky"
+    - "Dodržuje místní předpisy"
+
+evidence:
+  automated_test_results:
+    status: PASS
+    coverage: 88
+  
+  code_review_results:
+    status: APPROVED
+    reviewer: senior-engineer
+  
+  # CHYBÍ: legal_review_memo vyžadováno pro právní kontrolu
+
+compliance_triggers:
+  legal_review_required: true
+  reason: "Změny zásad ochrany osobních údajů a přenos dat přes hranice"
+  review_authority: LEGAL_TEAM
+
+metadata:
+  domain: enterprise
+  risk_level: SIGNIFICANT
+  expected_state: REVIEW_REQUIRED
+  required_reviews:
+    - LEGAL_TEAM
+  reason: "Právní kontrola vyžadována pro změny ochrany osobních údajů"

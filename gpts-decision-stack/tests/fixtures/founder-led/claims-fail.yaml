@@ -1,0 +1,32 @@
+# Fixture: Selhání ověření tvrzení
+# Účel: Testuje scénář, kdy tvrzení nejsou dostatečně podpořena důkazy
+# Očekávaný výsledek: CLAIMS_INSUFFICIENT
+
+artifact:
+  id: artifact-claims-001
+  type: PACKAGE_RELEASE
+  submitted_by: founder-team
+  submission_timestamp: "2026-03-14T10:00:00Z"
+
+claims:
+  functional_correctness:
+    - "Nová funkce funguje podle specifikace"
+    - "Všechna kritéria akceptace jsou splněna"
+  
+  quality_assurance:
+    - "Kód splňuje standardy kvality"
+
+evidence:
+  # NEDOSTATEČNÉ: Pokrytí testů pod požadovanými 80%
+  automated_test_results:
+    status: PASS
+    coverage: 45  # Pod požadovanými 80% dle 16_ClaimsEvidencePolicy.yaml
+  
+  # CHYBÍ: manual_test_results vyžadováno pro funkční správnost
+  # CHYBÍ: code_review_results vyžadováno pro zajištění kvality
+
+metadata:
+  domain: founder-led
+  priority: standard
+  expected_state: CLAIMS_INSUFFICIENT
+  reason: "Nedostatečné pokrytí testů a chybějící důkazy kontroly kódu"

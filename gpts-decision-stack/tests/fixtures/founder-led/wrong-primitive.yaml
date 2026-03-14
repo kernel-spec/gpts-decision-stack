@@ -1,0 +1,33 @@
+# Fixture: Nesprávné primitivum
+# Účel: Testuje scénář, kdy se používá neexistující nebo nesprávné primitivum
+# Očekávaný výsledek: INTAKE_REJECTED z důvodu neplatné operace
+
+artifact:
+  id: artifact-primitive-001
+  type: CONFIGURATION_CHANGE
+  submitted_by: founder-team
+  submission_timestamp: "2026-03-14T10:00:00Z"
+
+requested_operations:
+  # NEPLATNÉ: Primitiva, která neexistují v 12_PrimitiveCatalog.yaml
+  - operation: bypass_governance_check  # Neexistuje
+    parameters:
+      target_state: REVIEW_APPROVED
+  
+  - operation: force_state_transition  # Neexistuje
+    from: SUBMITTED
+    to: CLAIMS_VERIFIED
+
+claims:
+  functional_correctness:
+    - "Konfigurace je správná"
+
+evidence:
+  manual_test_results:
+    status: PASS
+
+metadata:
+  domain: founder-led
+  priority: standard
+  expected_gate_result: INTAKE_REJECTED
+  reason: "Použití neexistujících primitiv - porušení katalogu operací"

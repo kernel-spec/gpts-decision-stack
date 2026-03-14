@@ -1,0 +1,79 @@
+# Fixture: Povinná schvalovací matice
+# Účel: Testuje scénář vyžadující výkonné schválení pro regulované prostředí
+# Očekávaný výsledek: APPROVAL_REQUIRED na úrovni EXECUTIVE
+
+artifact:
+  id: artifact-regulated-001
+  type: PACKAGE_RELEASE
+  submitted_by: regulated-team
+  submission_timestamp: "2026-03-14T10:00:00Z"
+  target_environment: prod
+  industry: healthcare
+
+risk_assessment:
+  # Risk level MAJOR vyžaduje výkonné schválení dle 14_RiskComplianceTriggers.yaml
+  risk_level: MAJOR
+  criteria_met:
+    - Produkční nasazení
+    - Vysoký dopad na uživatele
+    - Zapojená migrace dat
+    - Obtížný návrat
+
+changes:
+  data_migration:
+    scope: patient_records
+    record_count: 1500000
+    reversibility: difficult
+  
+  system_impact:
+    affected_users: 50000
+    downtime_required: true
+    critical_path: true
+
+claims:
+  functional_correctness:
+    - "Migrace dat testována"
+    - "Plán návratu validován"
+  
+  regulatory_compliance:
+    - "Splňuje HIPAA požadavky"
+    - "Auditní stopa zachována"
+
+evidence:
+  automated_test_results:
+    status: PASS
+    coverage: 95
+  
+  acceptance_test_results:
+    status: PASS
+    all_criteria_met: true
+  
+  security_review_results:
+    status: APPROVED
+    reviewer: security-team
+  
+  compliance_review_results:
+    status: APPROVED
+    reviewer: compliance-officer
+
+required_approvals:
+  # 18_ApprovalEscalationMatrix.yaml - EXECUTIVE level vyžadováno
+  approval_level: EXECUTIVE
+  escalation_trigger: MAJOR_risk_level
+  required_reviewers:
+    - SECURITY_TEAM
+    - COMPLIANCE_TEAM
+    - LEGAL_TEAM
+  
+  additional_requirements:
+    - Plán postupného zavádění
+    - 24/7 pokrytí podpory
+    - Výkonný briefing připraven
+
+metadata:
+  domain: regulated
+  industry: healthcare
+  risk_level: MAJOR
+  expected_state: APPROVAL_REQUIRED
+  approval_level: EXECUTIVE
+  reason: "MAJOR risk level vyžaduje výkonné schválení pro produkci"

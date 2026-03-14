@@ -1,0 +1,61 @@
+# Fixture: Interní bez prodeje
+# Účel: Testuje scénář interního enablementu bez komerčních dopadů
+# Očekávaný výsledek: MINIMAL risk, STANDARD approval
+
+artifact:
+  id: artifact-enablement-001
+  type: CONFIGURATION_CHANGE
+  submitted_by: enablement-team
+  submission_timestamp: "2026-03-14T10:00:00Z"
+  target_environment: dev
+
+changes:
+  documentation_updates:
+    - "Aktualizace interní wiki"
+    - "Nové příklady použití API"
+  
+  configuration:
+    environment: dev
+    scope: internal_tooling
+    user_impact: none
+
+risk_assessment:
+  # Risk level MINIMAL dle 14_RiskComplianceTriggers.yaml
+  risk_level: MINIMAL
+  criteria_met:
+    - Pouze změny dokumentace
+    - Neprodukční prostředí
+    - Žádný dopad na uživatele
+    - Plně reverzibilní
+
+claims:
+  functional_correctness:
+    - "Dokumentace je přesná"
+    - "Příklady jsou funkční"
+
+evidence:
+  manual_test_results:
+    status: PASS
+    examples_verified: true
+  
+  peer_review:
+    status: APPROVED
+    reviewer: team-lead
+
+packaging:
+  # Žádné komerční balení - interní použití
+  commercial: false
+  internal_only: true
+  distribution: team_access
+
+required_approvals:
+  approval_level: STANDARD
+  additional_requirements: []
+
+metadata:
+  domain: enablement
+  risk_level: MINIMAL
+  environment: dev
+  expected_state: REVIEW_APPROVED
+  approval_level: STANDARD
+  reason: "Minimální riziko pro interní změny bez prodeje"

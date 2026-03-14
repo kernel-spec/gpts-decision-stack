@@ -1,0 +1,34 @@
+# Fixture: Nepodporovaná tvrzení
+# Účel: Testuje scénář, kdy jsou uvedena tvrzení mimo definované kategorie
+# Očekávaný výsledek: INTAKE_REJECTED
+
+artifact:
+  id: artifact-unsupported-001
+  type: PACKAGE_RELEASE
+  submitted_by: founder-team
+  submission_timestamp: "2026-03-14T10:00:00Z"
+
+claims:
+  # NEPLATNÉ: Kategorie tvrzení, která neexistuje v 16_ClaimsEvidencePolicy.yaml
+  marketing_effectiveness:
+    - "Zvýší konverzi o 50%"
+    - "Uživatelé to budou milovat"
+  
+  # NEPLATNÉ: Další nepodporovaná kategorie
+  competitive_advantage:
+    - "Lepší než konkurence"
+  
+  # Platné tvrzení, ale nedostatečné pro celek
+  functional_correctness:
+    - "Kód se kompiluje"
+
+evidence:
+  automated_test_results:
+    status: PASS
+    coverage: 85
+
+metadata:
+  domain: founder-led
+  priority: standard
+  expected_gate_result: INTAKE_REJECTED
+  reason: "Použití nepodporovaných kategorií tvrzení"

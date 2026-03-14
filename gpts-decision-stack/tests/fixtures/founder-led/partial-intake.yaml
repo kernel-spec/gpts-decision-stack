@@ -1,0 +1,43 @@
+# Fixture: Částečný příjem
+# Účel: Testuje scénář neúplného odeslání při příjmu
+# Očekávaný výsledek: INTAKE_REJECTED z důvodu neúplnosti
+
+artifact:
+  id: artifact-partial-001
+  type: PACKAGE_RELEASE
+  submitted_by: founder-team
+  submission_timestamp: "2026-03-14T10:00:00Z"
+
+# NEÚPLNÉ: Chybí základní povinné pole podle 03_ArtifactSchemas.yaml
+# claims: {}  # Chybí celá sekce tvrzení
+
+# NEÚPLNÉ: Částečné informace o změnách
+changes:
+  description: "Nějaké změny byly provedeny"
+  # CHYBÍ: Specifické detaily změn
+  # CHYBÍ: Dotčené komponenty
+  # CHYBÍ: Analýza dopadů
+
+# NEÚPLNÉ: Žádné důkazy
+# evidence: {}  # Chybí
+
+# NEÚPLNÉ: Základní metadata chybí
+metadata:
+  domain: founder-led
+  # CHYBÍ: priority
+  # CHYBÍ: target_environment
+  # CHYBÍ: submitter_details
+  expected_gate_result: INTAKE_REJECTED
+  reason: "Neúplné odeslání - chybí tvrzení, důkazy a základní metadata"
+
+completeness_check:
+  required_fields_present:
+    artifact_id: true
+    artifact_type: true
+    submitted_by: true
+    claims: false  # CHYBÍ
+    evidence: false  # CHYBÍ
+    changes_detail: false  # NEÚPLNÉ
+    metadata_complete: false  # NEÚPLNÉ
+  
+  overall_completeness: 40  # Pod minimální prahovou hodnotou
