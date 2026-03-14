@@ -1,71 +1,75 @@
+# Kontrolní seznam Prod
 
-Prod Checklist
+## Účel
 
-Purpose
+Řídit produkční vydání schváleného release kandidáta.
 
-Control the production release of an approved release candidate.
+## Hodnoty stavu
 
-Status values
+Používejte pouze:
+- `PASS`
+- `FAIL`
+- `BLOCKED`
+- `N/A`
 
-Use only:
-	•	PASS
-	•	FAIL
-	•	BLOCKED
-	•	N/A
+## Vstupní kritéria
 
-Entry criteria
+| Kritérium | Požadováno |
+|---|---|
+| staging gate = PASS | ano |
+| finální QA artefakt = PASS | ano |
+| autoritativní release notes existují | ano |
+| mapy vlastnictví / schválení / veta jsou schváleny | ano |
+| rollback plán existuje | ano |
+| monitoring a alerting existují | ano |
 
-Criterion	Required
-staging gate = PASS	yes
-final QA artifact = PASS	yes
-authoritative release notes exist	yes
-ownership / approval / veto maps are approved	yes
-rollback plan exists	yes
-monitoring and alerting exist	yes
+## Kontrolní seznam připravenosti
 
-Readiness checklist
+| Check ID | Kontrola | Vlastník | Stav |
+|---|---|---|---|
+| P-001 | staging gate = PASS | Release Coordinator |  |
+| P-002 | finální QA artefakt = PASS | QA Owner |  |
+| P-003 | autoritativní release notes schváleny | Release Authority |  |
+| P-004 | odvozené poznámky k balíčkování jsou odděleny | Release Coordinator |  |
+| P-005 | mapa vlastnictví schválena | Governance Approver |  |
+| P-006 | mapa schválení schválena | Governance Approver |  |
+| P-007 | mapa veta schválena | Governance Approver |  |
+| P-008 | rozsah exportu shell skriptů explicitně rozhodnut | Release Authority |  |
+| P-009 | schválený image tag / zmrazení rozsahu vydání existuje | Platform Owner |  |
+| P-010 | produkční backend zdravý | Platform Owner |  |
+| P-011 | produkční auth zdravý | Security Owner |  |
+| P-012 | produkční GPT config aktivní | GPT Ops Owner |  |
+| P-013 | post-deploy smoke = PASS | GPT Ops Owner |  |
+| P-014 | decision log zapisuje úspěšně | Audit Owner |  |
+| P-015 | kontrola veta funguje | Governance Ops |  |
+| P-016 | blokování vydání funguje | Governance Ops |  |
+| P-017 | alerting zelený | Platform Owner |  |
+| P-018 | připravenost na rollback potvrzena | Platform Owner |  |
 
-Check ID	Check	Owner	Status
-P-001	staging gate = PASS	Release Coordinator	
-P-002	final QA artifact = PASS	QA Owner	
-P-003	authoritative release notes approved	Release Authority	
-P-004	derived packaging notes are separated	Release Coordinator	
-P-005	ownership map approved	Governance Approver	
-P-006	approval map approved	Governance Approver	
-P-007	veto map approved	Governance Approver	
-P-008	shell script export scope explicitly decided	Release Authority	
-P-009	approved image tag / release scope freeze exists	Platform Owner	
-P-010	production backend healthy	Platform Owner	
-P-011	production auth healthy	Security Owner	
-P-012	production GPT config active	GPT Ops Owner	
-P-013	post-deploy smoke = PASS	GPT Ops Owner	
-P-014	decision log writes successfully	Audit Owner	
-P-015	veto check works	Governance Ops	
-P-016	release block works	Governance Ops	
-P-017	alerting green	Platform Owner	
-P-018	rollback readiness confirmed	Platform Owner	
+## Kritéria ukončení
 
-Exit criteria
+| Kritérium | Požadovaný výsledek |
+|---|---|
+| schválení správy | PASS |
+| produkční smoke | PASS |
+| auditní logování | PASS |
+| veto a blokování vydání | PASS |
+| připravenost na rollback | PASS |
 
-Criterion	Required Result
-governance sign-off	PASS
-production smoke	PASS
-audit logging	PASS
-veto and release block	PASS
-rollback readiness	PASS
+## Balíček důkazů
 
-Evidence pack
+| Důkaz | Požadováno |
+|---|---|
+| záznam produkčního nasazení | ano |
+| schválený rozsah vydání | ano |
+| finální QA artefakt | ano |
+| výstup produkčních smoke testů | ano |
+| snímek monitoringu | ano |
+| autoritativní release notes | ano |
 
-Evidence	Required
-production deployment record	yes
-approved release scope	yes
-final QA artifact	yes
-production smoke output	yes
-monitoring snapshot	yes
-authoritative release notes	yes
+## Šablona výsledku brány
 
-Gate result template
-
+```yaml
 prod_gate_result:
   environment: prod
   overall_status: PASS|FAIL|BLOCKED
@@ -77,7 +81,8 @@ prod_gate_result:
     - production_smoke_output
     - monitoring_snapshot
     - authoritative_release_notes
+```
 
-Hard rule
+## Tvrdé pravidlo
 
-Production must remain BLOCKED if staging is not PASS, or if knowledge completeness or fixture completeness is not PASS.
+Produkce musí zůstat BLOCKED pokud staging není PASS, nebo pokud úplnost znalostí nebo úplnost fixtures není PASS.

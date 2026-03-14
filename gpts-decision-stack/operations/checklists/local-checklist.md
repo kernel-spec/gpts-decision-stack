@@ -1,63 +1,63 @@
-# Local Checklist
+# Kontrolní seznam Local
 
-## Purpose
+## Účel
 
-Catch structural errors, missing content, and schema issues before any integration environment is used.
+Zachytit strukturální chyby, chybějící obsah a problémy se schématy před použitím jakéhokoli integračního prostředí.
 
-## Status values
+## Hodnoty stavu
 
-Use only:
+Používejte pouze:
 
 - `PASS`
 - `FAIL`
 - `BLOCKED`
 - `N/A`
 
-`BLOCKED` means the checklist cannot be fairly evaluated because required inputs are missing.
+`BLOCKED` znamená, že kontrolní seznam nelze spravedlivě vyhodnotit, protože chybí požadované vstupy.
 
-## Readiness checklist
+## Kontrolní seznam připravenosti
 
-| Check ID | Check | Owner | Status |
+| Check ID | Kontrola | Vlastník | Stav |
 |---|---|---|---|
-| L-001 | `README.md` exists | Repo Owner |  |
-| L-002 | `MASTER_SPEC.md` exists | Repo Owner |  |
-| L-003 | `repo.manifest.yaml` exists and is a full final file | Repo Owner |  |
-| L-004 | all `prompts/...` files exist | Prompt Owner |  |
-| L-005 | all `prompts/...` files have content | Prompt Owner |  |
-| L-006 | all `knowledge/...` files exist | Knowledge Owner |  |
-| L-007 | all `knowledge/...` files have content | Knowledge Owner |  |
-| L-008 | all `schemas/...` files exist | Schema Owner |  |
-| L-009 | all `tests/acceptance/...` files exist | QA Owner |  |
-| L-010 | all `tests/fixtures/...` files exist | QA Owner |  |
-| L-011 | all `tests/fixtures/...` files have content | QA Owner |  |
-| L-012 | YAML syntax validation completed | Repo Owner |  |
-| L-013 | manifest references point to existing files | Repo Owner |  |
-| L-014 | acceptance references point to existing fixtures | QA Owner |  |
-| L-015 | ownership map exists | Governance Ops |  |
-| L-016 | approval map exists | Governance Ops |  |
-| L-017 | operational veto map exists | Governance Ops |  |
-| L-018 | QA artifact path is defined | QA Owner |  |
+| L-001 | `README.md` existuje | Repo Owner |  |
+| L-002 | `MASTER_SPEC.md` existuje | Repo Owner |  |
+| L-003 | `repo.manifest.yaml` existuje a je kompletní finální soubor | Repo Owner |  |
+| L-004 | všechny soubory `prompts/...` existují | Prompt Owner |  |
+| L-005 | všechny soubory `prompts/...` mají obsah | Prompt Owner |  |
+| L-006 | všechny soubory `knowledge/...` existují | Knowledge Owner |  |
+| L-007 | všechny soubory `knowledge/...` mají obsah | Knowledge Owner |  |
+| L-008 | všechny soubory `schemas/...` existují | Schema Owner |  |
+| L-009 | všechny soubory `tests/acceptance/...` existují | QA Owner |  |
+| L-010 | všechny soubory `tests/fixtures/...` existují | QA Owner |  |
+| L-011 | všechny soubory `tests/fixtures/...` mají obsah | QA Owner |  |
+| L-012 | validace syntaxe YAML dokončena | Repo Owner |  |
+| L-013 | odkazy v manifestu ukazují na existující soubory | Repo Owner |  |
+| L-014 | odkazy v akceptačních testech ukazují na existující fixtures | QA Owner |  |
+| L-015 | mapa vlastnictví existuje | Governance Ops |  |
+| L-016 | mapa schválení existuje | Governance Ops |  |
+| L-017 | mapa operačního veta existuje | Governance Ops |  |
+| L-018 | cesta k QA artefaktu je definována | QA Owner |  |
 
-## Exit criteria
+## Kritéria ukončení
 
-| Criterion | Required Result |
+| Kritérium | Požadovaný výsledek |
 |---|---|
-| all required files exist | `PASS` |
-| knowledge completeness | `PASS` |
-| fixture completeness | `PASS` |
-| schema syntax | `PASS` |
-| manifest consistency | `PASS` |
+| všechny požadované soubory existují | `PASS` |
+| úplnost znalostí | `PASS` |
+| úplnost fixtures | `PASS` |
+| syntaxe schématu | `PASS` |
+| konzistence manifestu | `PASS` |
 
-## Evidence pack
+## Balíček důkazů
 
-| Evidence | Required |
+| Důkaz | Požadováno |
 |---|---|
-| file existence report | yes |
-| YAML validation output | yes |
-| manifest reference check | yes |
-| local QA report | yes |
+| zpráva o existenci souborů | ano |
+| výstup validace YAML | ano |
+| kontrola odkazů v manifestu | ano |
+| lokální QA zpráva | ano |
 
-## Gate result template
+## Šablona výsledku brány
 
 ```yaml
 local_gate_result:
@@ -71,11 +71,11 @@ local_gate_result:
     - local_qa_report
 ```
 
-## Fail-fast rule
+## Pravidlo okamžitého selhání
 
-If any knowledge_file is missing content, or any fixture is missing or empty, local may continue only as working draft validation.
+Pokud jakýkoli knowledge_file nemá obsah, nebo jakýkoli fixture chybí nebo je prázdný, local může pokračovat pouze jako validace pracovního návrhu.
 
-Required result:
+Požadovaný výsledek:
 
 ```yaml
 overall_status: FAIL
