@@ -1,6 +1,7 @@
 schema_version: "1.0.0"
 artifact_type: qa_final_gate_report
 report_date: "2026-03-14"
+report_updated: "2026-03-14"
 repository: gpts-decision-stack
 description: >
   Finální QA gate report pro repozitář gpts-decision-stack.
@@ -13,11 +14,11 @@ deploy_ready: false
 
 summary: >
   Repozitář obsahuje kompletní skeleton strukturu systému (řídicí rovina,
-  adaptivní enginy, schémata artefaktů, acceptance testy, governance mapy).
+  adaptivní enginy, schémata artefaktů, acceptance testy, governance mapy,
+  knowledge soubory, operační checklisty a promotion gate).
   Deployment je blokován chybějícím backend bindingem (GPT konfigurace a
-  deployment manifest) a chybějícími knowledge soubory a operačními checklisty.
-  Dokud tyto bloky nejsou odstraněny, musí overall_status zůstat FAIL
-  a bundle_classification zůstat REPO-READY SKELETON.
+  deployment manifest). Dokud tato blokace není odstraněna, musí overall_status
+  zůstat FAIL a bundle_classification zůstat REPO-READY SKELETON.
 
 layer_status:
   control_plane_prompts:
@@ -111,8 +112,8 @@ layer_status:
     note: Kanonické repo-control soubory fyzicky existují.
 
   knowledge_files:
-    status: FAIL
-    files_expected:
+    status: PASS
+    files_present:
       - knowledge/core/00-system-identity.yaml
       - knowledge/core/01-pipeline-states.yaml
       - knowledge/core/02-artifact-contracts.yaml
@@ -129,38 +130,33 @@ layer_status:
       - knowledge/domains/default/16-veto-policy.yaml
       - knowledge/domains/default/17-approval-policy.yaml
       - knowledge/domains/default/18-release-policy.yaml
-    files_present: []
     count_expected: 16
-    count_present: 0
-    blocker: true
+    count_present: 16
+    blocker: false
     note: >
-      Knowledge soubory nejsou fyzicky přítomny v repozitáři.
-      Skript bootstrap_knowledge_pack.sh existuje, ale soubory nebyly vygenerovány
-      ani commitnuty. Tato mezera blokuje staging a produkci.
+      Všechny knowledge soubory fyzicky existují po tomto kroku.
 
   operations_checklists:
-    status: FAIL
-    files_expected:
+    status: PASS
+    files_present:
       - operations/checklists/local-checklist.md
       - operations/checklists/dev-checklist.md
       - operations/checklists/staging-checklist.md
       - operations/checklists/prod-checklist.md
-    files_present: []
     count_expected: 4
-    count_present: 0
-    blocker: true
+    count_present: 4
+    blocker: false
     note: >
-      Operační checklisty nejsou fyzicky přítomny. Skript bootstrap_checklists_pack.sh
-      existuje, ale soubory nebyly vygenerovány ani commitnuty.
+      Všechny operační checklisty fyzicky existují po tomto kroku.
 
   promotion_gate:
-    status: FAIL
-    file_expected: operations/gates/promotion-gate.yaml
-    file_present: false
-    blocker: true
+    status: PASS
+    file_present: true
+    files_present:
+      - operations/gates/promotion-gate.yaml
+    blocker: false
     note: >
-      Soubor promotion-gate.yaml není fyzicky přítomen v repozitáři.
-      Tato mezera přímo blokuje formální posouzení deployment readiness.
+      Soubor promotion-gate.yaml fyzicky existuje po tomto kroku.
 
   backend_binding:
     status: FAIL
@@ -174,32 +170,6 @@ layer_status:
       Deployment readiness nelze dosáhnout bez backend bindingu.
 
 blocking_gaps:
-  - id: BLOCK-001
-    layer: knowledge_files
-    severity: critical
-    description: >
-      16 knowledge souborů není fyzicky přítomno.
-      Staging a produkce jsou blokovány.
-    resolution: >
-      Spustit bootstrap_knowledge_pack.sh a commitnout vygenerované soubory,
-      nebo vytvořit soubory ručně podle MASTER_SPEC.md.
-
-  - id: BLOCK-002
-    layer: operations_checklists
-    severity: high
-    description: >
-      4 operační checklisty nejsou fyzicky přítomny.
-    resolution: >
-      Spustit bootstrap_checklists_pack.sh a commitnout vygenerované soubory.
-
-  - id: BLOCK-003
-    layer: promotion_gate
-    severity: high
-    description: >
-      operations/gates/promotion-gate.yaml není fyzicky přítomen.
-    resolution: >
-      Vytvořit promotion-gate.yaml s aktuálním stavem deployment gates.
-
   - id: BLOCK-004
     layer: backend_binding
     severity: critical
@@ -228,6 +198,17 @@ resolved_gaps:
   - id: RESOLVED-006
     layer: repo_control_files
     description: MASTER_SPEC.md a repo.manifest.yaml fyzicky existují.
+  - id: RESOLVED-007
+    layer: knowledge_files
+    description: >
+      Všech 16 knowledge souborů fyzicky existuje
+      (7 core INVARIANT + 9 domain ADAPTIVE).
+  - id: RESOLVED-008
+    layer: operations_checklists
+    description: Všechny 4 operační checklisty fyzicky existují.
+  - id: RESOLVED-009
+    layer: promotion_gate
+    description: operations/gates/promotion-gate.yaml fyzicky existuje.
 
 audit_note: >
   Tento report nesmí být ručně upraven za účelem zlepšení hodnocení.

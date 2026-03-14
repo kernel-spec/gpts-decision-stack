@@ -1,0 +1,149 @@
+schema_version: "1.0.0"
+knowledge_id: "02-artifact-contracts"
+status: INVARIANT
+description: >
+  Kanonické kontrakty artefaktů systému gpts-decision-stack.
+  Každý agent vrací právě jeden artefakt. Artefakty mají kanonické názvy
+  a jsou validovány proti schématům v /schemas/artifacts/.
+
+artifact_contracts:
+  ProblemBrief:
+    owner_agent: AE-Intake
+    schema: schemas/artifacts/ProblemBrief.schema.yaml
+    pipeline_state: intake
+    required_fields:
+      - artifact_type
+      - problem_statement
+      - requestor_type
+      - decision_status
+      - blocking_issues
+      - version
+    description: >
+      Normalizovaný popis vstupního problému nebo požadavku.
+
+  FramingAssessment:
+    owner_agent: AE-Framing
+    schema: schemas/artifacts/FramingAssessment.schema.yaml
+    pipeline_state: problem_framing
+    required_fields:
+      - artifact_type
+      - framing_validity
+      - buyer_fit_status
+      - deliverable_fit_status
+      - task_fit_status
+      - decision_status
+      - blocking_issues
+      - version
+    description: >
+      Posouzení validity framingu, buyer fit a deliverable fit.
+
+  OfferDecision:
+    owner_agent: AE-Primitive
+    schema: schemas/artifacts/OfferDecision.schema.yaml
+    pipeline_state: primitive_selection
+    required_fields:
+      - artifact_type
+      - selected_primitive
+      - decision_status
+      - blocking_issues
+      - version
+    description: >
+      Rozhodnutí o výběru offer primitivu pro daný kontext.
+
+  ArchitectureSpec:
+    owner_agent: AE-Architecture
+    schema: schemas/artifacts/ArchitectureSpec.schema.yaml
+    pipeline_state: architecture_validation
+    required_fields:
+      - artifact_type
+      - feasibility_status
+      - decision_status
+      - blocking_issues
+      - version
+    description: >
+      Specifikace a posouzení feasibility architektury řešení.
+
+  ClaimsDecision:
+    owner_agents:
+      - AE-Claims
+      - CP-ContractAuditor
+    schema: schemas/artifacts/ClaimsDecision.schema.yaml
+    pipeline_state: claims_validation
+    required_fields:
+      - artifact_type
+      - claim_candidates_reviewed
+      - permitted_claims
+      - restricted_claims
+      - forbidden_claims
+      - claim_to_evidence_map
+      - evidence_gaps
+      - claim_fit_status
+      - decision_status
+      - version
+    description: >
+      Klasifikace claims a audit evidence. Forbidden claims blokují pipeline.
+
+  RiskDecision:
+    owner_agent: AE-RiskGov
+    schema: schemas/artifacts/RiskDecision.schema.yaml
+    pipeline_state: risk_governance_validation
+    required_fields:
+      - artifact_type
+      - risk_classification
+      - decision_status
+      - blocking_issues
+      - version
+    description: >
+      Klasifikace rizik a governance stav pipeline.
+
+  CommercialSpec:
+    owner_agent: AE-Commercial
+    schema: schemas/artifacts/CommercialSpec.schema.yaml
+    pipeline_state: commercial_packaging
+    required_fields:
+      - artifact_type
+      - packaging_scope
+      - offer_primitive_ref
+      - lane_bypass_active
+      - decision_status
+      - version
+    description: >
+      Komerční specifikace a packaging gate výsledek.
+
+  ReviewTopologyPlan:
+    owner_agent: AE-ReviewRouter
+    schema: schemas/artifacts/ReviewTopologyPlan.schema.yaml
+    pipeline_state: review_routing
+    required_fields:
+      - artifact_type
+      - activated_lanes
+      - mandatory_reviews
+      - decision_status
+      - version
+    description: >
+      Plán review topologie pro daný kontext a offer primitiv.
+
+  StateDecisionPacket:
+    owner_agent: CP-Governor
+    schema: schemas/artifacts/StateDecisionPacket.schema.yaml
+    description: >
+      Orchestrační artefakt řídicí roviny. Obsahuje current_state,
+      decision_log a veto_check.
+
+  ReleaseDecision:
+    owner_agent: CP-ReleaseArbiter
+    schema: schemas/artifacts/ReleaseDecision.schema.yaml
+    pipeline_state: release_decision
+    required_fields:
+      - artifact_type
+      - release_status
+      - veto_check
+      - blocking_issues
+      - version
+    description: >
+      Finální release rozhodnutí. Blokováno při aktivním vetu.
+
+artifact_invariants:
+  - Kanonické názvy artefaktů nesmí být měněny.
+  - Každý agent vrací právě jeden artefakt.
+  - Artefakty musí být validovány proti příslušnému schématu.

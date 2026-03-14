@@ -1,0 +1,72 @@
+schema_version: "1.0.0"
+knowledge_id: "14-claims-policy"
+status: ADAPTIVE
+description: >
+  Politika claims pro systém gpts-decision-stack. Definuje kategorie claims,
+  pravidla pro forbidden a restricted claims a audit evidence požadavky.
+  Tento soubor je ADAPTIVE.
+
+claims_categories:
+  verified:
+    description: >
+      Claim je podpořen dostupnou a auditable evidencí.
+    pipeline_impact: none
+    proceed_eligible: true
+
+  allowed:
+    description: >
+      Claim je povolen bez plné verifikace — v přijatelném rizikové pásmu.
+    pipeline_impact: low
+    proceed_eligible: true
+
+  restricted:
+    description: >
+      Claim je podmíněně povolen — vyžaduje explicitní souhlas autority
+      nebo dodatečnou evidenci.
+    pipeline_impact: medium
+    proceed_eligible: false
+    requires_authority_approval: true
+
+  forbidden:
+    description: >
+      Claim je absolutně zakázán. Pipeline nesmí pokračovat s forbidden claim.
+      Forbidden claim je tvrdý bloker.
+    pipeline_impact: blocking
+    proceed_eligible: false
+    hard_block: true
+
+  unverified:
+    description: >
+      Claim není možné verifikovat z dostupné evidence, ale není explicitně zakázán.
+    pipeline_impact: medium
+    proceed_eligible: false
+    requires_additional_evidence: true
+
+claims_policy_rules:
+  forbidden_claims:
+    rule: >
+      Pokud forbidden_claims v ClaimsDecision je neprázdné, musí AE-Claims
+      vrátit decision_status stop. CP-ContractAuditor potvrzuje blokaci.
+    invariant: Forbidden claims jsou absolutní bloker — nelze přepsat.
+
+  restricted_claims:
+    rule: >
+      Restricted claims vyžadují explicitní authority approval před proceed.
+      AE-Claims musí vrátit escalate nebo revise dokud approval není potvrzeno.
+
+  evidence_gaps:
+    rule: >
+      Evidence gaps musí být explicitně zaznamenány. Claim bez evidence
+      nesmí být klasifikován jako verified nebo allowed.
+    unknown_evidence: >
+      Pokud evidence je UNKNOWN, claim musí být unverified.
+
+  missing_claims_evidence:
+    rule: >
+      Chybějící claims evidence blokuje proceed. decision_status musí být
+      unresolved nebo revise — nikoliv proceed.
+
+claims_audit_rules:
+  - CP-ContractAuditor audituje claims vůči dostupné evidenci nezávisle na AE-Claims.
+  - Audit výsledek je závazný pokud se liší od AE-Claims hodnocení.
+  - Forbidden claims od CP-ContractAuditor jsou absolutní bloker.

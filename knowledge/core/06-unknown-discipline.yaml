@@ -1,0 +1,61 @@
+schema_version: "1.0.0"
+knowledge_id: "06-unknown-discipline"
+status: INVARIANT
+description: >
+  Pravidla pro zpracování UNKNOWN hodnot v systému gpts-decision-stack.
+  UNKNOWN je explicitní, platná hodnota a nesmí být zaměněna s chybou.
+
+unknown_definition:
+  description: >
+    UNKNOWN označuje, že povinná hodnota, artefakt, stakeholder nebo evidence
+    není v inputu přítomna a nelze ji odvodit z dostupného kontextu.
+  not_an_error: >
+    UNKNOWN není chyba zpracování. Je to explicitní stav nedostatečné informace.
+  valid_value: true
+
+unknown_handling_rules:
+  recording:
+    rule: >
+      Pokud je jakákoli povinná hodnota nepřítomna, musí být explicitně
+      zaznamenána jako UNKNOWN v příslušném poli artefaktu.
+    examples:
+      - buyer_type: UNKNOWN
+      - approval_path: UNKNOWN
+      - stakeholders: [UNKNOWN]
+
+  no_inference:
+    rule: >
+      Agent nesmí zjišťovat, domýšlet, odhadovat ani doplňovat
+      chybějící povinné hodnoty. Tiché nahrazení UNKNOWN je zakázáno.
+
+  no_proceed:
+    rule: >
+      Pipeline nesmí pokračovat za stav, který závisí na chybějících
+      povinných vstupech. Pokud je povinný vstup UNKNOWN:
+      decision_status musí být unresolved nebo blocked
+      a blocking_issues musí obsahovat popis chybějící hodnoty.
+
+  no_falsification:
+    rule: >
+      UNKNOWN nesmí být převeden na konkrétní hodnotu bez explicitního
+      vstupu od requestora nebo autority s odpovídajícím oprávněním.
+
+unknown_in_specific_contexts:
+  framing:
+    description: >
+      Pokud buyer_type nebo deliverable_fit_status jsou UNKNOWN ve FramingAssessment,
+      framing_validity nesmí být valid.
+  claims:
+    description: >
+      Pokud evidence pro claim je UNKNOWN, claim nesmí být klasifikován
+      jako verified nebo allowed.
+  veto:
+    description: >
+      Pokud stav veta je UNKNOWN, pipeline musí zacházet s tímto
+      stavem jako s potentially_blocked.
+
+unknown_discipline_invariants:
+  - UNKNOWN je explicitní, platná hodnota — není chybou.
+  - UNKNOWN nesmí být tiše ignorováno nebo nahrazeno předpokladem.
+  - Pipeline nesmí pokračovat pokud povinný vstup je UNKNOWN.
+  - UNKNOWN nesmí být konvertováno bez explicitního autoritativního vstupu.

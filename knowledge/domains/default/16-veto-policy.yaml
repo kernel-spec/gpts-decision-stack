@@ -1,0 +1,63 @@
+schema_version: "1.0.0"
+knowledge_id: "16-veto-policy"
+status: ADAPTIVE
+description: >
+  Politika veta pro systém gpts-decision-stack. Definuje rozsah veta,
+  trigger podmínky a procedury pro uvolnění veta.
+  Tento soubor je ADAPTIVE.
+
+veto_types:
+  operational_veto:
+    description: >
+      Operační veto — vydáváno risk governance autoritou nebo řídicí rovinou.
+      Absolutní blokace release nebo přechodu stavu.
+    scope:
+      - release_decision
+      - production_release
+    trigger_conditions:
+      - veto_active true v VetoStatus
+      - risk_classification critical nebo high s hard_block
+      - security_review_not_closed
+      - legal_review_not_closed
+    enforcement: CP-ReleaseArbiter vrací release_status blocked
+    release_procedure: >
+      Vyžaduje explicitní veto_release artefakt od originating_veto_authority.
+
+  model_veto:
+    description: >
+      Modelové veto — vydáváno CP-Governor při detekci porušení
+      pipeline invariantů. Odlišné od operačního veta.
+    scope:
+      - všechny stavy pipeline
+    trigger_conditions:
+      - false_proceed detekován
+      - silent_reentry detekován
+      - forbidden_claims s non-blocking decision_status
+    enforcement: CP-Governor blokuje StateDecisionPacket s decision_status blocked
+
+veto_scope_rules:
+  active_veto_scope:
+    rule: >
+      Aktivní veto platí pro celý zbývající průchod pipeline od bodu aktivace.
+    invariant: Veto scope nelze omezit bez veto_release.
+
+  veto_source_recording:
+    rule: >
+      Zdroj veta (veto_source) musí být explicitně zaznamenán v StateDecisionPacket
+      a v ReleaseDecision pokud je veto aktivní.
+
+veto_enforcement_rules:
+  - CP-ReleaseArbiter nesmí vrátit release_status allowed pokud veto_active je true.
+  - Veto nesmí být obejito žádným jiným artefaktem ani rozhodnutím.
+  - Veto lze uvolnit pouze veto_release od originating authority.
+  - Model veto a operační veto jsou odlišné třídy — nesmí být zaměňovány.
+
+veto_release_policy:
+  required_fields:
+    - veto_release_authority
+    - veto_release_reason
+    - original_veto_reference
+  prohibited:
+    - Tiché uvolnění bez veto_release artefaktu
+    - Uvolnění jinou autoritou než vydavatelem veta
+    - Ignorování veta při přechodu do release_decision

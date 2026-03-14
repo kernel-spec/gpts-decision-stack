@@ -1,0 +1,73 @@
+schema_version: "1.0.0"
+knowledge_id: "17-approval-policy"
+status: ADAPTIVE
+description: >
+  Schvalovací politika pro systém gpts-decision-stack. Definuje požadavky
+  na manuální schválení, approval chains a eskalační pravidla.
+  Tento soubor je ADAPTIVE.
+
+approval_requirements:
+  regulated_mandatory_approval:
+    description: >
+      Povinné manuální schválení pro regulované kontexty před přechodem
+      do release_decision.
+    trigger: manual_approval_required true
+    authority: regulated_approval_board
+    blocking: true
+    rule: >
+      Pokud manual_approval_required je true a schválení chybí,
+      CP-TransitionJudge musí vrátit transition_status escalate.
+
+  enterprise_procurement_approval:
+    description: >
+      Procurement schválení pro enterprise kontexty.
+    trigger: requestor_type enterprise NEBO buyer_type enterprise
+    authority: procurement_authority
+    blocking: true
+
+  enterprise_legal_approval:
+    description: >
+      Legal schválení pro enterprise kontexty.
+    trigger: legal_required true
+    authority: legal_authority
+    blocking: true
+
+  risk_governance_approval:
+    description: >
+      Risk governance schválení pokud risk_classification je high nebo critical.
+    trigger: risk_classification in [high, critical]
+    authority: risk_governance_authority
+    blocking: true
+
+approval_chains:
+  standard:
+    description: Standardní approval chain pro founder-led a enablement kontexty.
+    steps:
+      - claims_audit_clearance
+      - risk_governance_clearance
+
+  enterprise:
+    description: Enterprise approval chain s procurement a legal.
+    steps:
+      - procurement_clearance
+      - legal_clearance
+      - risk_governance_clearance
+    parallel_steps_allowed:
+      - procurement_clearance
+      - legal_clearance
+
+  regulated:
+    description: Regulovaný approval chain s povinným manuálním schválením.
+    steps:
+      - compliance_review_clearance
+      - legal_clearance
+      - risk_governance_clearance
+      - regulated_board_approval
+    sequential: true
+
+approval_policy_rules:
+  - Schválení je vázáno na role nebo autority — nikoliv na konkrétní osoby.
+  - Chybějící povinné schválení blokuje přechod do release_decision.
+  - Schválení nesmí být uděleno bez aktivní autority v daném kroku.
+  - Eskalace vyžaduje explicitní zaznamenání v StateDecisionPacket.
+  - Approval chain nelze zkrátit bez explicitní governance revize.

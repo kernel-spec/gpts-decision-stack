@@ -70,7 +70,7 @@ local_gate_result:
     - manifest_reference_check
     - local_qa_report
 
-Fail-fast rule
+## Fail-fast rule
 
 If any knowledge_file is missing content, or any fixture is missing or empty, local may continue only as working draft validation.
 

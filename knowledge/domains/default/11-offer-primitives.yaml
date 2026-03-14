@@ -1,0 +1,60 @@
+schema_version: "1.0.0"
+knowledge_id: "11-offer-primitives"
+status: ADAPTIVE
+description: >
+  Katalog offer primitivů dostupných v systému gpts-decision-stack.
+  Offer primitiv je základní typ komerční nebo delivery nabídky.
+  Tento soubor je ADAPTIVE a může být přizpůsoben per deployment.
+
+offer_primitives:
+  advisory_engagement:
+    description: >
+      Poradenský engagement — konzultační nebo advisory spolupráce
+      bez trvalého delivery závazku.
+    applicable_requestor_types:
+      - founder-led
+      - enterprise
+    requires_enterprise_lanes: false
+    commercial_packaging_required: true
+
+  product_license:
+    description: >
+      Produktová licence — software nebo IP licence s definovanými podmínkami.
+    applicable_requestor_types:
+      - enterprise
+      - founder-led
+    requires_enterprise_lanes: true
+    commercial_packaging_required: true
+
+  managed_service:
+    description: >
+      Managed service — provozní nebo managed delivery s SLA závazkem.
+    applicable_requestor_types:
+      - enterprise
+    requires_enterprise_lanes: true
+    commercial_packaging_required: true
+
+  internal_enablement:
+    description: >
+      Interní enablement — ne-komerční interní projekt nebo iniciativa.
+    applicable_requestor_types:
+      - enablement
+    requires_enterprise_lanes: false
+    commercial_packaging_required: false
+    commercial_lane_bypass_eligible: true
+
+  proof_of_concept:
+    description: >
+      Proof of concept — omezený technický nebo obchodní experiment
+      s explicitně definovaným rozsahem.
+    applicable_requestor_types:
+      - founder-led
+      - enterprise
+    requires_enterprise_lanes: false
+    commercial_packaging_required: false
+
+primitive_selection_rules:
+  - Offer primitiv musí odpovídat requestor_type z ProblemBrief.
+  - Wrong primitive je explicitní invalidation trigger.
+  - AE-Primitive musí vrátit invalidate pokud selected_primitive neodpovídá kontextu.
+  - UNKNOWN primitiv blokuje přechod z primitive_selection.

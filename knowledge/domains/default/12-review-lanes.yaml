@@ -1,0 +1,69 @@
+schema_version: "1.0.0"
+knowledge_id: "12-review-lanes"
+status: ADAPTIVE
+description: >
+  Katalog review lanes dostupných v systému gpts-decision-stack.
+  Review lanes definují typy přezkumu, které mohou být aktivovány
+  pro konkrétní kontext. Tento soubor je ADAPTIVE.
+
+review_lanes:
+  claims_review:
+    description: >
+      Přezkum claims — validace a audit claims vůči dostupné evidenci.
+      Povinný pro všechny kontexty kde claims jsou přítomny.
+    owner: CP-ContractAuditor
+    blocking: true
+    applicable_requestor_types: all
+
+  procurement_review:
+    description: >
+      Procurement přezkum — validace komerčních podmínek a procurement souladu.
+      Povinný pro enterprise kontexty.
+    owner: procurement_authority
+    blocking: true
+    applicable_requestor_types:
+      - enterprise
+      - regulated
+
+  legal_review:
+    description: >
+      Právní přezkum — validace právní souladu, smluvních podmínek a regulatory.
+      Povinný pro enterprise a regulated kontexty.
+    owner: legal_authority
+    blocking: true
+    applicable_requestor_types:
+      - enterprise
+      - regulated
+
+  risk_review:
+    description: >
+      Risk přezkum — posouzení identifikovaných rizik a mitigací.
+      Povinný pokud risk_classification je high nebo critical.
+    owner: risk_governance_authority
+    blocking: true
+    applicable_requestor_types: all
+    trigger_condition: risk_classification in [high, critical]
+
+  compliance_review:
+    description: >
+      Compliance přezkum — validace souladu s regulatorními požadavky.
+      Povinný pro regulated kontexty.
+    owner: compliance_authority
+    blocking: true
+    applicable_requestor_types:
+      - regulated
+
+  security_review:
+    description: >
+      Security přezkum — posouzení bezpečnostních aspektů řešení.
+      Aktivován pokud security risk je identifikován.
+    owner: security_authority
+    blocking: true
+    applicable_requestor_types: all
+    trigger_condition: security_risk_identified
+
+review_lane_rules:
+  - Povinné review lanes nesmí být označeny jako optional.
+  - Nedokončená povinná review lane blokuje přechod do release_decision.
+  - AE-ReviewRouter aktivuje lanes na základě requestor_type a risk profile.
+  - UNKNOWN stav review lane se považuje za nedokončenou.
