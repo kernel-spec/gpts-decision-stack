@@ -1,0 +1,80 @@
+schema_id: StateDecisionPacket
+schema_version: "1.0.0"
+artifact_type: StateDecisionPacket
+owner: CP-Governor
+description: >
+  Stavový rozhodovací paket produkovaný CP-Governor jako výstup orchestrace.
+  Zachycuje aktuální stav pipeline, další agent, celkový stav pipeline,
+  blokovací problémy a záznam do decision logu.
+  Kanonický název artefaktu je StateDecisionPacket.
+  Všechny reference musí používat tento název — žádná zpětná kompatibilita se starším
+  názvem GovernorDecision není zachována.
+
+required_fields:
+  - artifact_type
+  - current_state
+  - next_agent
+  - pipeline_status
+  - routing_rationale
+  - version
+
+fields:
+  artifact_type:
+    type: string
+    constant: StateDecisionPacket
+  current_state:
+    type: string
+    enum:
+      - intake
+      - problem_framing
+      - primitive_selection
+      - architecture_validation
+      - claims_validation
+      - risk_governance_validation
+      - commercial_packaging
+      - release_decision
+  next_agent:
+    type: string
+    description: Identifikátor agenta, který má jednat dále.
+  pipeline_status:
+    type: string
+    enum:
+      - proceed
+      - revise
+      - invalidate
+      - escalate
+      - stop
+      - blocked
+  routing_rationale:
+    type: string
+    description: Explicitní zdůvodnění rozhodnutí o routování.
+  blocking_issues:
+    type: list
+    items: string
+  unknowns:
+    type: list
+    items: string
+    description: Hodnoty, artefakty nebo evidence explicitně chybějící ve vstupu.
+  decision_log_entry:
+    type: object
+    fields:
+      step:
+        type: string
+      agent:
+        type: string
+        constant: CP-Governor
+      outcome:
+        type: string
+      rationale:
+        type: string
+      timestamp:
+        type: string
+        format: iso8601
+  version:
+    type: string
+
+invariants:
+  - Pokud je aktivní veto, musí být pipeline_status blocked.
+  - Falešný proceed je kritické selhání.
+  - Zpětný vstup musí být vždy zaznamenán. Tichý zpětný vstup není povolen.
+  - UNKNOWN hodnoty musí být explicitně zaznamenány v poli unknowns.

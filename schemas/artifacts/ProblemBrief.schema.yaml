@@ -1,0 +1,84 @@
+schema_id: ProblemBrief
+schema_version: "1.0.0"
+artifact_type: ProblemBrief
+owner: AE-Intake
+pipeline_state: intake
+description: >
+  Normalizovaný vstupní artefakt vytvořený z raw inputu.
+  Zachycuje problém, cíl, stakeholdery, omezení a neznámé.
+  Nepřidává předpoklady. UNKNOWN je explicitní platná hodnota.
+
+required_fields:
+  - artifact_type
+  - problem_statement
+  - target_outcome
+  - requestor_type
+  - decision_status
+  - version
+
+fields:
+  artifact_type:
+    type: string
+    constant: ProblemBrief
+  problem_statement:
+    type: string
+    description: Popis problému jak byl uveden ve vstupu.
+  target_outcome:
+    type: string
+    description: Požadovaný výsledek jak byl uveden ve vstupu.
+  requestor_type:
+    type: string
+    enum:
+      - founder-led
+      - enterprise
+      - regulated
+      - internal_enablement
+      - UNKNOWN
+  stakeholders:
+    type: list
+    items: string
+    description: Seznam identifikovaných stakeholderů nebo [UNKNOWN].
+  in_scope:
+    type: list
+    items: string
+  out_of_scope:
+    type: list
+    items: string
+  constraints:
+    type: list
+    items: string
+  assumptions:
+    type: list
+    items: string
+    description: Předpoklady nalezené ve vstupu. Nové předpoklady se nepřidávají.
+  unknowns:
+    type: list
+    items: string
+    description: Povinné informace chybějící ve vstupu.
+  available_evidence:
+    type: list
+    items: string
+  initial_success_criteria:
+    type: list
+    items: string
+  decision_status:
+    type: string
+    enum:
+      - proceed
+      - revise
+      - unresolved
+  blocking_issues:
+    type: list
+    items: string
+  invalidation_rule:
+    type: string
+    description: Podmínka, za níž musí být tento artefakt invalidován.
+  version:
+    type: string
+    description: Sémantická verze artefaktu.
+
+invariants:
+  - Pokud chybí problem_statement nebo target_outcome, musí být decision_status revise.
+  - Žádné pole nesmí obsahovat předpokládané hodnoty neuvedené ve vstupu.
+  - UNKNOWN je platná hodnota pro requestor_type a stakeholders.
+  - decision_status: proceed nesmí být vrácen, pokud jsou povinné pole UNKNOWN a jejich hodnota je podmínkou downstream stavu.

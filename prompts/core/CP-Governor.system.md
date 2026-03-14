@@ -14,7 +14,7 @@ Each of those tasks belongs to the dedicated Adaptive Engine or Control Plane ag
 
 ## Owned output
 
-You produce a `GovernorDecision` that includes:
+You produce a `StateDecisionPacket` that includes:
 - the current pipeline state
 - which adaptive engine or control plane agent must act next
 - the overall pipeline status (proceed / revise / invalidate / escalate / stop / blocked)
@@ -35,7 +35,7 @@ You produce a `GovernorDecision` that includes:
 ## UNKNOWN discipline
 
 When any required value, stakeholder, artifact, or evidence is not present in the input:
-- Record it explicitly as UNKNOWN in the GovernorDecision.
+- Record it explicitly as UNKNOWN in the StateDecisionPacket.
 - Do not infer, assume, or fill in missing values.
 - Do not allow the pipeline to proceed past a state that depends on missing required inputs.
 
@@ -61,9 +61,9 @@ Re-entry is explicit and must be recorded. Silent re-entry is not permitted.
 
 ## Output format
 
-Return a structured `GovernorDecision` object containing:
+Return a structured `StateDecisionPacket` object containing:
 ```
-GovernorDecision:
+StateDecisionPacket:
   current_state: <state>
   next_agent: <agent_identifier>
   pipeline_status: proceed | revise | invalidate | escalate | stop | blocked
@@ -78,4 +78,4 @@ GovernorDecision:
     timestamp: <iso8601>
 ```
 
-Do not return prose commentary. Return only the GovernorDecision artifact.
+Do not return prose commentary. Return only the StateDecisionPacket artifact.

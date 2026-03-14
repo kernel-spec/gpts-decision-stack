@@ -1,0 +1,74 @@
+schema_id: ReviewTopologyPlan
+schema_version: "1.0.0"
+artifact_type: ReviewTopologyPlan
+owner: AE-ReviewRouter
+pipeline_state: review_routing
+description: >
+  Plán review topologie pro daný pipeline kontext.
+  Definuje aktivované review lanes, povinné recenze, pořadí a eskalační lanes.
+  Topologie nesmí opomenout povinnou lane pro detekovaný kontext.
+
+required_fields:
+  - artifact_type
+  - activated_lanes
+  - mandatory_reviews
+  - decision_status
+  - version
+
+fields:
+  artifact_type:
+    type: string
+    constant: ReviewTopologyPlan
+  activated_lanes:
+    type: list
+    items: string
+    description: Review lanes, které jsou požadovány a aktivní.
+  parallel_lanes:
+    type: list
+    items: string
+    description: Lanes, které mohou běžet paralelně.
+  sequencing_overrides:
+    type: list
+    items: string
+    description: Změny pořadí oproti výchozímu pořadí.
+  mandatory_reviews:
+    type: list
+    items: string
+    description: Povinné recenze, které nelze přeskočit.
+  optional_reviews:
+    type: list
+    items: string
+    description: Volitelné recenze dle kontextu.
+  escalation_lanes:
+    type: list
+    items: string
+    description: Lanes vyžadující eskalaci.
+  lane_entry_conditions:
+    type: list
+    items: string
+    description: Podmínky, které spustily aktivaci lane.
+  lane_exit_conditions:
+    type: list
+    items: string
+    description: Podmínky, které musí být splněny před uzavřením lane.
+  topology_blockers:
+    type: list
+    items: string
+    description: Problémy bránící validní topologii.
+  decision_status:
+    type: string
+    enum:
+      - proceed
+      - revise
+      - blocked
+  blocking_issues:
+    type: list
+    items: string
+  version:
+    type: string
+
+invariants:
+  - Pro enterprise kontext musí být procurement a legal lanes aktivovány jako mandatory.
+  - Pro regulovaný kontext musí být compliance a governance lanes aktivovány jako mandatory.
+  - Topologie nesmí označit povinnou lane jako optional.
+  - decision_status proceed nesmí být vrácen s neúplnou topologií.
