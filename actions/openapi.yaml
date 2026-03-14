@@ -1,0 +1,685 @@
+openapi: "3.1.0"
+info:
+  title: gpts-decision-stack Actions API
+  version: "1.0.0"
+  description: >
+    Backend-facing action contract for the gpts-decision-stack decision pipeline.
+    GPT agents call these endpoints to persist pipeline state, enforce governance
+    gates, and coordinate pipeline transitions. The model is not the system of
+    record. All persistent state, veto enforcement, and release authority reside
+    exclusively in the backend service.
+
+servers:
+  - url: https://api.gpts-decision-stack.internal/v1
+    description: Production backend service (GCP Cloud Run, europe-west1)
+  - url: https://api-staging.gpts-decision-stack.internal/v1
+    description: Staging backend service (GCP Cloud Run, europe-west1)
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: >
+        Per-slot API key issued for each GPT deployment slot.
+        Managed via Google Secret Manager. Rotated every 90 days.
+
+  schemas:
+    PipelineSession:
+      type: object
+      required: [session_id, pipeline_state, requestor_type, veto_active, created_at]
+      properties:
+        session_id:
+          type: string
+          description: Unique session identifier (UUID).
+        pipeline_state:
+          type: string
+          enum:
+            - intake
+            - problem_framing
+            - primitive_selection
+            - architecture_validation
+            - claims_validation
+            - risk_governance_validation
+            - commercial_packaging
+            - release_decision
+            - completed
+            - blocked
+          description: Current canonical pipeline state.
+        requestor_type:
+          type: string
+          enum: [founder-led, enterprise, regulated, enablement]
+        veto_active:
+          type: boolean
+          default: false
+          description: Whether any active veto is currently blocking this session.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ArtifactSubmission:
+      type: object
+      required: [session_id, artifact_type, artifact_payload, submitted_by]
+      properties:
+        session_id:
+          type: string
+        artifact_type:
+          type: string
+          enum:
+            - ProblemBrief
+            - FramingAssessment
+            - OfferDecision
+            - ArchitectureSpec
+            - ClaimsDecision
+            - RiskDecision
+            - CommercialSpec
+            - ReviewTopologyPlan
+            - StateDecisionPacket
+            - ReleaseDecision
+        artifact_payload:
+          type: object
+          description: >
+            The full canonical artifact payload. The backend validates this
+            against the artifact's schema before accepting.
+        submitted_by:
+          type: string
+          description: Canonical agent identifier (e.g. CP-Governor, AE-Intake).
+        reentry:
+          type: boolean
+          default: false
+        reentry_reason:
+          type: string
+          nullable: true
+          description: Required and non-empty when reentry is true.
+
+    ArtifactSubmissionResult:
+      type: object
+      required: [session_id, pipeline_state, artifact_type, accepted]
+      properties:
+        session_id:
+          type: string
+        pipeline_state:
+          type: string
+        artifact_type:
+          type: string
+        accepted:
+          type: boolean
+        validation_errors:
+          type: array
+          items:
+            type: string
+          nullable: true
+
+    DecisionLogEntry:
+      type: object
+      required: [entry_id, session_id, pipeline_state, decision_status, agent, timestamp]
+      properties:
+        entry_id:
+          type: string
+        session_id:
+          type: string
+        pipeline_state:
+          type: string
+        decision_status:
+          type: string
+          enum: [proceed, revise, invalidate, escalate, stop, unresolved, blocked]
+        agent:
+          type: string
+        artifact_type:
+          type: string
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+        reentry:
+          type: boolean
+          default: false
+        reentry_reason:
+          type: string
+          nullable: true
+
+    DecisionLog:
+      type: object
+      required: [session_id, entries]
+      properties:
+        session_id:
+          type: string
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/DecisionLogEntry"
+
+    ReentryRequest:
+      type: object
+      required: [target_state, reentry_reason]
+      properties:
+        target_state:
+          type: string
+          enum:
+            - intake
+            - problem_framing
+            - primitive_selection
+            - architecture_validation
+            - claims_validation
+            - risk_governance_validation
+            - commercial_packaging
+        reentry_reason:
+          type: string
+          minLength: 10
+          description: Mandatory non-empty rationale for re-entry. Silent re-entry is rejected.
+        authorized_by:
+          type: string
+          nullable: true
+
+    VetoStatus:
+      type: object
+      required: [session_id, veto_active]
+      properties:
+        session_id:
+          type: string
+        veto_active:
+          type: boolean
+        veto_type:
+          type: string
+          enum: [operational_veto, model_veto]
+          nullable: true
+        veto_source:
+          type: string
+          nullable: true
+          description: Originating authority that issued the veto.
+        veto_activated_at:
+          type: string
+          format: date-time
+          nullable: true
+        veto_release_authority:
+          type: string
+          nullable: true
+          description: Authority required to release the veto.
+
+    VetoActivateRequest:
+      type: object
+      required: [veto_type, veto_source, veto_reason]
+      properties:
+        veto_type:
+          type: string
+          enum: [operational_veto, model_veto]
+        veto_source:
+          type: string
+          description: >
+            Canonical identity of the authority issuing the veto.
+            Only risk_governance_authority or governance_review_authority
+            may activate a veto.
+        veto_reason:
+          type: string
+          minLength: 10
+
+    VetoReleaseRequest:
+      type: object
+      required: [veto_release_authority, veto_release_reason, original_veto_reference]
+      properties:
+        veto_release_authority:
+          type: string
+          description: Must match the originating veto_source.
+        veto_release_reason:
+          type: string
+          minLength: 10
+        original_veto_reference:
+          type: string
+          description: Reference to the original veto record (entry_id or timestamp).
+
+    ApprovalRecord:
+      type: object
+      required: [record_id, session_id, approval_type, authority, approval_status]
+      properties:
+        record_id:
+          type: string
+        session_id:
+          type: string
+        approval_type:
+          type: string
+          enum:
+            - regulated_mandatory_approval
+            - enterprise_procurement_approval
+            - enterprise_legal_approval
+            - risk_governance_approval
+        authority:
+          type: string
+        approval_status:
+          type: string
+          enum: [pending, granted, denied, expired]
+        granted_at:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    ApprovalList:
+      type: object
+      required: [session_id, approvals]
+      properties:
+        session_id:
+          type: string
+        approvals:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApprovalRecord"
+
+    ApprovalSubmitRequest:
+      type: object
+      required: [approval_type, authority, approval_status]
+      properties:
+        approval_type:
+          type: string
+          enum:
+            - regulated_mandatory_approval
+            - enterprise_procurement_approval
+            - enterprise_legal_approval
+            - risk_governance_approval
+        authority:
+          type: string
+          description: >
+            Canonical authority granting or denying the approval.
+            Must correspond to the required authority for the approval_type.
+        approval_status:
+          type: string
+          enum: [granted, denied]
+        notes:
+          type: string
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      required: [error_code, message]
+      properties:
+        error_code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          nullable: true
+
+paths:
+
+  /health:
+    get:
+      operationId: getHealth
+      summary: Service health check
+      tags: [system]
+      security: []
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, version]
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy]
+                  version:
+                    type: string
+
+  /session:
+    post:
+      operationId: createSession
+      summary: Create a new pipeline session
+      description: >
+        Initialises a new pipeline session at the intake stage.
+        The session is the root record for all subsequent artifact
+        submissions, state transitions, veto records, and decision log entries.
+      tags: [pipeline]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [requestor_type]
+              properties:
+                requestor_type:
+                  type: string
+                  enum: [founder-led, enterprise, regulated, enablement]
+                external_ref:
+                  type: string
+                  nullable: true
+                  description: Optional external reference (ticket ID, project ID).
+      responses:
+        "201":
+          description: Session created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelineSession"
+        "400":
+          description: Invalid request body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized — missing or invalid API key.
+
+  /session/{session_id}:
+    get:
+      operationId: getSessionState
+      summary: Get current pipeline session state
+      tags: [pipeline]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Current session state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelineSession"
+        "404":
+          description: Session not found.
+        "401":
+          description: Unauthorized.
+
+  /session/{session_id}/artifact:
+    post:
+      operationId: submitArtifact
+      summary: Submit a canonical artifact for the current pipeline stage
+      description: >
+        Persists the canonical artifact to the session record and records the
+        corresponding decision log entry. The backend validates the artifact
+        payload against the registered artifact schema before accepting.
+        Returns 409 if the artifact_type does not match the current pipeline state.
+        The model is never the system of record — all artifact persistence
+        is managed by this endpoint.
+      tags: [pipeline]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArtifactSubmission"
+      responses:
+        "200":
+          description: Artifact accepted and persisted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArtifactSubmissionResult"
+        "400":
+          description: Invalid artifact payload or schema validation failure.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Artifact type not valid for current pipeline state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized.
+
+  /session/{session_id}/reentry:
+    post:
+      operationId: triggerReentry
+      summary: Trigger an explicit pipeline re-entry
+      description: >
+        Records an explicit re-entry to an earlier pipeline stage in the
+        decision log. Silent re-entry (no reason provided) is rejected with 400.
+        The target_state must be a valid earlier pipeline stage.
+        Re-entry does not erase existing decision log entries.
+      tags: [pipeline]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReentryRequest"
+      responses:
+        "200":
+          description: Re-entry recorded, session state updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelineSession"
+        "400":
+          description: Missing or empty reentry_reason (silent re-entry rejected).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized.
+
+  /session/{session_id}/decision-log:
+    get:
+      operationId: getDecisionLog
+      summary: Get the full decision log for a pipeline session
+      tags: [pipeline]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ordered list of all decision log entries for the session.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionLog"
+        "404":
+          description: Session not found.
+        "401":
+          description: Unauthorized.
+
+  /veto/{session_id}/status:
+    get:
+      operationId: getVetoStatus
+      summary: Get veto status for a pipeline session
+      description: >
+        Returns whether any active veto is blocking the session.
+        UNKNOWN veto status is treated as potentially_blocked by the pipeline.
+        The backend is the authoritative source of veto state — the model
+        may not infer or assume veto status from context.
+      tags: [governance]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Current veto status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VetoStatus"
+        "404":
+          description: Session not found.
+        "401":
+          description: Unauthorized.
+
+  /veto/{session_id}/activate:
+    post:
+      operationId: activateVeto
+      summary: Activate an operational veto on a pipeline session
+      description: >
+        Only risk_governance_authority or governance_review_authority may
+        activate a veto. Once activated, the pipeline is hard-blocked until
+        explicit veto_release from the originating authority. No other
+        authority or artifact can bypass an active veto.
+      tags: [governance]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VetoActivateRequest"
+      responses:
+        "200":
+          description: Veto activated. Pipeline is now blocked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VetoStatus"
+        "400":
+          description: Invalid veto request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Insufficient authority to activate veto.
+        "401":
+          description: Unauthorized.
+
+  /veto/{session_id}/release:
+    post:
+      operationId: releaseVeto
+      summary: Release an active veto on a pipeline session
+      description: >
+        Veto may only be released by the originating veto authority.
+        A veto_release_authority mismatch returns 403. Release requires
+        explicit veto_release_reason and original_veto_reference.
+        Silent veto release is never permitted.
+      tags: [governance]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VetoReleaseRequest"
+      responses:
+        "200":
+          description: Veto released. Pipeline unblocked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VetoStatus"
+        "400":
+          description: Invalid release request (missing required fields).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: >
+            Authority mismatch — only the originating veto authority
+            may release this veto.
+        "401":
+          description: Unauthorized.
+
+  /approval/{session_id}:
+    get:
+      operationId: getApprovals
+      summary: Get all approval records for a pipeline session
+      tags: [governance]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: All approval records for the session.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalList"
+        "404":
+          description: Session not found.
+        "401":
+          description: Unauthorized.
+
+  /approval/{session_id}/submit:
+    post:
+      operationId: submitApproval
+      summary: Submit a manual approval decision
+      description: >
+        Records a granted or denied approval from the appropriate authority.
+        The authority must correspond to the required authority for the
+        approval_type. Mismatched authority returns 403.
+        In regulated contexts, mandatory approval is required before the
+        pipeline may transition to release_decision.
+      tags: [governance]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalSubmitRequest"
+      responses:
+        "200":
+          description: Approval recorded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalRecord"
+        "400":
+          description: Invalid approval submission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Insufficient authority for this approval type.
+        "401":
+          description: Unauthorized.
+
+tags:
+  - name: system
+    description: Service health and metadata.
+  - name: pipeline
+    description: Pipeline session management and artifact submission.
+  - name: governance
+    description: Veto and manual approval governance operations.

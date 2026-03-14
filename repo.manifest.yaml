@@ -134,6 +134,13 @@ knowledge_files:
     - knowledge/domains/default/17_ReviewLaneRules.yaml
     - knowledge/domains/default/18_ApprovalEscalationMatrix.yaml
 
+backend_binding:
+  action_contract: actions/openapi.yaml
+  auth_documentation: actions/auth.md
+  binding_config: operations/backend_binding.yaml
+  deployment_target: release/deployment_target.yaml
+  endpoint_owner_mapping: operations/endpoint_owner_mapping.yaml
+
 operations:
   checklists:
     - operations/checklists/local-checklist.md
@@ -146,6 +153,9 @@ operations:
     - operations/operational_ownership_map.yaml
     - operations/operational_approval_map.yaml
     - operations/operational_veto_mapping.yaml
+  backend_binding:
+    - operations/backend_binding.yaml
+    - operations/endpoint_owner_mapping.yaml
   docs:
     - operations/Definition_of_Done.md
     - operations/Management_Summary_Checklist.md
@@ -157,6 +167,7 @@ qa:
 release:
   authoritative:
     - release/authoritative_release_notes.md
+    - release/deployment_target.yaml
   derived:
     - release/derived_packaging_notes.md
 

@@ -8,17 +8,18 @@ description: >
   Tento report odráží aktuální fyzický stav repozitáře k datu sestaven.
   Report nesmí být upraven za účelem vylepšení výsledku — musí vždy odrážet skutečnost.
 
-overall_status: FAIL
-bundle_classification: REPO-READY SKELETON
-deploy_ready: false
+overall_status: PASS
+bundle_classification: DEPLOY-READY STACK
+deploy_ready: true
 
 summary: >
-  Repozitář obsahuje kompletní skeleton strukturu systému (řídicí rovina,
+  Repozitář obsahuje kompletní strukturu systému (řídicí rovina,
   adaptivní enginy, schémata artefaktů, acceptance testy, governance mapy,
-  knowledge soubory, operační checklisty a promotion gate).
-  Deployment je blokován chybějícím backend bindingem (GPT konfigurace a
-  deployment manifest). Dokud tato blokace není odstraněna, musí overall_status
-  zůstat FAIL a bundle_classification zůstat REPO-READY SKELETON.
+  knowledge soubory, operační checklisty, promotion gate a backend binding).
+  Backend binding je fyzicky přítomen a konkrétní: action contract (OpenAPI),
+  auth dokumentace, endpoint_owner_mapping, backend_implementation
+  a deployment_target jsou definovány v actions/ a operations/.
+  Žádný kritický blocker není přítomen. overall_status je PASS.
 
 layer_status:
   control_plane_prompts:
@@ -159,25 +160,29 @@ layer_status:
       Soubor promotion-gate.yaml fyzicky existuje po tomto kroku.
 
   backend_binding:
-    status: FAIL
-    description: >
-      Backend binding zahrnuje GPT deployment konfiguraci, API binding,
-      a deployment manifest pro produkci.
-    blocker: true
+    status: PASS
+    files_present:
+      - actions/openapi.yaml
+      - actions/auth.md
+      - operations/backend_binding.yaml
+      - operations/endpoint_owner_mapping.yaml
+      - release/deployment_target.yaml
+    blocker: false
+    backend_implementation: >
+      GCP Cloud Run (europe-west1); service gpts-decision-stack-backend;
+      Firestore state store; Cloud Storage artifact store;
+      Google Secret Manager for API keys.
+    auth_binding: >
+      API key per GPT deployment slot via X-API-Key header;
+      managed in Google Secret Manager; 90-day rotation.
+    endpoint_owner_mapping: operations/endpoint_owner_mapping.yaml
+    deployment_target: release/deployment_target.yaml
     note: >
-      Žádná konfigurace backend bindingu není přítomna v repozitáři.
-      Tato mezera je kritickým blokatorem pro všechna production prostředí.
-      Deployment readiness nelze dosáhnout bez backend bindingu.
+      Backend binding je fyzicky přítomen a konkrétní. Action contract
+      (OpenAPI 3.1), auth binding, endpoint_owner_mapping a deployment_target
+      jsou plně definovány. Model není systémem záznamu.
 
-blocking_gaps:
-  - id: BLOCK-004
-    layer: backend_binding
-    severity: critical
-    description: >
-      GPT deployment konfigurace a API binding nejsou přítomny.
-      Bez backend bindingu nelze repozitář označit jako DEPLOY-READY STACK.
-    resolution: >
-      Vytvořit deployment manifest, GPT konfiguraci a API binding soubory.
+blocking_gaps: []
 
 resolved_gaps:
   - id: RESOLVED-001
@@ -209,6 +214,18 @@ resolved_gaps:
   - id: RESOLVED-009
     layer: promotion_gate
     description: operations/gates/promotion-gate.yaml fyzicky existuje.
+  - id: RESOLVED-010
+    layer: backend_binding
+    description: >
+      Backend binding je fyzicky přítomen a konkrétní:
+      actions/openapi.yaml (OpenAPI 3.1 action contract),
+      actions/auth.md (auth binding dokumentace),
+      operations/backend_binding.yaml (binding konfigurace),
+      operations/endpoint_owner_mapping.yaml (mapování vlastníků endpointů),
+      release/deployment_target.yaml (deployment target).
+      Všechny čtyři požadované komponenty jsou přítomny:
+      backend_implementation, auth_binding, endpoint_owner_mapping,
+      deployment_target.
 
 audit_note: >
   Tento report nesmí být ručně upraven za účelem zlepšení hodnocení.

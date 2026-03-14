@@ -1,0 +1,164 @@
+schema_version: "1.0.0"
+artifact_type: deployment_target
+description: >
+  Deployment cíl pro systém gpts-decision-stack. Definuje produkční a staging
+  deployment konfiguraci pro backend binding službu a GPT deployment sloty.
+
+backend_service:
+  production:
+    platform: GCP Cloud Run
+    service_name: gpts-decision-stack-backend
+    region: europe-west1
+    project_id: gpts-decision-stack-prod
+    image: europe-west1-docker.pkg.dev/gpts-decision-stack-prod/backend/service:latest
+    min_instances: 1
+    max_instances: 10
+    cpu: "1"
+    memory: 512Mi
+    timeout: 30s
+    service_account: gpts-decision-stack-svc@gpts-decision-stack-prod.iam.gserviceaccount.com
+    env:
+      FIRESTORE_PROJECT_ID: gpts-decision-stack-prod
+      STORAGE_BUCKET: gpts-decision-stack-prod-artifacts
+      SECRET_MANAGER_PROJECT_ID: gpts-decision-stack-prod
+    url: https://api.gpts-decision-stack.internal/v1
+
+  staging:
+    platform: GCP Cloud Run
+    service_name: gpts-decision-stack-backend-staging
+    region: europe-west1
+    project_id: gpts-decision-stack-staging
+    image: europe-west1-docker.pkg.dev/gpts-decision-stack-staging/backend/service:latest
+    min_instances: 0
+    max_instances: 3
+    cpu: "1"
+    memory: 512Mi
+    timeout: 30s
+    service_account: gpts-decision-stack-svc@gpts-decision-stack-staging.iam.gserviceaccount.com
+    env:
+      FIRESTORE_PROJECT_ID: gpts-decision-stack-staging
+      STORAGE_BUCKET: gpts-decision-stack-staging-artifacts
+      SECRET_MANAGER_PROJECT_ID: gpts-decision-stack-staging
+    url: https://api-staging.gpts-decision-stack.internal/v1
+
+gpt_deployment:
+  description: >
+    Deployment GPT agentů na platformu OpenAI ChatGPT Custom GPTs.
+    Každý agent je nasazen jako samostatný GPT slot s vlastní action
+    konfigurací odkazující na actions/openapi.yaml.
+  platform: OpenAI ChatGPT Custom GPTs
+  action_schema: actions/openapi.yaml
+  auth_config: actions/auth.md
+
+  slots:
+    - slot_id: CP-Governor
+      type: INVARIANT
+      gpt_name: Decision Stack Governor
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: CP-ContractAuditor
+      type: INVARIANT
+      gpt_name: Decision Stack Contract Auditor
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: CP-TransitionJudge
+      type: INVARIANT
+      gpt_name: Decision Stack Transition Judge
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: CP-ReleaseArbiter
+      type: INVARIANT
+      gpt_name: Decision Stack Release Arbiter
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: AE-Intake
+      type: ADAPTIVE
+      gpt_name: Decision Stack Intake Engine
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: AE-Framing
+      type: ADAPTIVE
+      gpt_name: Decision Stack Framing Engine
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: AE-Primitive
+      type: ADAPTIVE
+      gpt_name: Decision Stack Primitive Engine
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: AE-Architecture
+      type: ADAPTIVE
+      gpt_name: Decision Stack Architecture Engine
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: AE-Claims
+      type: ADAPTIVE
+      gpt_name: Decision Stack Claims Engine
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: AE-RiskGov
+      type: ADAPTIVE
+      gpt_name: Decision Stack Risk Governance Engine
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: AE-Commercial
+      type: ADAPTIVE
+      gpt_name: Decision Stack Commercial Engine
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: AE-ReviewRouter
+      type: ADAPTIVE
+      gpt_name: Decision Stack Review Router
+      action_enabled: true
+      auth_mode: api_key
+
+infrastructure:
+  state_store:
+    type: Cloud Firestore
+    mode: native
+    project: gpts-decision-stack-prod
+    collections:
+      - pipeline_sessions
+      - decision_logs
+      - veto_records
+      - approval_records
+
+  artifact_store:
+    type: Cloud Storage
+    bucket: gpts-decision-stack-prod-artifacts
+    access: write-once (immutable after submission)
+
+  secret_store:
+    type: Google Secret Manager
+    project: gpts-decision-stack-prod
+    secrets:
+      - name: gpts-decision-stack-api-key-cp-governor
+        description: API klíč pro GPT slot CP-Governor
+      - name: gpts-decision-stack-api-key-cp-contract-auditor
+        description: API klíč pro GPT slot CP-ContractAuditor
+      - name: gpts-decision-stack-api-key-cp-transition-judge
+        description: API klíč pro GPT slot CP-TransitionJudge
+      - name: gpts-decision-stack-api-key-cp-release-arbiter
+        description: API klíč pro GPT slot CP-ReleaseArbiter
+      - name: gpts-decision-stack-api-key-ae-intake
+        description: API klíč pro GPT slot AE-Intake
+      - name: gpts-decision-stack-api-key-ae-framing
+        description: API klíč pro GPT slot AE-Framing
+      - name: gpts-decision-stack-api-key-ae-primitive
+        description: API klíč pro GPT slot AE-Primitive
+      - name: gpts-decision-stack-api-key-ae-architecture
+        description: API klíč pro GPT slot AE-Architecture
+      - name: gpts-decision-stack-api-key-ae-claims
+        description: API klíč pro GPT slot AE-Claims
+      - name: gpts-decision-stack-api-key-ae-riskgov
+        description: API klíč pro GPT slot AE-RiskGov
+      - name: gpts-decision-stack-api-key-ae-commercial
+        description: API klíč pro GPT slot AE-Commercial
+      - name: gpts-decision-stack-api-key-ae-reviewrouter
+        description: API klíč pro GPT slot AE-ReviewRouter
+
+  audit_log:
+    type: Cloud Logging
+    project: gpts-decision-stack-prod
+    log_name: gpts-decision-stack-audit
+    retention: 365 days

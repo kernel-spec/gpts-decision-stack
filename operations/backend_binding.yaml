@@ -1,0 +1,89 @@
+schema_version: "1.0.0"
+artifact_type: backend_binding
+description: >
+  Konkrétní backend binding konfigurace pro systém gpts-decision-stack.
+  Definuje implementaci backend služby, auth vazbu, mapování vlastníků
+  endpointů a deployment cíl. Model není systémem záznamu — veškerý
+  persistentní stav, veto enforcement, schválení a release autorita žijí
+  výhradně v backend službě.
+
+backend_implementation:
+  service_name: gpts-decision-stack-backend
+  description: >
+    REST backend služba implementující action contract definovaný
+    v actions/openapi.yaml. Slouží jako systém záznamu (system of record)
+    pro pipeline stav, artefakty, decision log a governance stav.
+  runtime: GCP Cloud Run
+  api_contract: actions/openapi.yaml
+  base_url_prod: https://api.gpts-decision-stack.internal/v1
+  base_url_staging: https://api-staging.gpts-decision-stack.internal/v1
+  state_store: Cloud Firestore (managed, serverless)
+  artifact_store: Cloud Storage (canonical artifact payloads, immutable)
+  audit_log: Cloud Logging (structured JSON, long-term retention)
+  secret_store: Google Secret Manager (API klíče per deployment slot)
+
+auth_binding:
+  method: api_key
+  header_name: X-API-Key
+  description: >
+    Každý GPT deployment slot obdrží unikátní API klíč pro autentizaci
+    k backend službě. Klíče jsou spravovány v Google Secret Manager.
+    Model nemá přímý přístup k production datům — veškerá komunikace
+    probíhá prostřednictvím autentizovaného HTTPS action endpointu.
+  key_management: Google Secret Manager
+  key_rotation_policy: 90 days
+  scope_per_slot: true
+  auth_failure_action: reject_with_401
+  auth_documentation: actions/auth.md
+
+endpoint_owner_mapping:
+  description: >
+    Každý endpoint action API je mapován na funkčního vlastníka.
+    Vlastník nese zodpovědnost za provoz, auditování a správnost endpointu.
+  ref: operations/endpoint_owner_mapping.yaml
+
+deployment_target:
+  description: >
+    Deployment cíl pro backend binding službu a GPT deployment sloty.
+  ref: release/deployment_target.yaml
+  platform: GCP Cloud Run
+  region: europe-west1
+
+governance_constraints:
+  model_is_not_system_of_record: true
+  description: >
+    Model (GPT) nikdy neukládá stav přímo. Veškerý persistentní stav,
+    veto enforcement, schválení a release autorita žijí výhradně
+    v backend službě. Tyto governance constraints nesmí být oslabeny.
+  auth_outside_model: true
+  persistent_state_outside_model: true
+  execution_actions_outside_model: true
+  veto_enforcement_outside_model: true
+  release_authority_outside_model: true
+
+logging_requirements:
+  audit_log:
+    required: true
+    backend: Cloud Logging
+    format: structured JSON
+    retention: 365 days
+    required_fields:
+      - session_id
+      - endpoint
+      - agent_id
+      - timestamp
+      - decision_status
+      - artifact_type
+    applies_to_endpoints:
+      - /session POST
+      - /session/{id}/artifact POST
+      - /session/{id}/reentry POST
+      - /veto/{id}/activate POST
+      - /veto/{id}/release POST
+      - /approval/{id}/submit POST
+  access_log:
+    required: true
+    backend: Cloud Logging
+    format: structured JSON
+    retention: 90 days
+    applies_to_endpoints: all
