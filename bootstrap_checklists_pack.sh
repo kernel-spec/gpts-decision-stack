@@ -92,7 +92,7 @@ deployment_ready_stack: false
 
 EOF
 
-cat > “$ROOT/operations/checklists/dev-checklist.md” <<‘EOF’
+cat > "$ROOT/operations/checklists/dev-checklist.md" <<'EOF'
 
 Dev Checklist
 
@@ -178,7 +178,7 @@ Blocking rule
 Dev is BLOCKED if the backend is not concretely bound, or if auth binding, endpoint ownership, or GPT/action binding is missing.
 EOF
 
-cat > “$ROOT/operations/checklists/staging-checklist.md” <<‘EOF’
+cat > "$ROOT/operations/checklists/staging-checklist.md" <<'EOF'
 
 Staging Checklist
 
@@ -283,7 +283,7 @@ Hard rule
 Staging must remain BLOCKED if knowledge completeness or fixture completeness is not PASS.
 EOF
 
-cat > “$ROOT/operations/checklists/prod-checklist.md” <<‘EOF’
+cat > "$ROOT/operations/checklists/prod-checklist.md" <<'EOF'
 
 Prod Checklist
 
@@ -369,7 +369,7 @@ Hard rule
 Production must remain BLOCKED if staging is not PASS, or if knowledge completeness or fixture completeness is not PASS.
 EOF
 
-cat > “$ROOT/operations/gates/promotion-gate.yaml” <<‘EOF’
+cat > "$ROOT/operations/gates/promotion-gate.yaml" <<'EOF'
 status_model:
 allowed_statuses:
 - PASS
@@ -474,10 +474,11 @@ Final deployment readiness cannot pass until all knowledge_files and
 tests/fixtures content are explicitly present and auditable.
 EOF
 
-echo “Created files:”
-printf ’ - %s\n’ 
-“$ROOT/operations/checklists/local-checklist.md” 
-“$ROOT/operations/checklists/dev-checklist.md” 
-“$ROOT/operations/checklists/staging-checklist.md” 
-“$ROOT/operations/checklists/prod-checklist.md” 
-“$ROOT/operations/gates/promotion-gate.yaml”
+
+echo "Created files:"
+printf ' - %s\n' \
+  "$ROOT/operations/checklists/local-checklist.md" \
+  "$ROOT/operations/checklists/dev-checklist.md" \
+  "$ROOT/operations/checklists/staging-checklist.md" \
+  "$ROOT/operations/checklists/prod-checklist.md" \
+  "$ROOT/operations/gates/promotion-gate.yaml"

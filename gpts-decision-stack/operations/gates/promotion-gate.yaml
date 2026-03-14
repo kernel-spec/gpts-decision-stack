@@ -1,0 +1,102 @@
+status_model:
+allowed_statuses:
+- PASS
+- FAIL
+- BLOCKED
+- N/A
+
+global_promotion_gate:
+fail_if:
+- any_knowledge_file_missing_content
+- any_fixture_missing
+- any_fixture_missing_content
+result_if_triggered:
+overall_status: FAIL
+bundle_classification: REPO-READY SKELETON
+deployment_ready_stack: false
+staging: BLOCKED
+prod: BLOCKED
+blocking_gaps:
+- knowledge_content
+- fixture_content
+
+environment_promotion_map:
+	•	from: local
+to: dev
+allowed_only_if:
+	•	repo_manifest_complete
+	•	prompt_completeness == PASS
+	•	schema_consistency == PASS
+	•	backend_binding_defined == PASS
+	•	from: dev
+to: staging
+allowed_only_if:
+	•	dev_gate == PASS
+	•	backend_health == PASS
+	•	auth_binding == PASS
+	•	gpt_provisioning == PASS
+	•	smoke_tests == PASS
+	•	from: staging
+to: prod
+allowed_only_if:
+	•	staging_gate == PASS
+	•	final_qa_artifact == PASS
+	•	ownership_map_approved == PASS
+	•	approval_map_approved == PASS
+	•	veto_map_approved == PASS
+	•	authoritative_release_notes_approved == PASS
+
+environment_blockers:
+local:
+blocked_if: []
+dev:
+blocked_if:
+- openapi_not_bound_to_concrete_backend
+- auth_binding_missing
+- endpoint_owner_mapping_missing
+- gpt_action_binding_missing
+staging:
+blocked_if:
+- knowledge_file_completeness != PASS
+- fixture_completeness != PASS
+- qa_artifact_missing
+- ownership_map_missing
+- approval_map_missing
+- veto_map_missing
+prod:
+blocked_if:
+- staging_gate != PASS
+- final_qa_artifact != PASS
+- knowledge_file_completeness != PASS
+- fixture_completeness != PASS
+- ownership_map_not_approved
+- approval_map_not_approved
+- veto_map_not_approved
+- authoritative_release_notes_missing
+
+promotion_override_rule:
+if_any:
+- knowledge_file_completeness != PASS
+- fixture_completeness != PASS
+force_result:
+staging: BLOCKED
+prod: BLOCKED
+overall_status: FAIL
+bundle_classification: REPO-READY SKELETON
+deployment_ready_stack: false
+blocking_gaps:
+- knowledge_content
+- fixture_content
+
+current_gate_position:
+overall_status: FAIL
+bundle_classification: REPO-READY SKELETON
+deployment_ready_stack: false
+staging: BLOCKED
+prod: BLOCKED
+blocking_gaps:
+- knowledge_content
+- fixture_content
+reason: >
+Final deployment readiness cannot pass until all knowledge_files and
+tests/fixtures content are explicitly present and auditable.
