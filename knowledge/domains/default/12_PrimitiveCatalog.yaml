@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-knowledge_id: "11-offer-primitives"
+knowledge_id: "12_PrimitiveCatalog"
 status: ADAPTIVE
 description: >
   Katalog offer primitivů dostupných v systému gpts-decision-stack.

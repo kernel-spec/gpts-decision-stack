@@ -114,27 +114,27 @@ layer_status:
   knowledge_files:
     status: PASS
     files_present:
-      - knowledge/core/00-system-identity.yaml
-      - knowledge/core/01-pipeline-states.yaml
-      - knowledge/core/02-artifact-contracts.yaml
-      - knowledge/core/03-decision-model.yaml
-      - knowledge/core/04-governance-rules.yaml
-      - knowledge/core/05-fail-semantics.yaml
-      - knowledge/core/06-unknown-discipline.yaml
-      - knowledge/domains/default/10-requestor-types.yaml
-      - knowledge/domains/default/11-offer-primitives.yaml
-      - knowledge/domains/default/12-review-lanes.yaml
-      - knowledge/domains/default/13-risk-classification.yaml
-      - knowledge/domains/default/14-claims-policy.yaml
-      - knowledge/domains/default/15-commercial-policy.yaml
-      - knowledge/domains/default/16-veto-policy.yaml
-      - knowledge/domains/default/17-approval-policy.yaml
-      - knowledge/domains/default/18-release-policy.yaml
+      - knowledge/core/00_ControlPlane_Charter.md
+      - knowledge/core/01_CanonicalStates.yaml
+      - knowledge/core/02_TransitionRules.yaml
+      - knowledge/core/03_ArtifactSchemas.yaml
+      - knowledge/core/04_AuthorityMatrix.yaml
+      - knowledge/core/05_FailureSemantics.yaml
+      - knowledge/core/06_DecisionLogSchema.yaml
+      - knowledge/domains/default/10_DomainOntology.md
+      - knowledge/domains/default/11_FramingRules.yaml
+      - knowledge/domains/default/12_PrimitiveCatalog.yaml
+      - knowledge/domains/default/13_DeliveryTopologyRules.yaml
+      - knowledge/domains/default/14_RiskComplianceTriggers.yaml
+      - knowledge/domains/default/15_CommercialPackagingRules.yaml
+      - knowledge/domains/default/16_ClaimsEvidencePolicy.yaml
+      - knowledge/domains/default/17_ReviewLaneRules.yaml
+      - knowledge/domains/default/18_ApprovalEscalationMatrix.yaml
     count_expected: 16
     count_present: 16
     blocker: false
     note: >
-      Všechny knowledge soubory fyzicky existují po tomto kroku.
+      Všechny knowledge soubory fyzicky existují na kanonických cestách.
 
   operations_checklists:
     status: PASS

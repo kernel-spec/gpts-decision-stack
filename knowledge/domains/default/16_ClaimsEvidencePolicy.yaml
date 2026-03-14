@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-knowledge_id: "14-claims-policy"
+knowledge_id: "16_ClaimsEvidencePolicy"
 status: ADAPTIVE
 description: >
   Politika claims pro systém gpts-decision-stack. Definuje kategorie claims,

@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-knowledge_id: "15-commercial-policy"
+knowledge_id: "15_CommercialPackagingRules"
 status: ADAPTIVE
 description: >
   Komerční packaging politika pro systém gpts-decision-stack. Definuje

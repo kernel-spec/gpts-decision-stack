@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-knowledge_id: "18-release-policy"
+knowledge_id: "13_DeliveryTopologyRules"
 status: ADAPTIVE
 description: >
   Release politika pro systém gpts-decision-stack. Definuje podmínky

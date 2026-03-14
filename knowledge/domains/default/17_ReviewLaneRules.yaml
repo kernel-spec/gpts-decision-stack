@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-knowledge_id: "12-review-lanes"
+knowledge_id: "17_ReviewLaneRules"
 status: ADAPTIVE
 description: >
   Katalog review lanes dostupných v systému gpts-decision-stack.

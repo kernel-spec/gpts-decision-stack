@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-knowledge_id: "04-governance-rules"
+knowledge_id: "04_AuthorityMatrix"
 status: INVARIANT
 description: >
   Governance pravidla systému gpts-decision-stack. Definuje pravidla pro

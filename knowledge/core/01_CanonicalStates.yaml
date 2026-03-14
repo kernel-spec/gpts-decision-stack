@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-knowledge_id: "01-pipeline-states"
+knowledge_id: "01_CanonicalStates"
 status: INVARIANT
 description: >
   Kanonické stavy rozhodovacího pipeline systému gpts-decision-stack.

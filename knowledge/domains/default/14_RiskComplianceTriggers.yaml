@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-knowledge_id: "13-risk-classification"
+knowledge_id: "14_RiskComplianceTriggers"
 status: ADAPTIVE
 description: >
   Klasifikace rizik pro systém gpts-decision-stack. Definuje úrovně rizik

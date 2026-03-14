@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-knowledge_id: "03-decision-model"
+knowledge_id: "06_DecisionLogSchema"
 status: INVARIANT
 description: >
   Rozhodovací model systému gpts-decision-stack. Definuje povolené hodnoty

@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-knowledge_id: "05-fail-semantics"
+knowledge_id: "05_FailureSemantics"
 status: INVARIANT
 description: >
   Fail semantiky systému gpts-decision-stack. Definuje co tvoří selhání

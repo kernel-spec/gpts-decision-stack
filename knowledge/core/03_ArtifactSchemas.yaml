@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-knowledge_id: "02-artifact-contracts"
+knowledge_id: "03_ArtifactSchemas"
 status: INVARIANT
 description: >
   Kanonické kontrakty artefaktů systému gpts-decision-stack.
