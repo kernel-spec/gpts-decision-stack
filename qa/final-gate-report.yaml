@@ -9,21 +9,19 @@ description: >
   Report nesmí být upraven za účelem vylepšení výsledku — musí vždy odrážet skutečnost.
 
 overall_status: PASS
-bundle_classification: DEPLOY-CANDIDATE
+bundle_classification: REPO-READY SKELETON
 deploy_ready: false
 
 summary: >
-  Repozitář nyní obsahuje kompletní implementační strukturu systému:
+  Repozitář obsahuje kompletní implementační strukturu systému:
   řídicí rovina, adaptivní enginy, schémata artefaktů, acceptance testy,
   governance mapy, knowledge soubory, operační checklisty, promotion gate
-  a implementovaný backend (Cloudflare Worker).
-  Backend binding přešel z SPEC_ONLY na IMPLEMENTATION-BACKED:
-  backend/worker/ obsahuje spustitelný TypeScript kód pro všechna API
-  (11 endpointů), wrangler.toml s vazbami D1/R2/KV, GitHub Actions
-  deployment workflow a D1 schema migrace.
-  deploy_ready zůstává false — D1 databáze, R2 bucket, KV namespace
-  a Worker Secret (API_KEY_SECRET) musí být provisionovány před prvním
-  live deploymentem. Repo je deploy-kandidát, nikoliv live provisioned runtime.
+  a plně implementovaný backend (Cloudflare Worker, IMPLEMENTATION-BACKED).
+  Všechny repo vrstvy jsou PASS, blocking_gaps jsou prázdné.
+  bundle_classification zůstává REPO-READY SKELETON — DEPLOY-READY STACK
+  vyžaduje navíc: (a) provisionovanou Cloudflare infrastrukturu (D1, R2, KV,
+  Worker Secret), (b) evaluaci acceptance testů (ne pouze jejich definici).
+  deploy_ready je false — runtime prostředky nejsou dosud provisionovány.
 
 layer_status:
   control_plane_prompts:
@@ -209,7 +207,10 @@ layer_status:
       Repozitář obsahuje spustitelný TypeScript kód pro všechna API,
       wrangler konfiguraci s binding deklaracemi, D1 schema migraci
       a GitHub Actions deployment workflow. Provisioning skutečné
-      infrastruktury je nezbytný před prvním live deploymentem.
+      infrastruktury (D1 database_id, KV namespace id, R2 bucket,
+      API_KEY_SECRET Worker Secret) je nezbytný před prvním live deploymentem.
+      Toto je důvodem, proč bundle_classification zůstává REPO-READY SKELETON
+      a deploy_ready je false.
 
 blocking_gaps: []
 
@@ -219,8 +220,13 @@ provisioning_gaps:
     severity: informational
     description: >
       Cloudflare infrastruktura musí být provisionována před prvním live
-      deploymentem. Toto není blocking gap pro repo readiness, ale je
-      vyžadováno před production deploymentem.
+      deploymentem. Toto není blocking gap pro repo readiness (REPO-READY SKELETON),
+      ale je vyžadováno před dosažením DEPLOY-READY STACK.
+    placeholder_values:
+      - "wrangler.toml: database_id = REPLACE_WITH_D1_DATABASE_ID"
+      - "wrangler.toml: database_id = REPLACE_WITH_DEV_D1_DATABASE_ID"
+      - "wrangler.toml: id = REPLACE_WITH_KV_NAMESPACE_ID"
+      - "wrangler.toml: id = REPLACE_WITH_DEV_KV_NAMESPACE_ID"
     required_actions:
       - "wrangler d1 create gpts-decision-stack-db (a vyplnit database_id do wrangler.toml)"
       - "wrangler r2 bucket create gpts-decision-stack-artifacts"
@@ -228,6 +234,12 @@ provisioning_gaps:
       - "wrangler secret put API_KEY_SECRET"
       - "Nastavit CLOUDFLARE_API_TOKEN a CLOUDFLARE_ACCOUNT_ID jako GitHub Secrets"
       - "wrangler d1 execute gpts-decision-stack-db --file backend/worker/migrations/0001_init.sql"
+  - id: PROV-002
+    layer: acceptance_tests
+    severity: informational
+    description: >
+      Acceptance testy existují jako YAML definice. DEPLOY-READY STACK
+      vyžaduje jejich evaluaci (ne pouze definici) — viz operations/Definition_of_Done.md.
 
 resolved_gaps:
   - id: RESOLVED-001
@@ -272,3 +284,7 @@ audit_note: >
   Hodnoty overall_status a bundle_classification musí odpovídat skutečnému
   fyzickému stavu repozitáře. Falešné PASS je stejně závažné selhání
   jako falešný proceed v pipeline.
+  Normalizační poznámka: bundle_classification DEPLOY-CANDIDATE bylo odstraněno
+  jako nekanonická hodnota. Kanonické hodnoty jsou REPO-READY SKELETON a
+  DEPLOY-READY STACK (viz operations/Definition_of_Done.md). Aktuální stav
+  REPO-READY SKELETON je správný — implementace existuje, provisioning pending.
