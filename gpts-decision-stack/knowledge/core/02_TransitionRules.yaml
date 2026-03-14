@@ -1,0 +1,202 @@
+# State Transition Rules
+# Status: INVARIANT
+# Defines all allowed state transitions and conditions
+
+transition_rules:
+  # Initial submission
+  - from: UNSUBMITTED
+    to: SUBMITTED
+    authority: ANY_SUBMITTER
+    conditions:
+      - artifact_provided
+      - artifact_metadata_complete
+    validation:
+      - artifact_schema_valid
+  
+  # Intake evaluation
+  - from: SUBMITTED
+    to: INTAKE_REJECTED
+    authority: AE-Intake
+    conditions:
+      - intake_evaluation_complete
+      - intake_decision_is_reject
+    effects:
+      - log_rejection_reason
+      - notify_submitter
+  
+  - from: SUBMITTED
+    to: INTAKE_ACCEPTED
+    authority: AE-Intake
+    conditions:
+      - intake_evaluation_complete
+      - intake_decision_is_accept
+    effects:
+      - assign_tracking_id
+      - route_to_claims_verification
+  
+  # Claims verification
+  - from: INTAKE_ACCEPTED
+    to: CLAIMS_VERIFICATION
+    authority: AE-Claims
+    conditions:
+      - claims_identified
+      - evidence_requirements_defined
+    effects:
+      - create_claims_checklist
+  
+  - from: CLAIMS_VERIFICATION
+    to: CLAIMS_INSUFFICIENT
+    authority: AE-Claims
+    conditions:
+      - claims_evaluation_complete
+      - evidence_insufficient
+    effects:
+      - document_gaps
+      - notify_submitter
+  
+  - from: CLAIMS_VERIFICATION
+    to: CLAIMS_VERIFIED
+    authority: AE-Claims
+    conditions:
+      - claims_evaluation_complete
+      - evidence_sufficient
+      - all_claims_supported
+    effects:
+      - finalize_verification_report
+  
+  # Re-submission after insufficient claims
+  - from: CLAIMS_INSUFFICIENT
+    to: SUBMITTED
+    authority: ANY_SUBMITTER
+    conditions:
+      - additional_evidence_provided
+      - resubmission_requested
+    effects:
+      - reset_intake_evaluation
+  
+  # Review routing
+  - from: CLAIMS_VERIFIED
+    to: REVIEW_REQUIRED
+    authority: CP-Governor
+    conditions:
+      - review_required_by_policy
+    effects:
+      - assign_review_lane
+      - notify_reviewers
+  
+  - from: CLAIMS_VERIFIED
+    to: APPROVAL_REQUIRED
+    authority: CP-Governor
+    conditions:
+      - review_not_required_by_policy
+    effects:
+      - route_to_approval_workflow
+  
+  # Review process
+  - from: REVIEW_REQUIRED
+    to: REVIEW_IN_PROGRESS
+    authority: REVIEW_AUTHORITY
+    conditions:
+      - reviewer_assigned
+      - review_started
+  
+  - from: REVIEW_IN_PROGRESS
+    to: REVIEW_REJECTED
+    authority: REVIEW_AUTHORITY
+    conditions:
+      - review_complete
+      - review_decision_is_reject
+    effects:
+      - log_review_findings
+      - notify_stakeholders
+  
+  - from: REVIEW_IN_PROGRESS
+    to: REVIEW_APPROVED
+    authority: REVIEW_AUTHORITY
+    conditions:
+      - review_complete
+      - review_decision_is_approve
+    effects:
+      - finalize_review_report
+      - route_to_governance
+  
+  # Governance approval
+  - from: REVIEW_APPROVED
+    to: APPROVAL_REQUIRED
+    authority: CP-Governor
+    conditions:
+      - approval_workflow_required
+  
+  - from: APPROVAL_REQUIRED
+    to: APPROVAL_IN_PROGRESS
+    authority: APPROVAL_AUTHORITY
+    conditions:
+      - approvers_notified
+      - approval_workflow_started
+  
+  - from: APPROVAL_IN_PROGRESS
+    to: APPROVAL_REJECTED
+    authority: APPROVAL_AUTHORITY
+    conditions:
+      - approval_decision_complete
+      - approval_decision_is_reject
+    effects:
+      - log_rejection_rationale
+      - notify_all_parties
+  
+  - from: APPROVAL_IN_PROGRESS
+    to: APPROVAL_GRANTED
+    authority: APPROVAL_AUTHORITY
+    conditions:
+      - approval_decision_complete
+      - approval_decision_is_approve
+      - all_required_approvers_approved
+    effects:
+      - finalize_approval_record
+      - route_to_release_prep
+  
+  # Release preparation and control
+  - from: APPROVAL_GRANTED
+    to: RELEASE_READY
+    authority: CP-Governor
+    conditions:
+      - all_governance_complete
+      - release_artifacts_prepared
+      - deployment_plan_ready
+  
+  - from: RELEASE_READY
+    to: RELEASE_BLOCKED
+    authority: RELEASE_CONTROLLER
+    conditions:
+      any_of:
+        - operational_veto_active
+        - release_block_triggered
+    effects:
+      - log_block_reason
+      - notify_release_coordinator
+  
+  - from: RELEASE_BLOCKED
+    to: RELEASE_READY
+    authority: RELEASE_CONTROLLER
+    conditions:
+      - block_reason_resolved
+      - veto_cleared
+  
+  - from: RELEASE_READY
+    to: RELEASED
+    authority: RELEASE_CONTROLLER
+    conditions:
+      - no_active_blocks
+      - deployment_authorized
+      - deployment_successful
+    effects:
+      - finalize_release_record
+      - notify_all_stakeholders
+      - archive_decision_trail
+
+invariant_rules:
+  - All transitions require authority check
+  - All transitions must be logged
+  - Terminal states cannot transition
+  - Backward transitions require explicit definition
+  - Authority cannot be bypassed

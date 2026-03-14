@@ -1,0 +1,232 @@
+# Commercial Packaging Rules - Default Domain
+# Status: ADAPTIVE
+# Defines how artifacts are packaged for commercial distribution
+
+packaging_types:
+  internal_use:
+    description: Artifacts for internal organizational use only
+    
+    requirements:
+      licensing: NOT_REQUIRED
+      third_party_notices: RECOMMENDED
+      distribution_rights: INTERNAL_ONLY
+      support_commitment: BEST_EFFORT
+    
+    validation:
+      - Internal approval sufficient
+      - No export control check required
+      - Standard testing required
+    
+    distribution_channels:
+      - Internal artifact repository
+      - Internal deployment systems
+  
+  open_source:
+    description: Artifacts released under open source license
+    
+    requirements:
+      licensing: REQUIRED
+      license_type: OSI_APPROVED
+      third_party_notices: REQUIRED
+      source_code: MUST_INCLUDE
+      distribution_rights: PUBLIC
+      support_commitment: COMMUNITY
+    
+    validation:
+      - License compatibility check required
+      - Third-party dependency review required
+      - Source code completeness check required
+      - Documentation standards check required
+    
+    distribution_channels:
+      - Public package repositories
+      - Public source control
+      - Official download sites
+  
+  commercial:
+    description: Artifacts for commercial sale or licensing
+    
+    requirements:
+      licensing: REQUIRED
+      license_type: PROPRIETARY_OR_COMMERCIAL
+      third_party_notices: REQUIRED
+      licensing_terms: MUST_DEFINE
+      distribution_rights: LICENSED
+      support_commitment: CONTRACTUAL
+      warranty_terms: MUST_DEFINE
+    
+    validation:
+      - License review required
+      - Legal approval required
+      - Third-party licensing cleared
+      - Support plan validated
+      - Warranty terms reviewed
+    
+    distribution_channels:
+      - Licensed customer repositories
+      - Commercial distribution platforms
+      - Customer-specific delivery
+
+licensing_constraints:
+  third_party_dependencies:
+    allowed_licenses:
+      permissive:
+        - MIT
+        - Apache-2.0
+        - BSD-2-Clause
+        - BSD-3-Clause
+      
+      copyleft_weak:
+        - LGPL-2.1
+        - LGPL-3.0
+        - MPL-2.0
+      
+      copyleft_strong:
+        - GPL-2.0
+        - GPL-3.0
+        - AGPL-3.0
+    
+    compatibility_rules:
+      - Permissive licenses compatible with all packaging types
+      - Weak copyleft requires source distribution for library
+      - Strong copyleft requires full source distribution
+      - AGPL requires network use source provision
+  
+  license_verification:
+    required_for: ALL_PACKAGING_TYPES
+    
+    verification_steps:
+      - Enumerate all dependencies
+      - Identify license for each dependency
+      - Check compatibility with packaging type
+      - Verify license text inclusion
+      - Generate third-party notices file
+
+distribution_restrictions:
+  export_control:
+    check_required:
+      - Commercial packaging
+      - Open source with encryption
+      - Cross-border distribution
+    
+    validation:
+      - Export control classification
+      - Restricted country check
+      - Encryption registration check
+  
+  geographic_restrictions:
+    by_packaging_type:
+      internal_use:
+        restrictions: ORGANIZATIONAL_BOUNDARIES
+      
+      open_source:
+        restrictions: EXPORT_CONTROL_ONLY
+      
+      commercial:
+        restrictions: PER_LICENSE_AGREEMENT
+
+versioning_requirements:
+  semantic_versioning:
+    required_for: ALL_PACKAGING_TYPES
+    
+    format: MAJOR.MINOR.PATCH
+    
+    increment_rules:
+      major: Breaking changes or major features
+      minor: New features, backward compatible
+      patch: Bug fixes, backward compatible
+  
+  version_metadata:
+    required_fields:
+      - version_number
+      - release_date
+      - package_type
+      - license_identifier
+      - support_level
+  
+  changelog:
+    required_for: ALL_PACKAGING_TYPES
+    
+    required_sections:
+      - Added: New features
+      - Changed: Changes in existing functionality
+      - Deprecated: Soon-to-be removed features
+      - Removed: Removed features
+      - Fixed: Bug fixes
+      - Security: Security-related changes
+
+support_commitments:
+  by_packaging_type:
+    internal_use:
+      support_level: BEST_EFFORT
+      sla: NONE
+      support_channels:
+        - Internal ticketing system
+        - Team communication channels
+    
+    open_source:
+      support_level: COMMUNITY
+      sla: NONE
+      support_channels:
+        - Public issue tracker
+        - Community forums
+        - Documentation
+      
+      expectations:
+        - Bug reports welcome
+        - Pull requests considered
+        - No guaranteed response time
+    
+    commercial:
+      support_level: CONTRACTUAL
+      sla: PER_CONTRACT
+      support_channels:
+        - Dedicated support portal
+        - Email support
+        - Phone support (for premium)
+      
+      expectations:
+        - Response time per SLA
+        - Issue resolution per SLA
+        - Security patch commitment
+
+documentation_requirements:
+  all_packaging_types:
+    required:
+      - README with overview
+      - Installation instructions
+      - Basic usage examples
+      - License information
+      - Third-party notices
+  
+  open_source_additional:
+    required:
+      - Contributing guidelines
+      - Code of conduct
+      - Development setup guide
+      - Architecture documentation
+  
+  commercial_additional:
+    required:
+      - Comprehensive user guide
+      - API reference
+      - Troubleshooting guide
+      - Support contact information
+      - SLA documentation
+
+adaptation_guidelines:
+  domains_may_customize:
+    - Packaging types
+    - License policies
+    - Distribution channels
+    - Support commitments
+    - Documentation requirements
+  
+  domains_must_preserve:
+    - License compliance enforcement
+    - Third-party notice requirements
+    - Export control compliance
+    - Version traceability
+
+version: "1.0.0"
+status: ADAPTIVE

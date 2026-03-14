@@ -1,0 +1,223 @@
+# Delivery Topology Rules - Default Domain
+# Status: ADAPTIVE
+# Defines deployment topology and environment constraints
+
+environments:
+  local:
+    purpose: Local development and structural validation
+    characteristics:
+      - No backend integration
+      - File-based validation only
+      - Completeness checking
+      - Schema validation
+    
+    deployment_allowed_if:
+      - Bootstrap scripts execute successfully
+      - All required files exist
+      - YAML syntax is valid
+      - Manifest references resolve
+    
+    deployment_blocked_if: []
+    
+    testing_scope:
+      - File existence checks
+      - Schema validation
+      - Manifest consistency
+      - No runtime testing
+  
+  dev:
+    purpose: First real integration environment
+    characteristics:
+      - Backend services integrated
+      - GPT configuration deployed
+      - Enforcement services active
+      - Smoke testing enabled
+    
+    deployment_allowed_if:
+      - local_gate == PASS
+      - Backend build exists
+      - Auth binding defined
+      - Endpoint mapping complete
+      - GPT config binding prepared
+    
+    deployment_blocked_if:
+      - openapi_not_bound_to_concrete_backend
+      - auth_binding_missing
+      - endpoint_owner_mapping_missing
+      - gpt_action_binding_missing
+    
+    testing_scope:
+      - Backend health checks
+      - Auth validation
+      - GPT provisioning smoke tests
+      - Decision log append tests
+      - Basic end-to-end flows
+  
+  staging:
+    purpose: Full governance reality rehearsal
+    characteristics:
+      - Production-like topology
+      - Full governance enforcement
+      - Acceptance testing
+      - Approval workflows active
+      - Operational veto enabled
+    
+    deployment_allowed_if:
+      - dev_gate == PASS
+      - knowledge_file_completeness == PASS
+      - fixture_completeness == PASS
+      - qa_artifact_exists
+      - ownership_map_exists
+      - approval_map_exists
+      - veto_map_exists
+    
+    deployment_blocked_if:
+      - knowledge_file_completeness != PASS
+      - fixture_completeness != PASS
+      - qa_artifact_missing
+      - ownership_map_missing
+      - approval_map_missing
+      - veto_map_missing
+    
+    testing_scope:
+      - Full acceptance test suite
+      - Approval workflow validation
+      - Veto enforcement testing
+      - Release block testing
+      - False proceed detection
+      - Performance testing
+  
+  prod:
+    purpose: Production deployment
+    characteristics:
+      - Live user traffic
+      - Full audit logging
+      - Governance enforcement
+      - Monitoring and alerting
+      - Rollback capability
+    
+    deployment_allowed_if:
+      - staging_gate == PASS
+      - final_qa_artifact == PASS
+      - ownership_map_approved
+      - approval_map_approved
+      - veto_map_approved
+      - authoritative_release_notes_approved
+      - rollback_plan_exists
+      - monitoring_alerting_exist
+    
+    deployment_blocked_if:
+      - staging_gate != PASS
+      - final_qa_artifact != PASS
+      - knowledge_file_completeness != PASS
+      - fixture_completeness != PASS
+      - ownership_map_not_approved
+      - approval_map_not_approved
+      - veto_map_not_approved
+      - authoritative_release_notes_missing
+    
+    testing_scope:
+      - Production smoke tests
+      - Audit logging validation
+      - Monitoring verification
+      - Rollback readiness
+      - Performance monitoring
+
+promotion_paths:
+  local_to_dev:
+    requirements:
+      - All structural validations pass
+      - Backend infrastructure ready
+      - Configuration bindings complete
+    
+    validation:
+      - Manifest completeness
+      - Schema validity
+      - File existence
+      - Backend connectivity
+  
+  dev_to_staging:
+    requirements:
+      - Dev smoke tests pass
+      - Knowledge files complete
+      - Test fixtures complete
+      - Governance maps exist
+    
+    validation:
+      - Backend health confirmed
+      - GPT provisioning verified
+      - Governance prerequisites met
+  
+  staging_to_prod:
+    requirements:
+      - All acceptance tests pass
+      - Governance approval obtained
+      - Operational readiness confirmed
+      - Rollback plan validated
+    
+    validation:
+      - QA artifact approved
+      - All governance maps approved
+      - Release notes approved
+      - Monitoring operational
+
+rollback_requirements:
+  dev:
+    rollback_trigger:
+      - Backend health failure
+      - Critical smoke test failure
+    rollback_target: previous_working_dev_version
+    rollback_time: under_5_minutes
+  
+  staging:
+    rollback_trigger:
+      - Acceptance test failure
+      - Governance violation detected
+    rollback_target: previous_working_staging_version
+    rollback_time: under_10_minutes
+  
+  prod:
+    rollback_trigger:
+      - Production smoke failure
+      - Critical incident
+      - Operational veto
+    rollback_target: last_known_good_production
+    rollback_time: under_2_minutes
+    approval_required: true
+
+topology_constraints:
+  data_flow:
+    - All environments use same decision log schema
+    - No production data in dev/staging
+    - Audit trails are environment-specific
+    - Test fixtures don't leak to production
+  
+  access_control:
+    - Dev: Development team access
+    - Staging: QA and governance team access
+    - Prod: Authorized operations team only
+    - Audit logs: Read-only for most, append-only for system
+  
+  resource_isolation:
+    - Each environment has dedicated resources
+    - No cross-environment dependencies
+    - State is environment-specific
+    - Decision logs are per-environment
+
+adaptation_guidelines:
+  domains_may_customize:
+    - Environment characteristics
+    - Deployment conditions
+    - Testing scope per environment
+    - Promotion requirements
+    - Rollback procedures
+  
+  domains_must_preserve:
+    - Progressive deployment model
+    - Gate-based promotion
+    - Audit trail integrity
+    - Rollback capability
+    - Resource isolation
+
+version: "1.0.0"
+status: ADAPTIVE

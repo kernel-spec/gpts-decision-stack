@@ -1,0 +1,196 @@
+# Authority Matrix
+# Status: INVARIANT
+# Defines decision-making authority for each GPT and role
+
+authorities:
+  gpt_roles:
+    CP-Governor:
+      authority_level: CONTROL_PLANE
+      can_decide:
+        - validate_state_transitions
+        - enforce_governance_constraints
+        - route_to_review
+        - route_to_approval
+        - route_to_release
+        - maintain_decision_log
+        - report_violations
+      
+      cannot_decide:
+        - intake_artifact_evaluation
+        - claims_verification
+        - review_approval
+        - governance_approval
+        - release_execution
+      
+      decision_scope:
+        - All state transitions requiring governance validation
+        - Authority enforcement
+        - Routing decisions
+      
+      audit_requirement: MANDATORY
+    
+    AE-Intake:
+      authority_level: INTAKE
+      can_decide:
+        - evaluate_artifact_submission
+        - accept_or_reject_intake
+        - route_to_claims_verification
+        - flag_compliance_issues
+      
+      cannot_decide:
+        - verify_claims
+        - approve_releases
+        - bypass_evidence_requirements
+        - override_governance
+      
+      decision_scope:
+        - Initial artifact evaluation
+        - Intake acceptance decisions
+        - Basic compliance flagging
+      
+      audit_requirement: MANDATORY
+    
+    AE-Claims:
+      authority_level: VERIFICATION
+      can_decide:
+        - verify_claims_against_evidence
+        - determine_evidence_sufficiency
+        - escalate_insufficient_evidence
+        - document_verification_rationale
+      
+      cannot_decide:
+        - accept_claims_without_evidence
+        - bypass_review_requirements
+        - grant_final_approval
+        - execute_releases
+      
+      decision_scope:
+        - Claims verification
+        - Evidence sufficiency
+        - Verification escalation
+      
+      audit_requirement: MANDATORY
+    
+    REVIEW_AUTHORITY:
+      authority_level: REVIEW
+      can_decide:
+        - conduct_technical_review
+        - approve_or_reject_review
+        - request_additional_information
+        - escalate_to_governance
+      
+      cannot_decide:
+        - bypass_approval_requirements
+        - execute_releases
+        - override_veto
+      
+      decision_scope:
+        - Technical review decisions
+        - Review approval/rejection
+        - Escalation to governance
+      
+      audit_requirement: MANDATORY
+    
+    APPROVAL_AUTHORITY:
+      authority_level: GOVERNANCE
+      can_decide:
+        - grant_or_reject_governance_approval
+        - require_additional_reviews
+        - escalate_to_executive_authority
+        - document_approval_conditions
+      
+      cannot_decide:
+        - bypass_evidence_requirements
+        - override_operational_veto
+        - execute_releases_directly
+      
+      decision_scope:
+        - Governance approval decisions
+        - Conditional approvals
+        - Executive escalation
+      
+      audit_requirement: MANDATORY
+    
+    RELEASE_CONTROLLER:
+      authority_level: RELEASE
+      can_decide:
+        - authorize_release_execution
+        - block_release_for_operational_reasons
+        - clear_release_blocks
+        - execute_authorized_releases
+      
+      cannot_decide:
+        - bypass_governance_approval
+        - override_approval_rejection
+        - alter_decision_history
+      
+      decision_scope:
+        - Release authorization
+        - Operational veto enforcement
+        - Release execution
+      
+      audit_requirement: MANDATORY
+
+authority_checks:
+  required_for:
+    - All state transitions
+    - All decision records
+    - All governance actions
+  
+  check_sequence:
+    1. Verify decision maker identity
+    2. Validate authority level for decision type
+    3. Check decision scope alignment
+    4. Confirm no prohibited actions
+    5. Log authority check result
+  
+  failure_handling:
+    - Reject decision immediately
+    - Log unauthorized attempt
+    - Notify governance authority
+    - Do not execute state transition
+
+escalation_paths:
+  intake_escalation:
+    from: AE-Intake
+    to: AE-Claims
+    conditions:
+      - Intake accepted
+      - Claims verification required
+  
+  claims_escalation:
+    from: AE-Claims
+    to: CP-Governor
+    conditions:
+      - Claims verified
+      - Review or approval required
+  
+  review_escalation:
+    from: REVIEW_AUTHORITY
+    to: APPROVAL_AUTHORITY
+    conditions:
+      - Review approved
+      - Governance approval required
+  
+  approval_escalation:
+    from: APPROVAL_AUTHORITY
+    to: EXECUTIVE_AUTHORITY
+    conditions:
+      - Standard approval authority insufficient
+      - Executive decision required
+  
+  operational_escalation:
+    from: RELEASE_CONTROLLER
+    to: APPROVAL_AUTHORITY
+    conditions:
+      - Release blocked
+      - Governance review of block required
+
+invariant_rules:
+  - Authority cannot be delegated or transferred
+  - All decisions must have authority backing
+  - Authority checks are mandatory and cannot be bypassed
+  - Audit requirements are absolute
+
+matrix_version: "1.0.0"
+status: INVARIANT

@@ -1,0 +1,207 @@
+# Failure Semantics
+# Status: INVARIANT
+# Defines how failures are handled and recovered
+
+failure_categories:
+  authorization_failure:
+    severity: CRITICAL
+    description: Decision maker lacks authority for attempted action
+    
+    handling:
+      immediate:
+        - Reject decision immediately
+        - Do not execute state transition
+        - Log unauthorized attempt with full context
+      
+      notification:
+        - Notify governance authority
+        - Alert security monitoring
+        - Record in audit trail
+      
+      recovery:
+        - No automatic recovery
+        - Requires governance review
+        - May require authority escalation
+    
+    examples:
+      - AE-Intake attempting to grant final approval
+      - AE-Claims bypassing evidence requirements
+      - Any GPT attempting to alter decision history
+  
+  validation_failure:
+    severity: HIGH
+    description: Artifact or decision fails schema validation
+    
+    handling:
+      immediate:
+        - Reject artifact or decision
+        - Return validation errors
+        - Do not proceed with transition
+      
+      notification:
+        - Notify submitter with specific errors
+        - Log validation failure
+      
+      recovery:
+        - Automatic retry allowed after correction
+        - No escalation required for simple validation errors
+        - Escalate if validation failures persist
+    
+    examples:
+      - Missing required artifact metadata
+      - Invalid state transition request
+      - Malformed decision record
+  
+  evidence_insufficient:
+    severity: MEDIUM
+    description: Claims lack sufficient supporting evidence
+    
+    handling:
+      immediate:
+        - Transition to CLAIMS_INSUFFICIENT state
+        - Document specific evidence gaps
+        - Preserve artifact for resubmission
+      
+      notification:
+        - Notify submitter with gap analysis
+        - Provide guidance on evidence requirements
+      
+      recovery:
+        - Resubmission allowed with additional evidence
+        - No penalty for good-faith resubmission
+        - Track resubmission count
+    
+    examples:
+      - Test results missing
+      - Documentation incomplete
+      - Certification not provided
+  
+  governance_rejection:
+    severity: MEDIUM
+    description: Review or approval authority rejects artifact
+    
+    handling:
+      immediate:
+        - Transition to appropriate rejection state
+        - Finalize rejection record
+        - Make state terminal
+      
+      notification:
+        - Notify all stakeholders
+        - Document rejection rationale
+        - Provide feedback for future submissions
+      
+      recovery:
+        - No automatic recovery from terminal rejection
+        - New submission required for retry
+        - Learn from rejection feedback
+    
+    examples:
+      - Review identifies critical issues
+      - Approval authority denies governance approval
+      - Policy compliance failure
+  
+  operational_block:
+    severity: MEDIUM
+    description: Release blocked by operational veto or controller
+    
+    handling:
+      immediate:
+        - Transition to RELEASE_BLOCKED state
+        - Preserve release-ready status
+        - Do not execute release
+      
+      notification:
+        - Notify release coordinator
+        - Document block reason
+        - Provide expected resolution path
+      
+      recovery:
+        - Automatic unblock when reason resolved
+        - Return to RELEASE_READY state
+        - Resume release process
+    
+    examples:
+      - Production incident in progress
+      - Maintenance window conflict
+      - Operational capacity constraint
+  
+  system_failure:
+    severity: CRITICAL
+    description: System-level failure preventing normal operation
+    
+    handling:
+      immediate:
+        - Halt processing
+        - Preserve current state
+        - Do not lose audit trail
+      
+      notification:
+        - Alert system administrators
+        - Log failure details
+        - Trigger incident response
+      
+      recovery:
+        - Manual intervention required
+        - Resume from preserved state
+        - Verify audit trail integrity
+    
+    examples:
+      - Database connection failure
+      - Decision log corruption
+      - Authority service unavailable
+
+recovery_principles:
+  state_preservation:
+    - Never lose artifact data
+    - Preserve all decision history
+    - Maintain audit trail integrity
+  
+  graceful_degradation:
+    - Fail safe, not fail forward
+    - Reject rather than proceed incorrectly
+    - Preserve governance constraints
+  
+  audit_continuity:
+    - All failures are logged
+    - Recovery actions are logged
+    - No gaps in audit trail
+  
+  no_silent_failures:
+    - All failures generate notifications
+    - Stakeholders are informed
+    - Failures are escalated appropriately
+
+retry_policies:
+  validation_failure:
+    automatic_retry: false
+    manual_retry: allowed
+    retry_limit: none
+    backoff: not_applicable
+  
+  evidence_insufficient:
+    automatic_retry: false
+    manual_retry: allowed
+    retry_limit: 3_resubmissions
+    backoff: not_applicable
+  
+  operational_block:
+    automatic_retry: true
+    manual_retry: allowed
+    retry_limit: none
+    backoff: 5_minutes
+  
+  system_failure:
+    automatic_retry: true
+    manual_retry: allowed
+    retry_limit: 3_attempts
+    backoff: exponential
+
+invariant_rules:
+  - Failures never bypass governance
+  - Failures never skip audit logging
+  - Recovery never compromises authority
+  - Terminal states remain terminal
+
+semantics_version: "1.0.0"
+status: INVARIANT

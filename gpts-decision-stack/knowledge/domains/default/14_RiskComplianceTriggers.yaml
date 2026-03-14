@@ -1,0 +1,231 @@
+# Risk and Compliance Triggers - Default Domain
+# Status: ADAPTIVE
+# Defines conditions that trigger additional scrutiny or requirements
+
+risk_levels:
+  minimal:
+    criteria:
+      - Documentation-only changes
+      - Non-production environment
+      - No user-facing impact
+      - Fully reversible
+    
+    additional_requirements: []
+    
+    approval_level: STANDARD
+  
+  moderate:
+    criteria:
+      - Configuration changes
+      - Dev or staging environment
+      - Limited user impact
+      - Reversible with effort
+    
+    additional_requirements:
+      - Rollback plan required
+      - Impact assessment required
+    
+    approval_level: STANDARD
+  
+  significant:
+    criteria:
+      - Code or package changes
+      - Staging environment
+      - Moderate user impact
+      - Complex rollback
+    
+    additional_requirements:
+      - Comprehensive testing required
+      - Rollback plan and validation required
+      - Security review required
+    
+    approval_level: ELEVATED
+  
+  major:
+    criteria:
+      - Production deployment
+      - High user impact
+      - Data migration involved
+      - Difficult rollback
+    
+    additional_requirements:
+      - Full acceptance test suite required
+      - Security and compliance review required
+      - Executive approval required
+      - Staged rollout plan required
+      - 24/7 support coverage required
+    
+    approval_level: EXECUTIVE
+
+compliance_triggers:
+  security_review_required:
+    conditions:
+      - Authentication or authorization changes
+      - Cryptographic changes
+      - Security-sensitive configuration
+      - External service integration
+      - User data handling changes
+    
+    review_authority: SECURITY_TEAM
+    
+    evidence_required:
+      - Security scan results
+      - Penetration test results (for prod)
+      - Security architecture review
+  
+  legal_review_required:
+    conditions:
+      - Privacy policy changes
+      - Terms of service changes
+      - Data retention policy changes
+      - Cross-border data transfer
+      - Regulatory compliance impact
+    
+    review_authority: LEGAL_TEAM
+    
+    evidence_required:
+      - Legal review memo
+      - Compliance checklist
+      - Privacy impact assessment
+  
+  compliance_review_required:
+    conditions:
+      - Audit trail changes
+      - Governance process changes
+      - Regulatory control changes
+      - Industry standard compliance
+    
+    review_authority: COMPLIANCE_TEAM
+    
+    evidence_required:
+      - Compliance assessment
+      - Control validation results
+      - Audit trail verification
+  
+  architecture_review_required:
+    conditions:
+      - New service introduction
+      - Architecture pattern change
+      - Scalability concerns
+      - Performance-critical changes
+    
+    review_authority: ARCHITECTURE_TEAM
+    
+    evidence_required:
+      - Architecture decision record
+      - Scalability analysis
+      - Performance test results
+
+escalation_triggers:
+  automatic_escalation:
+    conditions:
+      - Risk level == MAJOR
+      - Production environment
+      - Critical priority
+      - Compliance trigger active
+      - Previous failure history
+    
+    escalation_target: EXECUTIVE_APPROVAL
+    
+    escalation_requirements:
+      - Executive briefing prepared
+      - Risk mitigation plan documented
+      - Rollback procedures validated
+  
+  manual_escalation_available:
+    conditions:
+      - Reviewer requests escalation
+      - Approver requests executive input
+      - Stakeholder raises concern
+      - Uncertainty about authority
+    
+    escalation_process:
+      - Document escalation reason
+      - Provide full context
+      - Await executive decision
+
+veto_triggers:
+  operational_veto_conditions:
+    - Production incident in progress
+    - Maintenance window conflict
+    - Resource capacity constraint
+    - Monitoring system degraded
+    - On-call team unavailable
+    - Recent production failure
+  
+  veto_authority: OPERATIONAL_TEAM
+  
+  veto_process:
+    - Veto reason must be documented
+    - Expected resolution time provided
+    - Artifact moves to RELEASE_BLOCKED
+    - Veto can be cleared when condition resolves
+
+release_block_triggers:
+  automatic_block:
+    conditions:
+      - Staging gate != PASS
+      - Knowledge completeness != PASS
+      - Fixture completeness != PASS
+      - Any terminal rejection state
+      - Active security incident
+    
+    block_authority: RELEASE_CONTROLLER
+    
+    unblock_requirements:
+      - Block condition fully resolved
+      - Re-validation completed
+      - Governance sign-off obtained
+  
+  manual_block:
+    conditions:
+      - Executive decision
+      - Emergency operational need
+      - External regulatory requirement
+    
+    block_authority: EXECUTIVE_AUTHORITY
+    
+    unblock_requirements:
+      - Explicit executive approval
+      - Documented resolution
+      - Audit trail entry
+
+monitoring_requirements:
+  by_risk_level:
+    minimal:
+      monitoring: STANDARD
+      alerting: NONE
+      on_call: NOT_REQUIRED
+    
+    moderate:
+      monitoring: STANDARD
+      alerting: BASIC
+      on_call: BUSINESS_HOURS
+    
+    significant:
+      monitoring: ENHANCED
+      alerting: COMPREHENSIVE
+      on_call: EXTENDED_HOURS
+    
+    major:
+      monitoring: INTENSIVE
+      alerting: CRITICAL_PATH
+      on_call: 24x7
+
+adaptation_guidelines:
+  domains_may_customize:
+    - Risk level criteria
+    - Compliance trigger conditions
+    - Review authority definitions
+    - Escalation thresholds
+    - Monitoring requirements
+  
+  domains_must_preserve:
+    - Progressive risk management
+    - Compliance enforcement
+    - Escalation capability
+    - Veto mechanism
+    - Audit trail of triggers
+
+version: "1.0.0"
+status: ADAPTIVE

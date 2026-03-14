@@ -1,0 +1,145 @@
+# Canonical States
+# Status: INVARIANT
+# These states form the canonical state machine for all artifacts
+
+canonical_states:
+  initial:
+    - name: UNSUBMITTED
+      description: Artifact not yet submitted to the system
+      entry_authority: NONE
+      exit_authority: ANY_SUBMITTER
+  
+  intake:
+    - name: SUBMITTED
+      description: Artifact submitted and awaiting intake evaluation
+      entry_authority: ANY_SUBMITTER
+      exit_authority: AE-Intake
+    
+    - name: INTAKE_REJECTED
+      description: Artifact rejected during intake evaluation
+      entry_authority: AE-Intake
+      exit_authority: NONE
+      terminal: true
+    
+    - name: INTAKE_ACCEPTED
+      description: Artifact accepted for further processing
+      entry_authority: AE-Intake
+      exit_authority: AE-Claims
+  
+  verification:
+    - name: CLAIMS_VERIFICATION
+      description: Claims being verified against evidence
+      entry_authority: AE-Claims
+      exit_authority: AE-Claims
+    
+    - name: CLAIMS_INSUFFICIENT
+      description: Claims lack sufficient evidence
+      entry_authority: AE-Claims
+      exit_authority: AE-Intake
+    
+    - name: CLAIMS_VERIFIED
+      description: Claims verified with sufficient evidence
+      entry_authority: AE-Claims
+      exit_authority: CP-Governor
+  
+  review:
+    - name: REVIEW_REQUIRED
+      description: Artifact requires review before approval
+      entry_authority: CP-Governor
+      exit_authority: REVIEW_AUTHORITY
+    
+    - name: REVIEW_IN_PROGRESS
+      description: Review is actively in progress
+      entry_authority: REVIEW_AUTHORITY
+      exit_authority: REVIEW_AUTHORITY
+    
+    - name: REVIEW_REJECTED
+      description: Review rejected the artifact
+      entry_authority: REVIEW_AUTHORITY
+      exit_authority: NONE
+      terminal: true
+    
+    - name: REVIEW_APPROVED
+      description: Review approved the artifact
+      entry_authority: REVIEW_AUTHORITY
+      exit_authority: CP-Governor
+  
+  governance:
+    - name: APPROVAL_REQUIRED
+      description: Governance approval required
+      entry_authority: CP-Governor
+      exit_authority: APPROVAL_AUTHORITY
+    
+    - name: APPROVAL_IN_PROGRESS
+      description: Approval workflow in progress
+      entry_authority: APPROVAL_AUTHORITY
+      exit_authority: APPROVAL_AUTHORITY
+    
+    - name: APPROVAL_REJECTED
+      description: Governance approval rejected
+      entry_authority: APPROVAL_AUTHORITY
+      exit_authority: NONE
+      terminal: true
+    
+    - name: APPROVAL_GRANTED
+      description: Governance approval granted
+      entry_authority: APPROVAL_AUTHORITY
+      exit_authority: CP-Governor
+  
+  release:
+    - name: RELEASE_READY
+      description: Artifact ready for release
+      entry_authority: CP-Governor
+      exit_authority: RELEASE_CONTROLLER
+    
+    - name: RELEASE_BLOCKED
+      description: Release blocked by operational veto or controller
+      entry_authority: RELEASE_CONTROLLER
+      exit_authority: RELEASE_CONTROLLER
+    
+    - name: RELEASED
+      description: Artifact successfully released
+      entry_authority: RELEASE_CONTROLLER
+      exit_authority: NONE
+      terminal: true
+
+state_categories:
+  intake_states:
+    - UNSUBMITTED
+    - SUBMITTED
+    - INTAKE_REJECTED
+    - INTAKE_ACCEPTED
+  
+  verification_states:
+    - CLAIMS_VERIFICATION
+    - CLAIMS_INSUFFICIENT
+    - CLAIMS_VERIFIED
+  
+  review_states:
+    - REVIEW_REQUIRED
+    - REVIEW_IN_PROGRESS
+    - REVIEW_REJECTED
+    - REVIEW_APPROVED
+  
+  governance_states:
+    - APPROVAL_REQUIRED
+    - APPROVAL_IN_PROGRESS
+    - APPROVAL_REJECTED
+    - APPROVAL_GRANTED
+  
+  release_states:
+    - RELEASE_READY
+    - RELEASE_BLOCKED
+    - RELEASED
+  
+  terminal_states:
+    - INTAKE_REJECTED
+    - REVIEW_REJECTED
+    - APPROVAL_REJECTED
+    - RELEASED
+
+invariants:
+  - Terminal states cannot transition to any other state
+  - All state transitions must be authorized
+  - State history is immutable
+  - Backward transitions require explicit rules

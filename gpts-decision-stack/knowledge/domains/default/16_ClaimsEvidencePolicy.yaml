@@ -1,0 +1,269 @@
+# Claims and Evidence Policy - Default Domain
+# Status: ADAPTIVE
+# Defines what claims require what evidence
+
+claim_categories:
+  functional_correctness:
+    description: Claims about functional behavior and correctness
+    
+    claim_types:
+      - Feature works as specified
+      - Bug is fixed
+      - Requirements are met
+      - Acceptance criteria satisfied
+    
+    required_evidence:
+      - automated_test_results:
+          description: Automated test suite results
+          sufficiency: Test coverage > 80% for changed code
+          verification: AE-Claims validates test execution
+      
+      - manual_test_results:
+          description: Manual test execution records
+          sufficiency: All critical paths tested
+          verification: AE-Claims validates test completeness
+      
+      - acceptance_test_results:
+          description: User acceptance test results
+          sufficiency: All acceptance criteria pass
+          verification: AE-Claims validates against requirements
+  
+  quality_assurance:
+    description: Claims about code quality and maintainability
+    
+    claim_types:
+      - Code meets quality standards
+      - Technical debt is acceptable
+      - Performance is adequate
+      - Maintainability is good
+    
+    required_evidence:
+      - code_review_results:
+          description: Code review findings and approvals
+          sufficiency: At least one reviewer approval
+          verification: AE-Claims validates reviewer authority
+      
+      - static_analysis_results:
+          description: Static code analysis results
+          sufficiency: No critical or high severity issues
+          verification: AE-Claims validates analysis execution
+      
+      - performance_test_results:
+          description: Performance benchmark results
+          sufficiency: Meets defined performance thresholds
+          verification: AE-Claims validates against baselines
+  
+  security:
+    description: Claims about security properties
+    
+    claim_types:
+      - No security vulnerabilities introduced
+      - Security controls are effective
+      - Authentication/authorization correct
+      - Data protection adequate
+    
+    required_evidence:
+      - security_scan_results:
+          description: Automated security scan results
+          sufficiency: No critical or high vulnerabilities
+          verification: AE-Claims validates scan coverage
+      
+      - security_review_findings:
+          description: Security team review results
+          sufficiency: Security team approval obtained
+          verification: AE-Claims validates reviewer authority
+      
+      - penetration_test_results:
+          description: Penetration testing results (prod only)
+          sufficiency: No exploitable vulnerabilities found
+          verification: AE-Claims validates test scope
+  
+  compliance:
+    description: Claims about regulatory and policy compliance
+    
+    claim_types:
+      - Meets regulatory requirements
+      - Complies with internal policies
+      - Audit trail is complete
+      - Privacy requirements satisfied
+    
+    required_evidence:
+      - compliance_checklist:
+          description: Completed compliance checklist
+          sufficiency: All items checked and validated
+          verification: AE-Claims validates checklist completeness
+      
+      - compliance_review_approval:
+          description: Compliance team review and approval
+          sufficiency: Formal approval documented
+          verification: AE-Claims validates approver authority
+      
+      - audit_trail_validation:
+          description: Audit trail completeness verification
+          sufficiency: All required events logged
+          verification: AE-Claims validates log integrity
+  
+  operational_readiness:
+    description: Claims about production readiness
+    
+    claim_types:
+      - Monitoring is in place
+      - Rollback plan is validated
+      - Documentation is complete
+      - Support is prepared
+    
+    required_evidence:
+      - monitoring_validation:
+          description: Monitoring and alerting configuration
+          sufficiency: All critical paths monitored
+          verification: AE-Claims validates coverage
+      
+      - rollback_plan:
+          description: Documented and tested rollback procedure
+          sufficiency: Rollback tested in staging
+          verification: AE-Claims validates test results
+      
+      - documentation:
+          description: User and operational documentation
+          sufficiency: All required sections complete
+          verification: AE-Claims validates completeness
+      
+      - support_readiness:
+          description: Support team prepared
+          sufficiency: Training complete, on-call coverage
+          verification: AE-Claims validates readiness
+
+evidence_sufficiency_rules:
+  minimum_requirements:
+    all_claims:
+      - At least one piece of evidence per claim
+      - Evidence must be verifiable
+      - Evidence must be recent (not stale)
+      - Evidence must be from authoritative source
+  
+  high_risk_artifacts:
+    - Multiple independent evidence sources required
+    - Third-party verification may be required
+    - Executive sign-off may be required
+  
+  low_risk_artifacts:
+    - Single evidence source may be sufficient
+    - Self-verification may be acceptable
+    - Standard approval process
+
+evidence_freshness:
+  automated_test_results:
+    maximum_age: 24_hours
+    must_be_from: Current artifact version
+  
+  security_scans:
+    maximum_age: 7_days
+    must_be_from: Current artifact version
+  
+  manual_reviews:
+    maximum_age: 30_days
+    must_be_from: Current or compatible version
+  
+  compliance_approvals:
+    maximum_age: 90_days
+    must_be_from: Current policy version
+
+evidence_quality:
+  trustworthiness:
+    high_trust:
+      - Automated test systems
+      - Certified scanning tools
+      - Approved review authorities
+    
+    medium_trust:
+      - Manual test records
+      - Self-reported metrics
+      - Peer reviews
+    
+    low_trust:
+      - Unverified claims
+      - Outdated evidence
+      - Unauthorized sources
+  
+  completeness:
+    complete:
+      - All claims have evidence
+      - All evidence is verifiable
+      - No gaps in coverage
+    
+    incomplete:
+      - Some claims lack evidence
+      - Some evidence not verifiable
+      - Coverage gaps exist
+    
+    insufficient:
+      - Most claims lack evidence
+      - Evidence quality poor
+      - Major coverage gaps
+
+verification_process:
+  for_each_claim:
+    steps:
+      1. Identify claim statement
+      2. Determine required evidence type
+      3. Locate and retrieve evidence
+      4. Verify evidence authenticity
+      5. Assess evidence freshness
+      6. Evaluate evidence quality
+      7. Determine sufficiency
+      8. Document verification result
+  
+  verification_outcomes:
+    verified:
+      condition: Sufficient high-quality evidence
+      next_state: CLAIMS_VERIFIED
+    
+    insufficient:
+      condition: Evidence missing or inadequate
+      next_state: CLAIMS_INSUFFICIENT
+      action: Document gaps, request additional evidence
+    
+    rejected:
+      condition: Evidence contradicts claim
+      next_state: INTAKE_REJECTED
+      action: Reject artifact, document reason
+
+special_cases:
+  no_evidence_available:
+    handling: >
+      If evidence cannot be provided due to legitimate constraints,
+      escalate to appropriate authority for waiver decision.
+      Document reason and obtain explicit approval.
+    
+    must_not: Accept claim without evidence or approval
+  
+  conflicting_evidence:
+    handling: >
+      If evidence sources conflict, escalate to review authority
+      for investigation and resolution. Do not proceed until resolved.
+    
+    must_not: Ignore conflicting evidence or choose selectively
+  
+  unknown_claim_type:
+    handling: >
+      If claim type is not defined in this policy, escalate to
+      governance for policy clarification or extension.
+    
+    must_not: Proceed without defined evidence requirements
+
+adaptation_guidelines:
+  domains_may_customize:
+    - Claim categories
+    - Evidence requirements
+    - Sufficiency thresholds
+    - Freshness requirements
+    - Quality criteria
+  
+  domains_must_preserve:
+    - Evidence is required for all claims
+    - Verification process is mandatory
+    - Quality assessment is required
+    - Escalation paths exist for exceptions
+
+version: "1.0.0"
+status: ADAPTIVE

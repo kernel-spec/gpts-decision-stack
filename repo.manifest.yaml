@@ -1,0 +1,177 @@
+manifest_version: "1.0.0"
+repository: gpts-decision-stack
+purpose: Governance-first Custom GPT deployment stack with explicit decision authority
+
+documentation:
+  master_spec: MASTER_SPEC.md
+  readme: README.md
+
+bootstrap_scripts:
+  - name: bootstrap_checklists_pack.sh
+    purpose: Generate operational checklists and gate rules
+    output_path: gpts-decision-stack/operations/
+  - name: bootstrap_knowledge_pack.sh
+    purpose: Generate core and domain knowledge files
+    output_path: gpts-decision-stack/knowledge/
+
+knowledge_files:
+  core:
+    path: knowledge/core/
+    invariant: true
+    files:
+      - name: 00_ControlPlane_Charter.md
+        purpose: Control plane charter and governance model
+        type: markdown
+      - name: 01_CanonicalStates.yaml
+        purpose: Canonical state definitions
+        type: yaml
+      - name: 02_TransitionRules.yaml
+        purpose: State transition rules
+        type: yaml
+      - name: 03_ArtifactSchemas.yaml
+        purpose: Artifact validation schemas
+        type: yaml
+      - name: 04_AuthorityMatrix.yaml
+        purpose: Decision authority matrix
+        type: yaml
+      - name: 05_FailureSemantics.yaml
+        purpose: Failure handling semantics
+        type: yaml
+      - name: 06_DecisionLogSchema.yaml
+        purpose: Decision log structure
+        type: yaml
+  
+  domains:
+    default:
+      path: knowledge/domains/default/
+      adaptive: true
+      files:
+        - name: 10_DomainOntology.md
+          purpose: Domain concepts and ontology
+          type: markdown
+        - name: 11_FramingRules.yaml
+          purpose: GPT behavior framing rules
+          type: yaml
+        - name: 12_PrimitiveCatalog.yaml
+          purpose: Available primitives and operations
+          type: yaml
+        - name: 13_DeliveryTopologyRules.yaml
+          purpose: Delivery topology constraints
+          type: yaml
+        - name: 14_RiskComplianceTriggers.yaml
+          purpose: Risk and compliance trigger conditions
+          type: yaml
+        - name: 15_CommercialPackagingRules.yaml
+          purpose: Commercial packaging constraints
+          type: yaml
+        - name: 16_ClaimsEvidencePolicy.yaml
+          purpose: Claims and evidence requirements
+          type: yaml
+        - name: 17_ReviewLaneRules.yaml
+          purpose: Review lane routing rules
+          type: yaml
+        - name: 18_ApprovalEscalationMatrix.yaml
+          purpose: Approval escalation paths
+          type: yaml
+
+operations:
+  checklists:
+    path: operations/checklists/
+    files:
+      - local-checklist.md
+      - dev-checklist.md
+      - staging-checklist.md
+      - prod-checklist.md
+  
+  gates:
+    path: operations/gates/
+    files:
+      - promotion-gate.yaml
+
+prompts:
+  path: prompts/
+  status: planned
+  files: []
+
+schemas:
+  path: schemas/
+  status: planned
+  files: []
+
+tests:
+  acceptance:
+    path: tests/acceptance/
+    status: planned
+    files: []
+  
+  fixtures:
+    path: tests/fixtures/
+    status: planned
+    files: []
+
+deployment_gates:
+  local:
+    entry_criteria: []
+    exit_criteria:
+      - all_required_files_exist
+      - knowledge_completeness
+      - fixture_completeness
+      - schema_syntax
+      - manifest_consistency
+  
+  dev:
+    entry_criteria:
+      - local_gate_pass
+      - backend_image_build_exists
+      - dev_target_exists
+      - dev_secrets_exist
+      - gpt_config_binding_prepared
+    exit_criteria:
+      - backend_health
+      - gpt_provisioning
+      - auth_binding
+      - endpoint_mapping
+      - smoke_tests
+      - decision_log_write
+  
+  staging:
+    entry_criteria:
+      - dev_gate_pass
+      - knowledge_file_completeness
+      - fixture_completeness
+      - qa_artifact_exists
+      - ownership_map_exists
+      - approval_map_exists
+      - veto_map_exists
+    exit_criteria:
+      - all_acceptance_tests
+      - veto_enforcement
+      - approval_workflow
+      - release_blocking
+      - qa_artifact
+      - false_proceed_count_zero
+  
+  prod:
+    entry_criteria:
+      - staging_gate_pass
+      - final_qa_artifact_pass
+      - authoritative_release_notes_exist
+      - ownership_approval_veto_maps_approved
+      - rollback_plan_exists
+      - monitoring_alerting_exist
+    exit_criteria:
+      - governance_signoff
+      - production_smoke
+      - audit_logging
+      - veto_and_release_block
+      - rollback_readiness
+
+current_status:
+  knowledge_files: in_progress
+  test_fixtures: planned
+  prompts: planned
+  schemas: planned
+  deployment_readiness: blocked
+  blocking_gaps:
+    - knowledge_content_completion
+    - fixture_content_completion

@@ -1,0 +1,267 @@
+# Review Lane Rules - Default Domain
+# Status: ADAPTIVE
+# Defines how artifacts are routed to appropriate review lanes
+
+review_lanes:
+  technical:
+    description: Technical correctness and code quality review
+    
+    triggers:
+      - artifact_type in [PACKAGE_RELEASE, CONFIGURATION_CHANGE]
+      - code_changes_present
+      - technical_risk >= MODERATE
+    
+    reviewer_qualifications:
+      - Technical expertise in relevant area
+      - Familiarity with codebase
+      - Understanding of architecture
+    
+    review_focus:
+      - Code quality and maintainability
+      - Architecture alignment
+      - Technical debt impact
+      - Performance considerations
+      - Error handling robustness
+    
+    approval_criteria:
+      - Code meets quality standards
+      - Architecture principles followed
+      - Technical risks acceptable
+      - No critical technical issues
+    
+    typical_duration: 2_to_4_hours
+  
+  security:
+    description: Security and vulnerability assessment
+    
+    triggers:
+      - artifact_type in [PACKAGE_RELEASE, CONFIGURATION_CHANGE]
+      - security_sensitive_changes
+      - target_environment == PROD
+      - authentication_or_authorization_changes
+      - cryptographic_changes
+      - external_integration_changes
+    
+    reviewer_qualifications:
+      - Security expertise
+      - Threat modeling experience
+      - Vulnerability assessment skills
+    
+    review_focus:
+      - Security vulnerabilities
+      - Authentication and authorization
+      - Data protection
+      - Cryptographic correctness
+      - Input validation
+      - Security best practices
+    
+    approval_criteria:
+      - No critical or high vulnerabilities
+      - Security controls effective
+      - Threat model updated
+      - Security best practices followed
+    
+    typical_duration: 4_to_8_hours
+  
+  compliance:
+    description: Regulatory and policy compliance review
+    
+    triggers:
+      - compliance_flags_present
+      - privacy_impact
+      - regulatory_requirements_affected
+      - audit_trail_changes
+      - policy_changes
+    
+    reviewer_qualifications:
+      - Compliance expertise
+      - Regulatory knowledge
+      - Policy interpretation skills
+    
+    review_focus:
+      - Regulatory compliance
+      - Policy adherence
+      - Privacy requirements
+      - Audit trail completeness
+      - Record retention
+    
+    approval_criteria:
+      - Regulatory requirements met
+      - Policies followed
+      - Privacy protections adequate
+      - Audit trail complete
+    
+    typical_duration: 2_to_6_hours
+  
+  business:
+    description: Business value and priority review
+    
+    triggers:
+      - high_business_impact
+      - strategic_initiative
+      - customer_facing_changes
+      - commercial_implications
+    
+    reviewer_qualifications:
+      - Business domain expertise
+      - Product management experience
+      - Customer understanding
+    
+    review_focus:
+      - Business value alignment
+      - Customer impact
+      - Market positioning
+      - Strategic fit
+      - Commercial viability
+    
+    approval_criteria:
+      - Business value clear
+      - Customer impact acceptable
+      - Strategic alignment confirmed
+      - Commercial model sound
+    
+    typical_duration: 1_to_3_hours
+  
+  operational:
+    description: Operational readiness and impact review
+    
+    triggers:
+      - target_environment in [STAGING, PROD]
+      - operational_impact >= MODERATE
+      - infrastructure_changes
+      - capacity_implications
+    
+    reviewer_qualifications:
+      - Operations expertise
+      - Production support experience
+      - Incident response skills
+    
+    review_focus:
+      - Operational readiness
+      - Monitoring and alerting
+      - Rollback procedures
+      - Support preparedness
+      - Capacity planning
+      - Impact on existing systems
+    
+    approval_criteria:
+      - Operations team ready
+      - Monitoring adequate
+      - Rollback validated
+      - Support prepared
+      - Capacity sufficient
+    
+    typical_duration: 2_to_4_hours
+
+routing_rules:
+  automatic_routing:
+    rules:
+      - if: target_environment == PROD
+        then: route_to [technical, security, operational]
+      
+      - if: security_sensitive_changes == true
+        then: route_to [security]
+      
+      - if: compliance_flags_present == true
+        then: route_to [compliance]
+      
+      - if: estimated_impact >= SIGNIFICANT
+        then: route_to [technical, business, operational]
+      
+      - if: estimated_impact == MODERATE
+        then: route_to [technical]
+      
+      - if: estimated_impact == MINIMAL
+        then: skip_review
+  
+  manual_routing_override:
+    allowed: true
+    authority: CP-Governor
+    rationale_required: true
+
+multi_lane_coordination:
+  parallel_review:
+    allowed: true
+    lanes_can_run_parallel:
+      - technical and security
+      - technical and compliance
+      - business and operational
+  
+  sequential_review:
+    required_when:
+      - Review findings block other reviews
+      - Interdependencies between lanes
+  
+  conflict_resolution:
+    - If lanes disagree on approval, escalate to governance
+    - Document disagreement and rationale
+    - Governance makes final decision
+
+review_timeouts:
+  by_lane:
+    technical: 48_hours
+    security: 72_hours
+    compliance: 72_hours
+    business: 24_hours
+    operational: 48_hours
+  
+  escalation_on_timeout:
+    - Notify reviewer and governance
+    - Escalate to review manager
+    - May proceed with partial review if risk acceptable
+
+reviewer_assignment:
+  assignment_criteria:
+    - Reviewer availability
+    - Relevant expertise
+    - No conflict of interest
+    - Workload balance
+  
+  assignment_process:
+    1. Identify required review lanes
+    2. Match lanes to available reviewers
+    3. Check reviewer qualifications
+    4. Verify availability
+    5. Assign and notify
+  
+  reassignment:
+    allowed_if:
+      - Reviewer unavailable
+      - Expertise mismatch discovered
+      - Conflict of interest identified
+
+review_completion:
+  required_outputs:
+    - Review decision (APPROVE/REJECT/NEEDS_WORK)
+    - Review findings document
+    - Risk assessment
+    - Recommendations
+  
+  approval_requirements:
+    - All assigned lanes must approve
+    - No unresolved critical findings
+    - All recommendations addressed or accepted
+  
+  rejection_handling:
+    - Document rejection reason
+    - Provide specific feedback
+    - Suggest remediation steps
+    - Allow resubmission after fixes
+
+adaptation_guidelines:
+  domains_may_customize:
+    - Review lane definitions
+    - Routing triggers
+    - Reviewer qualifications
+    - Review focus areas
+    - Approval criteria
+    - Timeout values
+  
+  domains_must_preserve:
+    - Review requirement for high-risk artifacts
+    - Approval requirement for production
+    - Escalation mechanism
+    - Documentation requirements
+
+version: "1.0.0"
+status: ADAPTIVE

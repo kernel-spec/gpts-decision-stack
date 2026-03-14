@@ -1,0 +1,200 @@
+# Artifact Schemas
+# Status: INVARIANT
+# Validation schemas for artifacts processed through the decision stack
+
+artifact_types:
+  submission:
+    schema:
+      artifact_id:
+        type: string
+        required: true
+        pattern: "^[A-Z]{3}-[0-9]{6}$"
+        description: Unique artifact identifier
+      
+      submitter:
+        type: object
+        required: true
+        properties:
+          name:
+            type: string
+            required: true
+          email:
+            type: string
+            required: true
+            format: email
+          organization:
+            type: string
+            required: false
+      
+      submission_timestamp:
+        type: string
+        required: true
+        format: iso8601
+      
+      artifact_type:
+        type: string
+        required: true
+        enum:
+          - PACKAGE_RELEASE
+          - CONFIGURATION_CHANGE
+          - POLICY_UPDATE
+          - KNOWLEDGE_UPDATE
+      
+      artifact_payload:
+        type: object
+        required: true
+        description: Type-specific artifact content
+      
+      claims:
+        type: array
+        required: true
+        items:
+          type: object
+          properties:
+            claim_id:
+              type: string
+              required: true
+            claim_statement:
+              type: string
+              required: true
+            evidence_references:
+              type: array
+              items:
+                type: string
+      
+      metadata:
+        type: object
+        required: true
+        properties:
+          priority:
+            type: string
+            enum: [LOW, MEDIUM, HIGH, CRITICAL]
+          target_environment:
+            type: string
+            enum: [DEV, STAGING, PROD]
+          estimated_impact:
+            type: string
+            enum: [MINIMAL, MODERATE, SIGNIFICANT, MAJOR]
+  
+  decision_record:
+    schema:
+      decision_id:
+        type: string
+        required: true
+        pattern: "^DEC-[0-9]{8}$"
+      
+      artifact_id:
+        type: string
+        required: true
+      
+      decision_maker:
+        type: string
+        required: true
+        enum:
+          - CP-Governor
+          - AE-Intake
+          - AE-Claims
+          - REVIEW_AUTHORITY
+          - APPROVAL_AUTHORITY
+          - RELEASE_CONTROLLER
+      
+      decision_timestamp:
+        type: string
+        required: true
+        format: iso8601
+      
+      state_transition:
+        type: object
+        required: true
+        properties:
+          from_state:
+            type: string
+            required: true
+          to_state:
+            type: string
+            required: true
+          transition_valid:
+            type: boolean
+            required: true
+      
+      decision_rationale:
+        type: string
+        required: true
+        min_length: 10
+      
+      supporting_evidence:
+        type: array
+        required: false
+        items:
+          type: string
+      
+      authority_check:
+        type: object
+        required: true
+        properties:
+          authorized:
+            type: boolean
+            required: true
+          authority_source:
+            type: string
+            required: true
+  
+  evidence:
+    schema:
+      evidence_id:
+        type: string
+        required: true
+      
+      evidence_type:
+        type: string
+        required: true
+        enum:
+          - TEST_RESULTS
+          - DOCUMENTATION
+          - CERTIFICATION
+          - AUDIT_REPORT
+          - REVIEW_FINDINGS
+          - APPROVAL_RECORD
+      
+      content_reference:
+        type: string
+        required: true
+        description: URI or path to evidence content
+      
+      verification_status:
+        type: string
+        required: true
+        enum:
+          - UNVERIFIED
+          - VERIFIED
+          - REJECTED
+      
+      verified_by:
+        type: string
+        required: false
+      
+      verification_timestamp:
+        type: string
+        required: false
+        format: iso8601
+
+validation_rules:
+  artifact_submission:
+    - All required fields must be present
+    - Artifact ID must be unique
+    - At least one claim must be provided
+    - All claims must reference evidence
+  
+  decision_record:
+    - Decision ID must be unique
+    - State transition must be valid per TransitionRules
+    - Authority check must pass
+    - Rationale must be substantive
+  
+  evidence:
+    - Evidence must be accessible
+    - Verification must be traceable
+    - Evidence type must match claim type
+
+schema_version: "1.0.0"
+status: INVARIANT
