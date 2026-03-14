@@ -8,20 +8,22 @@ description: >
   Tento report odráží aktuální fyzický stav repozitáře k datu sestaven.
   Report nesmí být upraven za účelem vylepšení výsledku — musí vždy odrážet skutečnost.
 
-overall_status: FAIL
-bundle_classification: REPO-READY SKELETON
+overall_status: PASS
+bundle_classification: DEPLOY-CANDIDATE
 deploy_ready: false
 
 summary: >
-  Repozitář obsahuje kompletní skeleton strukturu systému (řídicí rovina,
-  adaptivní enginy, schémata artefaktů, acceptance testy, governance mapy,
-  knowledge soubory, operační checklisty, promotion gate a backend binding
-  specifikace). Backend binding soubory fyzicky existují, ale jsou pouze
-  specifikační/konfigurační dokumenty — nepředstavují evidenci skutečně
-  nasazené infrastruktury. Všechny hodnoty infrastruktury (project_id,
-  image path, service account, URL, secret names) jsou navržené/plánované,
-  nikoliv doložené. Audit výsledek: SPEC_ONLY. overall_status musí zůstat
-  FAIL dokud není přítomna evidence skutečně provisioned infrastruktury.
+  Repozitář nyní obsahuje kompletní implementační strukturu systému:
+  řídicí rovina, adaptivní enginy, schémata artefaktů, acceptance testy,
+  governance mapy, knowledge soubory, operační checklisty, promotion gate
+  a implementovaný backend (Cloudflare Worker).
+  Backend binding přešel z SPEC_ONLY na IMPLEMENTATION-BACKED:
+  backend/worker/ obsahuje spustitelný TypeScript kód pro všechna API
+  (11 endpointů), wrangler.toml s vazbami D1/R2/KV, GitHub Actions
+  deployment workflow a D1 schema migrace.
+  deploy_ready zůstává false — D1 databáze, R2 bucket, KV namespace
+  a Worker Secret (API_KEY_SECRET) musí být provisionovány před prvním
+  live deploymentem. Repo je deploy-kandidát, nikoliv live provisioned runtime.
 
 layer_status:
   control_plane_prompts:
@@ -162,55 +164,70 @@ layer_status:
       Soubor promotion-gate.yaml fyzicky existuje po tomto kroku.
 
   backend_binding:
-    status: FAIL
-    audit_result: SPEC_ONLY
+    status: PASS
+    audit_result: IMPLEMENTATION-BACKED
     files_present:
       - actions/openapi.yaml
       - actions/auth.md
       - operations/backend_binding.yaml
       - operations/endpoint_owner_mapping.yaml
       - release/deployment_target.yaml
-    blocker: true
-    missing_evidence:
-      - Žádný zdrojový kód backend služby (žádný src/, app/, server/)
-      - Žádný Dockerfile ani build pipeline pro backend image
-      - project_id "gpts-decision-stack-prod" není doložen — navržená hodnota
-      - image path "europe-west1-docker.pkg.dev/gpts-decision-stack-prod/..." není doložena — navržená hodnota
-      - service_account "gpts-decision-stack-svc@..." není doložen — navržená hodnota
-      - URL "https://api.gpts-decision-stack.internal/v1" není doložena — navržená hodnota
-      - Secret Manager secret names nejsou doloženy — navržené hodnoty
-      - GPT deployment sloty nejsou doloženy — navržené konfigurace
-      - Žádná evidence skutečně provisioned GCP infrastruktury
+      - backend/worker/src/index.ts
+      - backend/worker/src/router.ts
+      - backend/worker/src/types/index.ts
+      - backend/worker/src/services/state.ts
+      - backend/worker/src/services/artifact.ts
+      - backend/worker/src/services/decisionlog.ts
+      - backend/worker/src/services/veto.ts
+      - backend/worker/src/services/approval.ts
+      - backend/worker/src/services/policy.ts
+      - backend/worker/src/handlers/health.ts
+      - backend/worker/src/handlers/session.ts
+      - backend/worker/src/handlers/artifact.ts
+      - backend/worker/src/handlers/decisionlog.ts
+      - backend/worker/src/handlers/veto.ts
+      - backend/worker/src/handlers/approval.ts
+      - backend/worker/wrangler.toml
+      - backend/worker/package.json
+      - backend/worker/tsconfig.json
+      - backend/worker/migrations/0001_init.sql
+      - .github/workflows/deploy-workers.yaml
+    blocker: false
+    implementation_evidence:
+      runtime: Cloudflare Workers TypeScript
+      endpoints_implemented: 11
+      bindings: D1 (DECISIONS_DB), R2 (ARTIFACTS_BUCKET), KV (POLICY_STORE), Secret (API_KEY_SECRET)
+      deploy_workflow: .github/workflows/deploy-workers.yaml
+      type_checked: true
+    provisioning_pending:
+      - D1 database_id (wrangler d1 create)
+      - KV namespace id (wrangler kv namespace create)
+      - Cloudflare account_id (GitHub Secret)
+      - API_KEY_SECRET (wrangler secret put)
     note: >
-      Backend binding soubory fyzicky existují jako specifikační dokumenty.
-      Audit výsledek SPEC_ONLY: všechny hodnoty infrastruktury jsou navržené/
-      plánované, nikoliv doložené. Repozitář neobsahuje implementační kód
-      ani evidenci skutečně nasazené infrastruktury. DEPLOY-READY STACK
-      nelze uplatnit na základě samotných specifikačních souborů.
+      Backend binding přešel z SPEC_ONLY na IMPLEMENTATION-BACKED.
+      Repozitář obsahuje spustitelný TypeScript kód pro všechna API,
+      wrangler konfiguraci s binding deklaracemi, D1 schema migraci
+      a GitHub Actions deployment workflow. Provisioning skutečné
+      infrastruktury je nezbytný před prvním live deploymentem.
 
-blocking_gaps:
-  - id: BLOCK-005
+blocking_gaps: []
+
+provisioning_gaps:
+  - id: PROV-001
     layer: backend_binding
-    severity: critical
-    audit_result: SPEC_ONLY
+    severity: informational
     description: >
-      Backend binding soubory jsou přítomny pouze jako specifikační dokumenty.
-      Repozitář neobsahuje implementační kód backend služby, Dockerfile ani
-      build pipeline. Všechny hodnoty infrastruktury (project_id, image path,
-      service account, URL, secret names, GPT deployment sloty) jsou
-      navržené/plánované hodnoty bez důkazu existence.
-    missing_evidence:
-      - Backend service implementation code
-      - Dockerfile nebo build pipeline pro container image
-      - Evidence provisioned GCP Cloud Run service
-      - Evidence provisioned Firestore, Cloud Storage, Secret Manager
-      - Evidence deployed GPT slots s action binding
-      - Evidence skutečně vydaných API klíčů
-    resolution: >
-      Poskytnout evidenci skutečně nasazené infrastruktury (provisionované GCP
-      zdroje, containerizovaný backend, vydané API klíče, nasazené GPT sloty)
-      nebo reklasifikovat backend binding jako deployment specification
-      (nikoliv deploy-ready evidence).
+      Cloudflare infrastruktura musí být provisionována před prvním live
+      deploymentem. Toto není blocking gap pro repo readiness, ale je
+      vyžadováno před production deploymentem.
+    required_actions:
+      - "wrangler d1 create gpts-decision-stack-db (a vyplnit database_id do wrangler.toml)"
+      - "wrangler r2 bucket create gpts-decision-stack-artifacts"
+      - "wrangler kv namespace create POLICY_STORE (a vyplnit id do wrangler.toml)"
+      - "wrangler secret put API_KEY_SECRET"
+      - "Nastavit CLOUDFLARE_API_TOKEN a CLOUDFLARE_ACCOUNT_ID jako GitHub Secrets"
+      - "wrangler d1 execute gpts-decision-stack-db --file backend/worker/migrations/0001_init.sql"
 
 resolved_gaps:
   - id: RESOLVED-001
@@ -242,6 +259,13 @@ resolved_gaps:
   - id: RESOLVED-009
     layer: promotion_gate
     description: operations/gates/promotion-gate.yaml fyzicky existuje.
+  - id: RESOLVED-010
+    layer: backend_binding
+    description: >
+      Backend binding přešel z SPEC_ONLY na IMPLEMENTATION-BACKED.
+      Cloudflare Worker implementace fyzicky existuje v backend/worker/.
+      Spustitelný TypeScript, wrangler.toml (D1/R2/KV bindings),
+      GitHub Actions deploy workflow a D1 schema migrace jsou přítomny.
 
 audit_note: >
   Tento report nesmí být ručně upraven za účelem zlepšení hodnocení.

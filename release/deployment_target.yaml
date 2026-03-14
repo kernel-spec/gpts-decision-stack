@@ -5,41 +5,37 @@ description: >
   deployment konfiguraci pro backend binding službu a GPT deployment sloty.
 
 backend_service:
-  production:
-    platform: GCP Cloud Run
-    service_name: gpts-decision-stack-backend
-    region: europe-west1
-    project_id: gpts-decision-stack-prod
-    image: europe-west1-docker.pkg.dev/gpts-decision-stack-prod/backend/service:latest
-    min_instances: 1
-    max_instances: 10
-    cpu: "1"
-    memory: 512Mi
-    timeout: 30s
-    service_account: gpts-decision-stack-svc@gpts-decision-stack-prod.iam.gserviceaccount.com
-    env:
-      FIRESTORE_PROJECT_ID: gpts-decision-stack-prod
-      STORAGE_BUCKET: gpts-decision-stack-prod-artifacts
-      SECRET_MANAGER_PROJECT_ID: gpts-decision-stack-prod
-    url: https://api.gpts-decision-stack.internal/v1
+  description: >
+    Cloudflare Worker implementace action API.
+    Zdrojový kód: backend/worker/
+    Deployment workflow: .github/workflows/deploy-workers.yaml
+    Worker název se nastaví po provisionování Cloudflare účtu.
+  platform: Cloudflare Workers
+  implementation: backend/worker/src/index.ts
+  wrangler_config: backend/worker/wrangler.toml
+  deploy_workflow: .github/workflows/deploy-workers.yaml
+  runtime: Cloudflare Workers (serverless edge)
 
-  staging:
-    platform: GCP Cloud Run
-    service_name: gpts-decision-stack-backend-staging
-    region: europe-west1
-    project_id: gpts-decision-stack-staging
-    image: europe-west1-docker.pkg.dev/gpts-decision-stack-staging/backend/service:latest
-    min_instances: 0
-    max_instances: 3
-    cpu: "1"
-    memory: 512Mi
-    timeout: 30s
-    service_account: gpts-decision-stack-svc@gpts-decision-stack-staging.iam.gserviceaccount.com
-    env:
-      FIRESTORE_PROJECT_ID: gpts-decision-stack-staging
-      STORAGE_BUCKET: gpts-decision-stack-staging-artifacts
-      SECRET_MANAGER_PROJECT_ID: gpts-decision-stack-staging
-    url: https://api-staging.gpts-decision-stack.internal/v1
+  dev:
+    worker_name: gpts-decision-stack-worker-dev
+    d1_database: gpts-decision-stack-db-dev
+    r2_bucket: gpts-decision-stack-artifacts-dev
+    kv_namespace: POLICY_STORE (dev)
+    url: https://gpts-decision-stack-worker-dev.<account>.workers.dev
+    note: >
+      URL se nastaví po deploymentu. Nejedná se o placeholder skutečně
+      provisioned produkční infrastruktury — jde o konfigurační šablonu.
+
+  prod:
+    worker_name: gpts-decision-stack-worker
+    d1_database: gpts-decision-stack-db
+    r2_bucket: gpts-decision-stack-artifacts
+    kv_namespace: POLICY_STORE (prod)
+    url: https://gpts-decision-stack-worker.<account>.workers.dev
+    custom_domain: nakonfigurovat po provisionování (volitelné)
+    note: >
+      URL a custom domain se nastaví po prvním úspěšném deploymentu.
+      Žádná live produkční URL není v tomto souboru vynalezena.
 
 gpt_deployment:
   description: >
@@ -114,51 +110,31 @@ gpt_deployment:
 
 infrastructure:
   state_store:
-    type: Cloud Firestore
-    mode: native
-    project: gpts-decision-stack-prod
-    collections:
-      - pipeline_sessions
-      - decision_logs
+    type: Cloudflare D1
+    binding: DECISIONS_DB
+    schema: backend/worker/migrations/0001_init.sql
+    tables:
+      - sessions
+      - artifacts
+      - decision_log
       - veto_records
-      - approval_records
+      - approvals
 
   artifact_store:
-    type: Cloud Storage
-    bucket: gpts-decision-stack-prod-artifacts
+    type: Cloudflare R2
+    binding: ARTIFACTS_BUCKET
     access: write-once (immutable after submission)
+    key_format: "{session_id}/{artifact_id}/{artifact_type}.json"
+
+  policy_store:
+    type: Cloudflare KV
+    binding: POLICY_STORE
+    access: read (policy/config lookups)
 
   secret_store:
-    type: Google Secret Manager
-    project: gpts-decision-stack-prod
-    secrets:
-      - name: gpts-decision-stack-api-key-cp-governor
-        description: API klíč pro GPT slot CP-Governor
-      - name: gpts-decision-stack-api-key-cp-contract-auditor
-        description: API klíč pro GPT slot CP-ContractAuditor
-      - name: gpts-decision-stack-api-key-cp-transition-judge
-        description: API klíč pro GPT slot CP-TransitionJudge
-      - name: gpts-decision-stack-api-key-cp-release-arbiter
-        description: API klíč pro GPT slot CP-ReleaseArbiter
-      - name: gpts-decision-stack-api-key-ae-intake
-        description: API klíč pro GPT slot AE-Intake
-      - name: gpts-decision-stack-api-key-ae-framing
-        description: API klíč pro GPT slot AE-Framing
-      - name: gpts-decision-stack-api-key-ae-primitive
-        description: API klíč pro GPT slot AE-Primitive
-      - name: gpts-decision-stack-api-key-ae-architecture
-        description: API klíč pro GPT slot AE-Architecture
-      - name: gpts-decision-stack-api-key-ae-claims
-        description: API klíč pro GPT slot AE-Claims
-      - name: gpts-decision-stack-api-key-ae-riskgov
-        description: API klíč pro GPT slot AE-RiskGov
-      - name: gpts-decision-stack-api-key-ae-commercial
-        description: API klíč pro GPT slot AE-Commercial
-      - name: gpts-decision-stack-api-key-ae-reviewrouter
-        description: API klíč pro GPT slot AE-ReviewRouter
-
-  audit_log:
-    type: Cloud Logging
-    project: gpts-decision-stack-prod
-    log_name: gpts-decision-stack-audit
-    retention: 365 days
+    type: Cloudflare Worker Secrets
+    secret_name: API_KEY_SECRET
+    description: >
+      Jeden sdílený API klíč pro autentizaci action endpointů.
+      Nastaví se pomocí: wrangler secret put API_KEY_SECRET
+      Nikdy se necommituje do repozitáře.

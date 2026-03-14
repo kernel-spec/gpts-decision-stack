@@ -1,0 +1,48 @@
+name = "gpts-decision-stack-worker"
+main = "src/index.ts"
+compatibility_date = "2025-03-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ---------- Bindings ----------
+
+[[d1_databases]]
+binding = "DECISIONS_DB"
+database_name = "gpts-decision-stack-db"
+# Set database_id after running: wrangler d1 create gpts-decision-stack-db
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+[[r2_buckets]]
+binding = "ARTIFACTS_BUCKET"
+bucket_name = "gpts-decision-stack-artifacts"
+# Create bucket with: wrangler r2 bucket create gpts-decision-stack-artifacts
+
+[[kv_namespaces]]
+binding = "POLICY_STORE"
+# Create namespace with: wrangler kv namespace create POLICY_STORE
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# API_KEY_SECRET is set as a Worker Secret, never in this file:
+#   wrangler secret put API_KEY_SECRET
+
+# ---------- Dev environment ----------
+
+[env.dev]
+name = "gpts-decision-stack-worker-dev"
+
+[[env.dev.d1_databases]]
+binding = "DECISIONS_DB"
+database_name = "gpts-decision-stack-db-dev"
+database_id = "REPLACE_WITH_DEV_D1_DATABASE_ID"
+
+[[env.dev.r2_buckets]]
+binding = "ARTIFACTS_BUCKET"
+bucket_name = "gpts-decision-stack-artifacts-dev"
+
+[[env.dev.kv_namespaces]]
+binding = "POLICY_STORE"
+id = "REPLACE_WITH_DEV_KV_NAMESPACE_ID"
+
+# ---------- Production environment ----------
+
+[env.prod]
+name = "gpts-decision-stack-worker"

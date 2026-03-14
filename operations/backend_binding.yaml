@@ -8,33 +8,36 @@ description: >
   výhradně v backend službě.
 
 backend_implementation:
-  service_name: gpts-decision-stack-backend
+  service_name: gpts-decision-stack-worker
   description: >
-    REST backend služba implementující action contract definovaný
+    Cloudflare Worker implementující action contract definovaný
     v actions/openapi.yaml. Slouží jako systém záznamu (system of record)
     pro pipeline stav, artefakty, decision log a governance stav.
-  runtime: GCP Cloud Run
+    Zdrojový kód: backend/worker/src/
+  runtime: Cloudflare Workers
+  implementation_path: backend/worker/
   api_contract: actions/openapi.yaml
-  base_url_prod: https://api.gpts-decision-stack.internal/v1
-  base_url_staging: https://api-staging.gpts-decision-stack.internal/v1
-  state_store: Cloud Firestore (managed, serverless)
-  artifact_store: Cloud Storage (canonical artifact payloads, immutable)
-  audit_log: Cloud Logging (structured JSON, long-term retention)
-  secret_store: Google Secret Manager (API klíče per deployment slot)
+  deploy_workflow: .github/workflows/deploy-workers.yaml
+  state_store: Cloudflare D1 (binding DECISIONS_DB)
+  artifact_store: Cloudflare R2 (binding ARTIFACTS_BUCKET)
+  policy_store: Cloudflare KV (binding POLICY_STORE)
+  secret_store: Cloudflare Worker Secrets (API_KEY_SECRET per deployment)
 
 auth_binding:
   method: api_key
   header_name: X-API-Key
   description: >
-    Každý GPT deployment slot obdrží unikátní API klíč pro autentizaci
-    k backend službě. Klíče jsou spravovány v Google Secret Manager.
-    Model nemá přímý přístup k production datům — veškerá komunikace
-    probíhá prostřednictvím autentizovaného HTTPS action endpointu.
-  key_management: Google Secret Manager
+    Každý GPT deployment slot se autentizuje k backend workeru pomocí
+    API klíče v hlavičce X-API-Key. Klíč je uložen jako Cloudflare Worker
+    Secret (API_KEY_SECRET). Model nemá přímý přístup k production datům —
+    veškerá komunikace probíhá prostřednictvím autentizovaného HTTPS endpointu.
+    Konstantní porovnání zabraňuje timing útokům (viz backend/worker/src/index.ts).
+  key_management: Cloudflare Worker Secrets
   key_rotation_policy: 90 days
   scope_per_slot: true
   auth_failure_action: reject_with_401
   auth_documentation: actions/auth.md
+  auth_implementation: backend/worker/src/index.ts
 
 endpoint_owner_mapping:
   description: >
@@ -46,8 +49,7 @@ deployment_target:
   description: >
     Deployment cíl pro backend binding službu a GPT deployment sloty.
   ref: release/deployment_target.yaml
-  platform: GCP Cloud Run
-  region: europe-west1
+  platform: Cloudflare Workers
 
 governance_constraints:
   model_is_not_system_of_record: true
@@ -64,9 +66,9 @@ governance_constraints:
 logging_requirements:
   audit_log:
     required: true
-    backend: Cloud Logging
+    backend: Cloudflare Workers console.log (structured JSON via Wrangler tail)
     format: structured JSON
-    retention: 365 days
+    retention: Cloudflare Workers Logs retention (configured per account)
     required_fields:
       - session_id
       - endpoint
@@ -83,7 +85,6 @@ logging_requirements:
       - /approval/{id}/submit POST
   access_log:
     required: true
-    backend: Cloud Logging
+    backend: Cloudflare Workers Logs
     format: structured JSON
-    retention: 90 days
     applies_to_endpoints: all
