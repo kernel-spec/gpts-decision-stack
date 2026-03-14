@@ -7,13 +7,11 @@ info:
     GPT agents call these endpoints to persist pipeline state, enforce governance
     gates, and coordinate pipeline transitions. The model is not the system of
     record. All persistent state, veto enforcement, and release authority reside
-    exclusively in the backend service.
+    exclusively in the Cloudflare Workers backend service.
 
 servers:
-  - url: https://api.gpts-decision-stack.internal/v1
-    description: Production backend service (GCP Cloud Run, europe-west1)
-  - url: https://api-staging.gpts-decision-stack.internal/v1
-    description: Staging backend service (GCP Cloud Run, europe-west1)
+  - url: https://gpts-decision-stack.victorain92.workers.dev
+    description: Development backend service (Cloudflare Workers)
 
 security:
   - ApiKeyAuth: []
@@ -26,9 +24,29 @@ components:
       name: X-API-Key
       description: >
         Per-slot API key issued for each GPT deployment slot.
-        Managed via Google Secret Manager. Rotated every 90 days.
+        Stored as a Cloudflare Worker Secret and rotated operationally.
 
   schemas:
+    HealthEnvelope:
+      type: object
+      required: [ok, data]
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+          required: [status, service, timestamp]
+          properties:
+            status:
+              type: string
+              enum: [ok]
+            service:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+
     PipelineSession:
       type: object
       required: [session_id, pipeline_state, requestor_type, veto_active, created_at]
@@ -310,7 +328,6 @@ components:
           nullable: true
 
 paths:
-
   /health:
     get:
       operationId: getHealth
@@ -323,14 +340,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required: [status, version]
-                properties:
-                  status:
-                    type: string
-                    enum: [healthy]
-                  version:
-                    type: string
+                $ref: "#/components/schemas/HealthEnvelope"
 
   /session:
     post:
