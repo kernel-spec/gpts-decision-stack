@@ -27,7 +27,7 @@ id = "b406728e872e41c8ac865946295ad4fc"
 # ---------- Dev environment ----------
 
 [env.dev]
-name = "gpts-decision-stack-worker-dev"
+name = "gpts-decision-stack-dev"
 
 [[env.dev.d1_databases]]
 binding = "DECISIONS_DB"
@@ -45,4 +45,4 @@ id = "02dbad5ba7dd496f8f44865fba72ebed"
 # ---------- Production environment ----------
 
 [env.prod]
-name = "gpts-decision-stack-worker"
+name = "gpts-decision-stack"
