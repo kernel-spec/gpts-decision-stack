@@ -8,7 +8,9 @@ description: >
   Tento report odráží aktuální fyzický stav repozitáře k datu sestaven.
   Report nesmí být upraven za účelem vylepšení výsledku — musí vždy odrážet skutečnost.
 
-overall_status: PASS
+overall_status: FAIL
+repo_integrity_status: PASS
+deployment_readiness_status: FAIL
 bundle_classification: REPO-READY SKELETON
 deploy_ready: false
 
@@ -17,11 +19,11 @@ summary: >
   řídicí rovina, adaptivní enginy, schémata artefaktů, acceptance testy,
   governance mapy, knowledge soubory, operační checklisty, promotion gate
   a plně implementovaný backend (Cloudflare Worker, IMPLEMENTATION-BACKED).
-  Všechny repo vrstvy jsou PASS, blocking_gaps jsou prázdné.
-  bundle_classification zůstává REPO-READY SKELETON — DEPLOY-READY STACK
-  vyžaduje navíc: (a) provisionovanou Cloudflare infrastrukturu (D1, R2, KV,
-  Worker Secret), (b) evaluaci acceptance testů (ne pouze jejich definici).
-  deploy_ready je false — runtime prostředky nejsou dosud provisionovány.
+  repo_integrity_status je PASS — všechny repo vrstvy jsou fyzicky přítomny.
+  overall_status je FAIL (fail-closed governance): Cloudflare infrastruktura
+  není provisionována (D1, R2, KV, Worker Secret jsou placeholders) a acceptance
+  testy jsou definice, nikoliv evaluované výsledky. Dokud tyto podmínky nejsou
+  splněny, celkový gate výsledek musí být FAIL. deploy_ready je false.
 
 layer_status:
   control_plane_prompts:
@@ -281,10 +283,10 @@ resolved_gaps:
 
 audit_note: >
   Tento report nesmí být ručně upraven za účelem zlepšení hodnocení.
-  Hodnoty overall_status a bundle_classification musí odpovídat skutečnému
-  fyzickému stavu repozitáře. Falešné PASS je stejně závažné selhání
+  overall_status musí být FAIL dokud deployment readiness podmínky nejsou splněny
+  (fail-closed governance). repo_integrity_status PASS odráží fyzickou přítomnost
+  všech repo vrstev a je odděleným signálem od deployment gate.
+  bundle_classification DEPLOY-CANDIDATE bylo odstraněno jako nekanonická hodnota.
+  Kanonické hodnoty jsou REPO-READY SKELETON a DEPLOY-READY STACK
+  (viz operations/Definition_of_Done.md). Falešné PASS je stejně závažné selhání
   jako falešný proceed v pipeline.
-  Normalizační poznámka: bundle_classification DEPLOY-CANDIDATE bylo odstraněno
-  jako nekanonická hodnota. Kanonické hodnoty jsou REPO-READY SKELETON a
-  DEPLOY-READY STACK (viz operations/Definition_of_Done.md). Aktuální stav
-  REPO-READY SKELETON je správný — implementace existuje, provisioning pending.

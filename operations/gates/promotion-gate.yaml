@@ -95,7 +95,9 @@ promotion_override_rule:
       - fixture_content
 
 current_gate_position:
-  overall_status: PASS
+  overall_status: FAIL
+  repo_integrity_status: PASS
+  deployment_readiness_status: FAIL
   bundle_classification: REPO-READY SKELETON
   deployment_ready_stack: false
   staging: BLOCKED
@@ -108,7 +110,7 @@ current_gate_position:
     - API_KEY_SECRET (Worker Secret)
     - Acceptance testy — evaluace (AC-001 až AC-012 jsou definice, ne výsledky)
   reason: >
-    Všechny repo vrstvy jsou PASS. Backend binding přešel na IMPLEMENTATION-BACKED.
-    Cloudflare Worker TypeScript kód, wrangler.toml, GitHub Actions workflow
-    a D1 migrace existují. DEPLOY-READY STACK nelze označit dokud nejsou
-    provisionovány Cloudflare runtime prostředky a acceptance testy nejsou evaluovány.
+    Všechny repo vrstvy jsou fyzicky přítomny (repo_integrity_status PASS).
+    overall_status je FAIL (fail-closed governance) — Cloudflare runtime prostředky
+    nejsou provisionovány a acceptance testy nebyly evaluovány. DEPLOY-READY STACK
+    nelze označit dokud tyto podmínky nejsou splněny.
