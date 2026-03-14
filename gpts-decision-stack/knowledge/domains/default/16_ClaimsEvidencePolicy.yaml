@@ -1,269 +1,269 @@
-# Claims and Evidence Policy - Default Domain
+# Politika Tvrzení a Důkazů - Výchozí Doména
 # Status: ADAPTIVE
-# Defines what claims require what evidence
+# Definuje, která tvrzení vyžadují jaké důkazy
 
 claim_categories:
   functional_correctness:
-    description: Claims about functional behavior and correctness
+    description: Tvrzení o funkčním chování a správnosti
     
     claim_types:
-      - Feature works as specified
-      - Bug is fixed
-      - Requirements are met
-      - Acceptance criteria satisfied
+      - Funkce funguje podle specifikace
+      - Chyba je opravena
+      - Požadavky jsou splněny
+      - Kritéria akceptace splněna
     
     required_evidence:
       - automated_test_results:
-          description: Automated test suite results
-          sufficiency: Test coverage > 80% for changed code
-          verification: AE-Claims validates test execution
+          description: Výsledky automatizované testovací sady
+          sufficiency: Testovací pokrytí > 80% pro změněný kód
+          verification: AE-Claims validuje provedení testu
       
       - manual_test_results:
-          description: Manual test execution records
-          sufficiency: All critical paths tested
-          verification: AE-Claims validates test completeness
+          description: Záznamy manuálního provedení testů
+          sufficiency: Všechny kritické cesty testovány
+          verification: AE-Claims validuje úplnost testu
       
       - acceptance_test_results:
-          description: User acceptance test results
-          sufficiency: All acceptance criteria pass
-          verification: AE-Claims validates against requirements
+          description: Výsledky uživatelských akceptačních testů
+          sufficiency: Všechna kritéria akceptace projdou
+          verification: AE-Claims validuje oproti požadavkům
   
   quality_assurance:
-    description: Claims about code quality and maintainability
+    description: Tvrzení o kvalitě kódu a udržovatelnosti
     
     claim_types:
-      - Code meets quality standards
-      - Technical debt is acceptable
-      - Performance is adequate
-      - Maintainability is good
+      - Kód splňuje standardy kvality
+      - Technický dluh je přijatelný
+      - Výkon je adekvátní
+      - Udržovatelnost je dobrá
     
     required_evidence:
       - code_review_results:
-          description: Code review findings and approvals
-          sufficiency: At least one reviewer approval
-          verification: AE-Claims validates reviewer authority
+          description: Zjištění a schválení kontroly kódu
+          sufficiency: Minimálně jedno schválení kontrolora
+          verification: AE-Claims validuje autoritu kontrolora
       
       - static_analysis_results:
-          description: Static code analysis results
-          sufficiency: No critical or high severity issues
-          verification: AE-Claims validates analysis execution
+          description: Výsledky statické analýzy kódu
+          sufficiency: Žádné kritické nebo vysoce závažné problémy
+          verification: AE-Claims validuje provedení analýzy
       
       - performance_test_results:
-          description: Performance benchmark results
-          sufficiency: Meets defined performance thresholds
-          verification: AE-Claims validates against baselines
+          description: Výsledky výkonnostních benchmarků
+          sufficiency: Splňuje definované výkonnostní prahy
+          verification: AE-Claims validuje oproti základním hodnotám
   
   security:
-    description: Claims about security properties
+    description: Tvrzení o bezpečnostních vlastnostech
     
     claim_types:
-      - No security vulnerabilities introduced
-      - Security controls are effective
-      - Authentication/authorization correct
-      - Data protection adequate
+      - Nebyly zavedeny žádné bezpečnostní zranitelnosti
+      - Bezpečnostní kontroly jsou efektivní
+      - Autentizace/autorizace správná
+      - Ochrana dat adekvátní
     
     required_evidence:
       - security_scan_results:
-          description: Automated security scan results
-          sufficiency: No critical or high vulnerabilities
-          verification: AE-Claims validates scan coverage
+          description: Výsledky automatizovaného bezpečnostního skenu
+          sufficiency: Žádné kritické nebo vysoké zranitelnosti
+          verification: AE-Claims validuje pokrytí skenu
       
       - security_review_findings:
-          description: Security team review results
-          sufficiency: Security team approval obtained
-          verification: AE-Claims validates reviewer authority
+          description: Výsledky kontroly bezpečnostního týmu
+          sufficiency: Získáno schválení bezpečnostního týmu
+          verification: AE-Claims validuje autoritu kontrolora
       
       - penetration_test_results:
-          description: Penetration testing results (prod only)
-          sufficiency: No exploitable vulnerabilities found
-          verification: AE-Claims validates test scope
+          description: Výsledky penetračního testování (pouze prod)
+          sufficiency: Nenalezeny žádné zneužitelné zranitelnosti
+          verification: AE-Claims validuje rozsah testu
   
   compliance:
-    description: Claims about regulatory and policy compliance
+    description: Tvrzení o regulačním a politickém souladu
     
     claim_types:
-      - Meets regulatory requirements
-      - Complies with internal policies
-      - Audit trail is complete
-      - Privacy requirements satisfied
+      - Splňuje regulační požadavky
+      - Vyhovuje interním politikám
+      - Auditní stopa je úplná
+      - Požadavky na soukromí splněny
     
     required_evidence:
       - compliance_checklist:
-          description: Completed compliance checklist
-          sufficiency: All items checked and validated
-          verification: AE-Claims validates checklist completeness
+          description: Dokončený kontrolní seznam souladu
+          sufficiency: Všechny položky zkontrolovány a validovány
+          verification: AE-Claims validuje úplnost kontrolního seznamu
       
       - compliance_review_approval:
-          description: Compliance team review and approval
-          sufficiency: Formal approval documented
-          verification: AE-Claims validates approver authority
+          description: Kontrola a schválení týmem souladu
+          sufficiency: Formální schválení dokumentováno
+          verification: AE-Claims validuje autoritu schvalovatele
       
       - audit_trail_validation:
-          description: Audit trail completeness verification
-          sufficiency: All required events logged
-          verification: AE-Claims validates log integrity
+          description: Ověření úplnosti auditní stopy
+          sufficiency: Všechny požadované události zaznamenány
+          verification: AE-Claims validuje integritu záznamu
   
   operational_readiness:
-    description: Claims about production readiness
+    description: Tvrzení o produkční připravenosti
     
     claim_types:
-      - Monitoring is in place
-      - Rollback plan is validated
-      - Documentation is complete
-      - Support is prepared
+      - Monitorování je na místě
+      - Plán návratu je validován
+      - Dokumentace je úplná
+      - Podpora je připravena
     
     required_evidence:
       - monitoring_validation:
-          description: Monitoring and alerting configuration
-          sufficiency: All critical paths monitored
-          verification: AE-Claims validates coverage
+          description: Konfigurace monitorování a upozorňování
+          sufficiency: Všechny kritické cesty monitorovány
+          verification: AE-Claims validuje pokrytí
       
       - rollback_plan:
-          description: Documented and tested rollback procedure
-          sufficiency: Rollback tested in staging
-          verification: AE-Claims validates test results
+          description: Dokumentovaný a testovaný postup návratu
+          sufficiency: Návrat testován ve staging
+          verification: AE-Claims validuje výsledky testů
       
       - documentation:
-          description: User and operational documentation
-          sufficiency: All required sections complete
-          verification: AE-Claims validates completeness
+          description: Uživatelská a provozní dokumentace
+          sufficiency: Všechny požadované sekce úplné
+          verification: AE-Claims validuje úplnost
       
       - support_readiness:
-          description: Support team prepared
-          sufficiency: Training complete, on-call coverage
-          verification: AE-Claims validates readiness
+          description: Tým podpory připraven
+          sufficiency: Školení dokončeno, pokrytí pohotovosti
+          verification: AE-Claims validuje připravenost
 
 evidence_sufficiency_rules:
   minimum_requirements:
     all_claims:
-      - At least one piece of evidence per claim
-      - Evidence must be verifiable
-      - Evidence must be recent (not stale)
-      - Evidence must be from authoritative source
+      - Minimálně jeden důkaz na tvrzení
+      - Důkaz musí být ověřitelný
+      - Důkaz musí být aktuální (ne zastaralý)
+      - Důkaz musí být z autoritativního zdroje
   
   high_risk_artifacts:
-    - Multiple independent evidence sources required
-    - Third-party verification may be required
-    - Executive sign-off may be required
+    - Vyžadovány více nezávislých zdrojů důkazů
+    - Může být vyžadováno ověření třetí stranou
+    - Může být vyžadováno výkonné schválení
   
   low_risk_artifacts:
-    - Single evidence source may be sufficient
-    - Self-verification may be acceptable
-    - Standard approval process
+    - Jeden zdroj důkazu může být dostatečný
+    - Sebeověření může být přijatelné
+    - Standardní schvalovací proces
 
 evidence_freshness:
   automated_test_results:
     maximum_age: 24_hours
-    must_be_from: Current artifact version
+    must_be_from: Aktuální verze artefaktu
   
   security_scans:
     maximum_age: 7_days
-    must_be_from: Current artifact version
+    must_be_from: Aktuální verze artefaktu
   
   manual_reviews:
     maximum_age: 30_days
-    must_be_from: Current or compatible version
+    must_be_from: Aktuální nebo kompatibilní verze
   
   compliance_approvals:
     maximum_age: 90_days
-    must_be_from: Current policy version
+    must_be_from: Aktuální verze politiky
 
 evidence_quality:
   trustworthiness:
     high_trust:
-      - Automated test systems
-      - Certified scanning tools
-      - Approved review authorities
+      - Automatizované testovací systémy
+      - Certifikované skenovací nástroje
+      - Schválené kontrolní autority
     
     medium_trust:
-      - Manual test records
-      - Self-reported metrics
-      - Peer reviews
+      - Záznamy manuálních testů
+      - Samohlášené metriky
+      - Vzájemné kontroly
     
     low_trust:
-      - Unverified claims
-      - Outdated evidence
-      - Unauthorized sources
+      - Neověřená tvrzení
+      - Zastaralé důkazy
+      - Neautorizované zdroje
   
   completeness:
     complete:
-      - All claims have evidence
-      - All evidence is verifiable
-      - No gaps in coverage
+      - Všechna tvrzení mají důkazy
+      - Všechny důkazy jsou ověřitelné
+      - Žádné mezery v pokrytí
     
     incomplete:
-      - Some claims lack evidence
-      - Some evidence not verifiable
-      - Coverage gaps exist
+      - Některá tvrzení postrádají důkazy
+      - Některé důkazy nejsou ověřitelné
+      - Existují mezery v pokrytí
     
     insufficient:
-      - Most claims lack evidence
-      - Evidence quality poor
-      - Major coverage gaps
+      - Většina tvrzení postrádá důkazy
+      - Špatná kvalita důkazů
+      - Velké mezery v pokrytí
 
 verification_process:
   for_each_claim:
     steps:
-      1. Identify claim statement
-      2. Determine required evidence type
-      3. Locate and retrieve evidence
-      4. Verify evidence authenticity
-      5. Assess evidence freshness
-      6. Evaluate evidence quality
-      7. Determine sufficiency
-      8. Document verification result
+      1. Identifikovat prohlášení tvrzení
+      2. Určit požadovaný typ důkazu
+      3. Lokalizovat a načíst důkaz
+      4. Ověřit autenticitu důkazu
+      5. Posoudit aktuálnost důkazu
+      6. Vyhodnotit kvalitu důkazu
+      7. Určit dostatečnost
+      8. Dokumentovat výsledek ověření
   
   verification_outcomes:
     verified:
-      condition: Sufficient high-quality evidence
+      condition: Dostatečný vysoce kvalitní důkaz
       next_state: CLAIMS_VERIFIED
     
     insufficient:
-      condition: Evidence missing or inadequate
+      condition: Důkaz chybí nebo je nedostatečný
       next_state: CLAIMS_INSUFFICIENT
-      action: Document gaps, request additional evidence
+      action: Dokumentovat mezery, požádat o dodatečné důkazy
     
     rejected:
-      condition: Evidence contradicts claim
+      condition: Důkaz je v rozporu s tvrzením
       next_state: INTAKE_REJECTED
-      action: Reject artifact, document reason
+      action: Odmítnout artefakt, dokumentovat důvod
 
 special_cases:
   no_evidence_available:
     handling: >
-      If evidence cannot be provided due to legitimate constraints,
-      escalate to appropriate authority for waiver decision.
-      Document reason and obtain explicit approval.
+      Pokud nelze poskytnout důkaz z legitimních omezení,
+      eskalujte k příslušné autoritě pro rozhodnutí o výjimce.
+      Dokumentujte důvod a získejte explicitní schválení.
     
-    must_not: Accept claim without evidence or approval
+    must_not: Přijímat tvrzení bez důkazu nebo schválení
   
   conflicting_evidence:
     handling: >
-      If evidence sources conflict, escalate to review authority
-      for investigation and resolution. Do not proceed until resolved.
+      Pokud se zdroje důkazů rozcházejí, eskalujte ke kontrolní autoritě
+      pro vyšetření a řešení. Nepokračujte, dokud nebude vyřešeno.
     
-    must_not: Ignore conflicting evidence or choose selectively
+    must_not: Ignorovat rozporné důkazy nebo vybírat selektivně
   
   unknown_claim_type:
     handling: >
-      If claim type is not defined in this policy, escalate to
-      governance for policy clarification or extension.
+      Pokud typ tvrzení není definován v této politice, eskalujte
+      ke správě pro vyjasnění nebo rozšíření politiky.
     
-    must_not: Proceed without defined evidence requirements
+    must_not: Pokračovat bez definovaných požadavků na důkazy
 
 adaptation_guidelines:
   domains_may_customize:
-    - Claim categories
-    - Evidence requirements
-    - Sufficiency thresholds
-    - Freshness requirements
-    - Quality criteria
+    - Kategorie tvrzení
+    - Požadavky na důkazy
+    - Prahy dostatečnosti
+    - Požadavky na aktuálnost
+    - Kritéria kvality
   
   domains_must_preserve:
-    - Evidence is required for all claims
-    - Verification process is mandatory
-    - Quality assessment is required
-    - Escalation paths exist for exceptions
+    - Důkaz je vyžadován pro všechna tvrzení
+    - Ověřovací proces je povinný
+    - Posouzení kvality je vyžadováno
+    - Eskalační cesty existují pro výjimky
 
 version: "1.0.0"
 status: ADAPTIVE

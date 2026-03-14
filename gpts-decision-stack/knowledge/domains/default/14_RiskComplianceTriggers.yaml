@@ -1,14 +1,14 @@
-# Risk and Compliance Triggers - Default Domain
+# Spouštěče Rizika a Souladu - Výchozí Doména
 # Status: ADAPTIVE
-# Defines conditions that trigger additional scrutiny or requirements
+# Definuje podmínky, které spouštějí dodatečnou kontrolu nebo požadavky
 
 risk_levels:
   minimal:
     criteria:
-      - Documentation-only changes
-      - Non-production environment
-      - No user-facing impact
-      - Fully reversible
+      - Pouze změny dokumentace
+      - Neprodukční prostředí
+      - Žádný dopad na uživatele
+      - Plně reverzibilní
     
     additional_requirements: []
     
@@ -16,179 +16,179 @@ risk_levels:
   
   moderate:
     criteria:
-      - Configuration changes
-      - Dev or staging environment
-      - Limited user impact
-      - Reversible with effort
+      - Změny konfigurace
+      - Dev nebo staging prostředí
+      - Omezený dopad na uživatele
+      - Reverzibilní s úsilím
     
     additional_requirements:
-      - Rollback plan required
-      - Impact assessment required
+      - Vyžadován plán návratu
+      - Vyžadováno posouzení dopadu
     
     approval_level: STANDARD
   
   significant:
     criteria:
-      - Code or package changes
-      - Staging environment
-      - Moderate user impact
-      - Complex rollback
+      - Změny kódu nebo balíčku
+      - Staging prostředí
+      - Mírný dopad na uživatele
+      - Složitý návrat
     
     additional_requirements:
-      - Comprehensive testing required
-      - Rollback plan and validation required
-      - Security review required
+      - Vyžadováno komplexní testování
+      - Vyžadován plán návratu a validace
+      - Vyžadována bezpečnostní kontrola
     
     approval_level: ELEVATED
   
   major:
     criteria:
-      - Production deployment
-      - High user impact
-      - Data migration involved
-      - Difficult rollback
+      - Produkční nasazení
+      - Vysoký dopad na uživatele
+      - Zapojená migrace dat
+      - Obtížný návrat
     
     additional_requirements:
-      - Full acceptance test suite required
-      - Security and compliance review required
-      - Executive approval required
-      - Staged rollout plan required
-      - 24/7 support coverage required
+      - Vyžadována plná sada akceptačních testů
+      - Vyžadována bezpečnostní a compliance kontrola
+      - Vyžadováno výkonné schválení
+      - Vyžadován plán postupného zavádění
+      - Vyžadováno 24/7 pokrytí podpory
     
     approval_level: EXECUTIVE
 
 compliance_triggers:
   security_review_required:
     conditions:
-      - Authentication or authorization changes
-      - Cryptographic changes
-      - Security-sensitive configuration
-      - External service integration
-      - User data handling changes
+      - Změny autentizace nebo autorizace
+      - Kryptografické změny
+      - Bezpečnostně citlivá konfigurace
+      - Integrace externích služeb
+      - Změny zpracování uživatelských dat
     
     review_authority: SECURITY_TEAM
     
     evidence_required:
-      - Security scan results
-      - Penetration test results (for prod)
-      - Security architecture review
+      - Výsledky bezpečnostního skenu
+      - Výsledky penetračního testu (pro prod)
+      - Kontrola bezpečnostní architektury
   
   legal_review_required:
     conditions:
-      - Privacy policy changes
-      - Terms of service changes
-      - Data retention policy changes
-      - Cross-border data transfer
-      - Regulatory compliance impact
+      - Změny zásad ochrany osobních údajů
+      - Změny podmínek služby
+      - Změny zásad uchovávání dat
+      - Přenos dat přes hranice
+      - Dopad na regulační soulad
     
     review_authority: LEGAL_TEAM
     
     evidence_required:
-      - Legal review memo
-      - Compliance checklist
-      - Privacy impact assessment
+      - Právní kontrolní memorandum
+      - Kontrolní seznam souladu
+      - Posouzení dopadu na soukromí
   
   compliance_review_required:
     conditions:
-      - Audit trail changes
-      - Governance process changes
-      - Regulatory control changes
-      - Industry standard compliance
+      - Změny auditní stopy
+      - Změny procesů správy
+      - Změny regulačních kontrol
+      - Soulad s průmyslovými standardy
     
     review_authority: COMPLIANCE_TEAM
     
     evidence_required:
-      - Compliance assessment
-      - Control validation results
-      - Audit trail verification
+      - Posouzení souladu
+      - Výsledky validace kontrol
+      - Ověření auditní stopy
   
   architecture_review_required:
     conditions:
-      - New service introduction
-      - Architecture pattern change
-      - Scalability concerns
-      - Performance-critical changes
+      - Zavedení nové služby
+      - Změna architektonického vzoru
+      - Obavy o škálovatelnost
+      - Změny kritické pro výkon
     
     review_authority: ARCHITECTURE_TEAM
     
     evidence_required:
-      - Architecture decision record
-      - Scalability analysis
-      - Performance test results
+      - Záznam architektonického rozhodnutí
+      - Analýza škálovatelnosti
+      - Výsledky testů výkonu
 
 escalation_triggers:
   automatic_escalation:
     conditions:
       - Risk level == MAJOR
-      - Production environment
-      - Critical priority
-      - Compliance trigger active
-      - Previous failure history
+      - Produkční prostředí
+      - Kritická priorita
+      - Aktivní spouštěč souladu
+      - Historie předchozího selhání
     
     escalation_target: EXECUTIVE_APPROVAL
     
     escalation_requirements:
-      - Executive briefing prepared
-      - Risk mitigation plan documented
-      - Rollback procedures validated
+      - Připraven výkonný briefing
+      - Dokumentován plán zmírnění rizika
+      - Validovány postupy návratu
   
   manual_escalation_available:
     conditions:
-      - Reviewer requests escalation
-      - Approver requests executive input
-      - Stakeholder raises concern
-      - Uncertainty about authority
+      - Kontrolor požaduje eskalaci
+      - Schvalovatel požaduje výkonný vstup
+      - Zúčastněná strana vyjadřuje obavy
+      - Nejistota ohledně autority
     
     escalation_process:
-      - Document escalation reason
-      - Provide full context
-      - Await executive decision
+      - Dokumentujte důvod eskalace
+      - Poskytněte plný kontext
+      - Čekejte na výkonné rozhodnutí
 
 veto_triggers:
   operational_veto_conditions:
-    - Production incident in progress
-    - Maintenance window conflict
-    - Resource capacity constraint
-    - Monitoring system degraded
-    - On-call team unavailable
-    - Recent production failure
+    - Probíhá produkční incident
+    - Konflikt údržbového okna
+    - Omezení kapacity zdrojů
+    - Degradovaný monitorovací systém
+      - Nedostupný pohotovostní tým
+    - Nedávné produkční selhání
   
   veto_authority: OPERATIONAL_TEAM
   
   veto_process:
-    - Veto reason must be documented
-    - Expected resolution time provided
-    - Artifact moves to RELEASE_BLOCKED
-    - Veto can be cleared when condition resolves
+    - Důvod veta musí být dokumentován
+    - Poskytnut očekávaný čas řešení
+    - Artefakt se přesune do RELEASE_BLOCKED
+    - Veto může být zrušeno, když se podmínka vyřeší
 
 release_block_triggers:
   automatic_block:
     conditions:
       - Staging gate != PASS
-      - Knowledge completeness != PASS
-      - Fixture completeness != PASS
-      - Any terminal rejection state
-      - Active security incident
+      - Úplnost znalostí != PASS
+      - Úplnost fixtur != PASS
+      - Jakýkoli terminální stav odmítnutí
+      - Aktivní bezpečnostní incident
     
     block_authority: RELEASE_CONTROLLER
     
     unblock_requirements:
-      - Block condition fully resolved
-      - Re-validation completed
-      - Governance sign-off obtained
+      - Podmínka blokování plně vyřešena
+      - Dokončena re-validace
+      - Získáno schválení správy
   
   manual_block:
     conditions:
-      - Executive decision
-      - Emergency operational need
-      - External regulatory requirement
+      - Výkonné rozhodnutí
+      - Naléhavá provozní potřeba
+      - Externí regulační požadavek
     
     block_authority: EXECUTIVE_AUTHORITY
     
     unblock_requirements:
-      - Explicit executive approval
-      - Documented resolution
-      - Audit trail entry
+      - Explicitní výkonné schválení
+      - Dokumentované řešení
+      - Záznam auditní stopy
 
 monitoring_requirements:
   by_risk_level:
@@ -214,18 +214,18 @@ monitoring_requirements:
 
 adaptation_guidelines:
   domains_may_customize:
-    - Risk level criteria
-    - Compliance trigger conditions
-    - Review authority definitions
-    - Escalation thresholds
-    - Monitoring requirements
+    - Kritéria úrovně rizika
+    - Podmínky spouštěče souladu
+    - Definice kontrolních autorit
+    - Prahy eskalace
+    - Požadavky na monitorování
   
   domains_must_preserve:
-    - Progressive risk management
-    - Compliance enforcement
-    - Escalation capability
-    - Veto mechanism
-    - Audit trail of triggers
+    - Progresivní řízení rizik
+    - Vynucování souladu
+    - Schopnost eskalace
+    - Mechanismus veta
+    - Auditní stopa spouštěčů
 
 version: "1.0.0"
 status: ADAPTIVE

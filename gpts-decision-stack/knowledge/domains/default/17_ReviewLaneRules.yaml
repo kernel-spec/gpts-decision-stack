@@ -1,10 +1,10 @@
-# Review Lane Rules - Default Domain
+# Pravidla Kontrolních Linií - Výchozí Doména
 # Status: ADAPTIVE
-# Defines how artifacts are routed to appropriate review lanes
+# Definuje, jak jsou artefakty směrovány do příslušných kontrolních linií
 
 review_lanes:
   technical:
-    description: Technical correctness and code quality review
+    description: Kontrola technické správnosti a kvality kódu
     
     triggers:
       - artifact_type in [PACKAGE_RELEASE, CONFIGURATION_CHANGE]
@@ -12,27 +12,27 @@ review_lanes:
       - technical_risk >= MODERATE
     
     reviewer_qualifications:
-      - Technical expertise in relevant area
-      - Familiarity with codebase
-      - Understanding of architecture
+      - Technická expertiza v relevantní oblasti
+      - Znalost kódové základny
+      - Porozumění architektuře
     
     review_focus:
-      - Code quality and maintainability
-      - Architecture alignment
-      - Technical debt impact
-      - Performance considerations
-      - Error handling robustness
+      - Kvalita kódu a udržovatelnost
+      - Sladění s architekturou
+      - Dopad technického dluhu
+      - Úvahy o výkonu
+      - Robustnost zpracování chyb
     
     approval_criteria:
-      - Code meets quality standards
-      - Architecture principles followed
-      - Technical risks acceptable
-      - No critical technical issues
+      - Kód splňuje standardy kvality
+      - Dodrženy principy architektury
+      - Technická rizika přijatelná
+      - Žádné kritické technické problémy
     
     typical_duration: 2_to_4_hours
   
   security:
-    description: Security and vulnerability assessment
+    description: Posouzení bezpečnosti a zranitelností
     
     triggers:
       - artifact_type in [PACKAGE_RELEASE, CONFIGURATION_CHANGE]
@@ -43,28 +43,28 @@ review_lanes:
       - external_integration_changes
     
     reviewer_qualifications:
-      - Security expertise
-      - Threat modeling experience
-      - Vulnerability assessment skills
+      - Expertiza v bezpečnosti
+      - Zkušenosti s modelováním hrozeb
+      - Schopnosti posouzení zranitelností
     
     review_focus:
-      - Security vulnerabilities
-      - Authentication and authorization
-      - Data protection
-      - Cryptographic correctness
-      - Input validation
-      - Security best practices
+      - Bezpečnostní zranitelnosti
+      - Autentizace a autorizace
+      - Ochrana dat
+      - Kryptografická správnost
+      - Validace vstupů
+      - Osvědčené bezpečnostní postupy
     
     approval_criteria:
-      - No critical or high vulnerabilities
-      - Security controls effective
-      - Threat model updated
-      - Security best practices followed
+      - Žádné kritické nebo vysoké zranitelnosti
+      - Efektivní bezpečnostní kontroly
+      - Aktualizován model hrozeb
+      - Dodrženy osvědčené bezpečnostní postupy
     
     typical_duration: 4_to_8_hours
   
   compliance:
-    description: Regulatory and policy compliance review
+    description: Kontrola souladu s regulacemi a politikami
     
     triggers:
       - compliance_flags_present
@@ -74,27 +74,27 @@ review_lanes:
       - policy_changes
     
     reviewer_qualifications:
-      - Compliance expertise
-      - Regulatory knowledge
-      - Policy interpretation skills
+      - Expertiza v souladu
+      - Znalost regulací
+      - Schopnosti interpretace politik
     
     review_focus:
-      - Regulatory compliance
-      - Policy adherence
-      - Privacy requirements
-      - Audit trail completeness
-      - Record retention
+      - Regulační soulad
+      - Dodržování politik
+      - Požadavky na soukromí
+      - Úplnost auditní stopy
+      - Uchovávání záznamů
     
     approval_criteria:
-      - Regulatory requirements met
-      - Policies followed
-      - Privacy protections adequate
-      - Audit trail complete
+      - Splněny regulační požadavky
+      - Dodrženy politiky
+      - Adekvátní ochrany soukromí
+      - Úplná auditní stopa
     
     typical_duration: 2_to_6_hours
   
   business:
-    description: Business value and priority review
+    description: Kontrola obchodní hodnoty a priority
     
     triggers:
       - high_business_impact
@@ -103,27 +103,27 @@ review_lanes:
       - commercial_implications
     
     reviewer_qualifications:
-      - Business domain expertise
-      - Product management experience
-      - Customer understanding
+      - Expertiza obchodní domény
+      - Zkušenosti s řízením produktů
+      - Porozumění zákazníkům
     
     review_focus:
-      - Business value alignment
-      - Customer impact
-      - Market positioning
-      - Strategic fit
-      - Commercial viability
+      - Sladění obchodní hodnoty
+      - Dopad na zákazníky
+      - Tržní pozicování
+      - Strategické přizpůsobení
+      - Komerční životaschopnost
     
     approval_criteria:
-      - Business value clear
-      - Customer impact acceptable
-      - Strategic alignment confirmed
-      - Commercial model sound
+      - Jasná obchodní hodnota
+      - Přijatelný dopad na zákazníky
+      - Potvrzeno strategické sladění
+      - Solidní obchodní model
     
     typical_duration: 1_to_3_hours
   
   operational:
-    description: Operational readiness and impact review
+    description: Kontrola provozní připravenosti a dopadu
     
     triggers:
       - target_environment in [STAGING, PROD]
@@ -132,24 +132,24 @@ review_lanes:
       - capacity_implications
     
     reviewer_qualifications:
-      - Operations expertise
-      - Production support experience
-      - Incident response skills
+      - Expertiza v provozu
+      - Zkušenosti s provozní podporou
+      - Schopnosti reakce na incidenty
     
     review_focus:
-      - Operational readiness
-      - Monitoring and alerting
-      - Rollback procedures
-      - Support preparedness
-      - Capacity planning
-      - Impact on existing systems
+      - Provozní připravenost
+      - Monitorování a upozorňování
+      - Postupy návratu
+      - Připravenost podpory
+      - Plánování kapacity
+      - Dopad na existující systémy
     
     approval_criteria:
-      - Operations team ready
-      - Monitoring adequate
-      - Rollback validated
-      - Support prepared
-      - Capacity sufficient
+      - Tým operací připraven
+      - Adekvátní monitorování
+      - Validován návrat
+      - Připravena podpora
+      - Dostatečná kapacita
     
     typical_duration: 2_to_4_hours
 
@@ -189,13 +189,13 @@ multi_lane_coordination:
   
   sequential_review:
     required_when:
-      - Review findings block other reviews
-      - Interdependencies between lanes
+      - Zjištění kontroly blokují jiné kontroly
+      - Vzájemné závislosti mezi liniemi
   
   conflict_resolution:
-    - If lanes disagree on approval, escalate to governance
-    - Document disagreement and rationale
-    - Governance makes final decision
+    - Pokud se linie neshodnou na schválení, eskalujte ke správě
+    - Dokumentujte nesouhlas a odůvodnění
+    - Správa činí konečné rozhodnutí
 
 review_timeouts:
   by_lane:
@@ -206,62 +206,62 @@ review_timeouts:
     operational: 48_hours
   
   escalation_on_timeout:
-    - Notify reviewer and governance
-    - Escalate to review manager
-    - May proceed with partial review if risk acceptable
+    - Upozornit kontrolora a správu
+    - Eskalovat ke správci kontroly
+    - Může pokračovat s částečnou kontrolou, pokud je riziko přijatelné
 
 reviewer_assignment:
   assignment_criteria:
-    - Reviewer availability
-    - Relevant expertise
-    - No conflict of interest
-    - Workload balance
+    - Dostupnost kontrolora
+    - Relevantní expertiza
+    - Žádný konflikt zájmů
+    - Vyvážení pracovní zátěže
   
   assignment_process:
-    1. Identify required review lanes
-    2. Match lanes to available reviewers
-    3. Check reviewer qualifications
-    4. Verify availability
-    5. Assign and notify
+    1. Identifikovat požadované kontrolní linie
+    2. Přiřadit linie dostupným kontrolorům
+    3. Zkontrolovat kvalifikace kontrolora
+    4. Ověřit dostupnost
+    5. Přiřadit a upozornit
   
   reassignment:
     allowed_if:
-      - Reviewer unavailable
-      - Expertise mismatch discovered
-      - Conflict of interest identified
+      - Kontrolor nedostupný
+      - Zjištěn nesoulad expertízy
+      - Identifikován konflikt zájmů
 
 review_completion:
   required_outputs:
-    - Review decision (APPROVE/REJECT/NEEDS_WORK)
-    - Review findings document
-    - Risk assessment
-    - Recommendations
+    - Rozhodnutí kontroly (APPROVE/REJECT/NEEDS_WORK)
+    - Dokument zjištění kontroly
+    - Posouzení rizika
+    - Doporučení
   
   approval_requirements:
-    - All assigned lanes must approve
-    - No unresolved critical findings
-    - All recommendations addressed or accepted
+    - Všechny přiřazené linie musí schválit
+    - Žádná nevyřešená kritická zjištění
+    - Všechna doporučení vyřešena nebo přijata
   
   rejection_handling:
-    - Document rejection reason
-    - Provide specific feedback
-    - Suggest remediation steps
-    - Allow resubmission after fixes
+    - Dokumentovat důvod odmítnutí
+    - Poskytnout konkrétní zpětnou vazbu
+    - Navrhnout nápravné kroky
+    - Umožnit opětovné podání po opravách
 
 adaptation_guidelines:
   domains_may_customize:
-    - Review lane definitions
-    - Routing triggers
-    - Reviewer qualifications
-    - Review focus areas
-    - Approval criteria
-    - Timeout values
+    - Definice kontrolních linií
+    - Spouštěče směrování
+    - Kvalifikace kontrolorů
+    - Oblasti zaměření kontroly
+    - Kritéria schválení
+    - Hodnoty časového limitu
   
   domains_must_preserve:
-    - Review requirement for high-risk artifacts
-    - Approval requirement for production
-    - Escalation mechanism
-    - Documentation requirements
+    - Požadavek kontroly pro vysoce rizikové artefakty
+    - Požadavek schválení pro produkci
+    - Mechanismus eskalace
+    - Požadavky na dokumentaci
 
 version: "1.0.0"
 status: ADAPTIVE

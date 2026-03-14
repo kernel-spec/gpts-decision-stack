@@ -1,44 +1,44 @@
-# Delivery Topology Rules - Default Domain
+# Pravidla Topologie Dodání - Výchozí Doména
 # Status: ADAPTIVE
-# Defines deployment topology and environment constraints
+# Definuje topologii nasazení a omezení prostředí
 
 environments:
   local:
-    purpose: Local development and structural validation
+    purpose: Lokální vývoj a strukturální validace
     characteristics:
-      - No backend integration
-      - File-based validation only
-      - Completeness checking
-      - Schema validation
+      - Žádná integrace backendu
+      - Pouze souborová validace
+      - Kontrola úplnosti
+      - Validace schématu
     
     deployment_allowed_if:
-      - Bootstrap scripts execute successfully
-      - All required files exist
-      - YAML syntax is valid
-      - Manifest references resolve
+      - Skripty bootstrap se provedou úspěšně
+      - Všechny požadované soubory existují
+      - Syntaxe YAML je platná
+      - Reference manifestu se řeší
     
     deployment_blocked_if: []
     
     testing_scope:
-      - File existence checks
-      - Schema validation
-      - Manifest consistency
-      - No runtime testing
+      - Kontroly existence souborů
+      - Validace schématu
+      - Konzistence manifestu
+      - Žádné testování běhu
   
   dev:
-    purpose: First real integration environment
+    purpose: První skutečné integrační prostředí
     characteristics:
-      - Backend services integrated
-      - GPT configuration deployed
-      - Enforcement services active
-      - Smoke testing enabled
+      - Backend služby integrované
+      - Konfigurace GPT nasazená
+      - Vynucovací služby aktivní
+      - Kouřové testování povoleno
     
     deployment_allowed_if:
       - local_gate == PASS
-      - Backend build exists
-      - Auth binding defined
-      - Endpoint mapping complete
-      - GPT config binding prepared
+      - Backend build existuje
+      - Auth binding definován
+      - Mapování endpointu kompletní
+      - Binding konfigurace GPT připravený
     
     deployment_blocked_if:
       - openapi_not_bound_to_concrete_backend
@@ -47,20 +47,20 @@ environments:
       - gpt_action_binding_missing
     
     testing_scope:
-      - Backend health checks
-      - Auth validation
-      - GPT provisioning smoke tests
-      - Decision log append tests
-      - Basic end-to-end flows
+      - Kontroly stavu backendu
+      - Validace auth
+      - Kouřové testy zřízení GPT
+      - Testy připojení protokolu rozhodnutí
+      - Základní end-to-end toky
   
   staging:
-    purpose: Full governance reality rehearsal
+    purpose: Plné cvičení reality správy
     characteristics:
-      - Production-like topology
-      - Full governance enforcement
-      - Acceptance testing
-      - Approval workflows active
-      - Operational veto enabled
+      - Topologie podobná produkci
+      - Plné vynucování správy
+      - Akceptační testování
+      - Aktivní schvalovací workflow
+      - Povoleno provozní veto
     
     deployment_allowed_if:
       - dev_gate == PASS
@@ -80,21 +80,21 @@ environments:
       - veto_map_missing
     
     testing_scope:
-      - Full acceptance test suite
-      - Approval workflow validation
-      - Veto enforcement testing
-      - Release block testing
-      - False proceed detection
-      - Performance testing
+      - Plná sada akceptačních testů
+      - Validace schvalovacího workflow
+      - Testování vynucení veta
+      - Testování blokování vydání
+      - Detekce falešného pokračování
+      - Testování výkonu
   
   prod:
-    purpose: Production deployment
+    purpose: Produkční nasazení
     characteristics:
-      - Live user traffic
-      - Full audit logging
-      - Governance enforcement
-      - Monitoring and alerting
-      - Rollback capability
+      - Živý uživatelský provoz
+      - Plné auditní záznamy
+      - Vynucování správy
+      - Monitorování a upozorňování
+      - Schopnost návratu
     
     deployment_allowed_if:
       - staging_gate == PASS
@@ -117,107 +117,107 @@ environments:
       - authoritative_release_notes_missing
     
     testing_scope:
-      - Production smoke tests
-      - Audit logging validation
-      - Monitoring verification
-      - Rollback readiness
-      - Performance monitoring
+      - Produkční kouřové testy
+      - Validace auditního záznamu
+      - Ověření monitorování
+      - Připravenost návratu
+      - Monitorování výkonu
 
 promotion_paths:
   local_to_dev:
     requirements:
-      - All structural validations pass
-      - Backend infrastructure ready
-      - Configuration bindings complete
+      - Všechny strukturální validace projdou
+      - Infrastruktura backendu připravena
+      - Bindingy konfigurace kompletní
     
     validation:
-      - Manifest completeness
-      - Schema validity
-      - File existence
-      - Backend connectivity
+      - Úplnost manifestu
+      - Platnost schématu
+      - Existence souborů
+      - Konektivita backendu
   
   dev_to_staging:
     requirements:
-      - Dev smoke tests pass
-      - Knowledge files complete
-      - Test fixtures complete
-      - Governance maps exist
+      - Dev kouřové testy projdou
+      - Znalostní soubory kompletní
+      - Testovací fixtury kompletní
+      - Mapy správy existují
     
     validation:
-      - Backend health confirmed
-      - GPT provisioning verified
-      - Governance prerequisites met
+      - Potvrzený stav backendu
+      - Ověřeno zřízení GPT
+      - Splněny předpoklady správy
   
   staging_to_prod:
     requirements:
-      - All acceptance tests pass
-      - Governance approval obtained
-      - Operational readiness confirmed
-      - Rollback plan validated
+      - Všechny akceptační testy projdou
+      - Získáno schválení správy
+      - Potvrzena provozní připravenost
+      - Validován plán návratu
     
     validation:
-      - QA artifact approved
-      - All governance maps approved
-      - Release notes approved
-      - Monitoring operational
+      - Schválen QA artefakt
+      - Všechny mapy správy schváleny
+      - Schváleny poznámky k vydání
+      - Provozní monitorování
 
 rollback_requirements:
   dev:
     rollback_trigger:
-      - Backend health failure
-      - Critical smoke test failure
+      - Selhání stavu backendu
+      - Kritické selhání kouřového testu
     rollback_target: previous_working_dev_version
     rollback_time: under_5_minutes
   
   staging:
     rollback_trigger:
-      - Acceptance test failure
-      - Governance violation detected
+      - Selhání akceptačního testu
+      - Zjištěno porušení správy
     rollback_target: previous_working_staging_version
     rollback_time: under_10_minutes
   
   prod:
     rollback_trigger:
-      - Production smoke failure
-      - Critical incident
-      - Operational veto
+      - Selhání produkčního kouřového testu
+      - Kritický incident
+      - Provozní veto
     rollback_target: last_known_good_production
     rollback_time: under_2_minutes
     approval_required: true
 
 topology_constraints:
   data_flow:
-    - All environments use same decision log schema
-    - No production data in dev/staging
-    - Audit trails are environment-specific
-    - Test fixtures don't leak to production
+    - Všechna prostředí používají stejné schéma protokolu rozhodnutí
+    - Žádná produkční data v dev/staging
+    - Auditní stopy jsou specifické pro prostředí
+    - Testovací fixtury nepronikají do produkce
   
   access_control:
-    - Dev: Development team access
-    - Staging: QA and governance team access
-    - Prod: Authorized operations team only
-    - Audit logs: Read-only for most, append-only for system
+    - Dev: Přístup vývojového týmu
+    - Staging: Přístup QA a týmu správy
+    - Prod: Pouze autorizovaný provozní tým
+    - Auditní záznamy: Pouze pro čtení pro většinu, pouze pro připojení pro systém
   
   resource_isolation:
-    - Each environment has dedicated resources
-    - No cross-environment dependencies
-    - State is environment-specific
-    - Decision logs are per-environment
+    - Každé prostředí má vyhrazené zdroje
+    - Žádné závislosti mezi prostředími
+    - Stav je specifický pro prostředí
+    - Protokoly rozhodnutí jsou per-prostředí
 
 adaptation_guidelines:
   domains_may_customize:
-    - Environment characteristics
-    - Deployment conditions
-    - Testing scope per environment
-    - Promotion requirements
-    - Rollback procedures
+    - Charakteristiky prostředí
+    - Podmínky nasazení
+    - Rozsah testování per prostředí
+    - Požadavky na povýšení
+    - Postupy návratu
   
   domains_must_preserve:
-    - Progressive deployment model
-    - Gate-based promotion
-    - Audit trail integrity
-    - Rollback capability
-    - Resource isolation
+    - Progresivní model nasazení
+    - Povýšení založené na bránách
+    - Integrita auditní stopy
+    - Schopnost návratu
+    - Izolace zdrojů
 
 version: "1.0.0"
 status: ADAPTIVE

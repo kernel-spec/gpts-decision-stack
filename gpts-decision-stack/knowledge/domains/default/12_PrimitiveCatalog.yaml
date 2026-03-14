@@ -1,11 +1,11 @@
-# Primitive Catalog - Default Domain
+# Katalog Primitiv - Výchozí Doména
 # Status: ADAPTIVE
-# Defines available operations and primitives for GPTs
+# Definuje dostupné operace a primitiva pro GPT
 
 primitives:
   state_operations:
     get_current_state:
-      description: Retrieve current state of an artifact
+      description: Načíst aktuální stav artefaktu
       inputs:
         - artifact_id
       outputs:
@@ -14,7 +14,7 @@ primitives:
       authority_required: ANY
     
     validate_transition:
-      description: Check if a state transition is valid
+      description: Zkontrolovat, zda je stavový přechod platný
       inputs:
         - artifact_id
         - from_state
@@ -25,7 +25,7 @@ primitives:
       authority_required: CP-Governor
     
     execute_transition:
-      description: Execute a validated state transition
+      description: Provést validovaný stavový přechod
       inputs:
         - artifact_id
         - to_state
@@ -38,7 +38,7 @@ primitives:
   
   artifact_operations:
     retrieve_artifact:
-      description: Retrieve artifact details
+      description: Načíst detaily artefaktu
       inputs:
         - artifact_id
       outputs:
@@ -48,7 +48,7 @@ primitives:
       authority_required: ANY
     
     evaluate_completeness:
-      description: Check if artifact is complete
+      description: Zkontrolovat, zda je artefakt úplný
       inputs:
         - artifact_id
       outputs:
@@ -57,7 +57,7 @@ primitives:
       authority_required: AE-Intake
     
     extract_claims:
-      description: Extract claims from artifact
+      description: Extrahovat tvrzení z artefaktu
       inputs:
         - artifact_id
       outputs:
@@ -67,7 +67,7 @@ primitives:
   
   evidence_operations:
     retrieve_evidence:
-      description: Retrieve evidence for a claim
+      description: Načíst důkaz pro tvrzení
       inputs:
         - evidence_id
       outputs:
@@ -76,7 +76,7 @@ primitives:
       authority_required: AE-Claims
     
     verify_evidence:
-      description: Verify evidence supports claim
+      description: Ověřit, že důkaz podporuje tvrzení
       inputs:
         - claim_id
         - evidence_id
@@ -87,7 +87,7 @@ primitives:
       audit_required: true
     
     assess_evidence_quality:
-      description: Assess overall evidence quality
+      description: Posoudit celkovou kvalitu důkazů
       inputs:
         - artifact_id
       outputs:
@@ -97,7 +97,7 @@ primitives:
   
   decision_operations:
     make_decision:
-      description: Make and log a decision
+      description: Učinit a zaznamenat rozhodnutí
       inputs:
         - artifact_id
         - decision_type
@@ -110,7 +110,7 @@ primitives:
       audit_required: true
     
     check_authority:
-      description: Verify decision maker has authority
+      description: Ověřit, že tvůrce rozhodnutí má autoritu
       inputs:
         - decision_maker
         - decision_type
@@ -121,7 +121,7 @@ primitives:
       authority_required: CP-Governor
     
     log_decision:
-      description: Create audit log entry
+      description: Vytvořit auditní záznam
       inputs:
         - decision_record
         - state_context
@@ -134,7 +134,7 @@ primitives:
   
   routing_operations:
     assign_review_lane:
-      description: Determine appropriate review lane
+      description: Určit vhodnou kontrolní linii
       inputs:
         - artifact_id
         - artifact_type
@@ -145,7 +145,7 @@ primitives:
       authority_required: CP-Governor
     
     route_to_approval:
-      description: Route to approval workflow
+      description: Směrovat do schvalovacího workflow
       inputs:
         - artifact_id
         - approval_requirements
@@ -155,7 +155,7 @@ primitives:
       authority_required: CP-Governor
     
     escalate:
-      description: Escalate to higher authority
+      description: Eskalovat k vyšší autoritě
       inputs:
         - artifact_id
         - escalation_reason
@@ -167,7 +167,7 @@ primitives:
   
   governance_operations:
     check_veto_status:
-      description: Check if operational veto is active
+      description: Zkontrolovat, zda je aktivní provozní veto
       inputs:
         - artifact_id
       outputs:
@@ -176,7 +176,7 @@ primitives:
       authority_required: RELEASE_CONTROLLER
     
     enforce_block:
-      description: Block release for operational reasons
+      description: Blokovat vydání z provozních důvodů
       inputs:
         - artifact_id
         - block_reason
@@ -187,7 +187,7 @@ primitives:
       audit_required: true
     
     clear_block:
-      description: Clear release block
+      description: Zrušit blokování vydání
       inputs:
         - block_id
         - resolution_notes
@@ -198,43 +198,43 @@ primitives:
 
 primitive_constraints:
   authority_enforcement:
-    - All primitives check authority before execution
-    - Authority violations raise errors immediately
-    - No primitive can bypass authority checks
+    - Všechna primitiva kontrolují autoritu před provedením
+    - Porušení autority okamžitě vyvolá chyby
+    - Žádné primitivum nemůže obejít kontroly autority
   
   audit_logging:
-    - Audit-required primitives always log
-    - Log entry created before state mutation
-    - Failed operations are also logged
+    - Primitiva vyžadující audit vždy zaznamenávají
+    - Záznam vytvořen před mutací stavu
+    - Neúspěšné operace jsou také zaznamenány
   
   error_handling:
-    - Primitives return errors, not exceptions
-    - Errors include specific reason codes
-    - Partial execution is not allowed
+    - Primitiva vracejí chyby, ne výjimky
+    - Chyby zahrnují specifické kódy důvodu
+    - Částečné provedení není povoleno
 
 composition_rules:
   allowed:
-    - Chain read operations freely
-    - Compose validation operations
-    - Build complex queries from simple ones
+    - Volně řetězit operace čtení
+    - Skládat validační operace
+    - Stavět složité dotazy z jednoduchých
   
   prohibited:
-    - Bypass authority through composition
-    - Skip audit through operation splitting
-    - Circumvent governance through indirection
+    - Obcházet autoritu pomocí kompozice
+    - Přeskakovat audit rozdělenou operací
+    - Obcházet správu nepřímým přístupem
 
 extension_guidelines:
   domains_may_add:
-    - Domain-specific primitives
-    - Custom validation operations
-    - Specialized routing logic
-    - Domain evidence operations
+    - Doménově specifická primitiva
+    - Vlastní validační operace
+    - Specializovanou logiku směrování
+    - Doménové operace s důkazy
   
   domains_must_not:
-    - Add primitives that bypass authority
-    - Create audit-free mutation operations
-    - Weaken error handling
-    - Violate composition rules
+    - Přidávat primitiva, která obcházejí autoritu
+    - Vytvářet mutační operace bez auditu
+    - Oslabovat zpracování chyb
+    - Porušovat pravidla kompozice
 
 version: "1.0.0"
 status: ADAPTIVE

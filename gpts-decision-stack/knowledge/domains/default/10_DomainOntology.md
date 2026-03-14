@@ -1,97 +1,97 @@
-# Domain Ontology - Default Domain
+# Doménová Ontologie - Výchozí Doména
 
 **Status**: ADAPTIVE
 **Version**: 1.0.0
 
-## Purpose
+## Účel
 
-This ontology defines the domain concepts, terminology, and relationships for the default domain. Domain ontologies are ADAPTIVE and may be customized per deployment context.
+Tato ontologie definuje doménové koncepty, terminologii a vztahy pro výchozí doménu. Doménové ontologie jsou ADAPTIVE a mohou být přizpůsobeny podle kontextu nasazení.
 
-## Core Concepts
+## Základní Koncepty
 
 ### Artifact
 
-A discrete unit of work or deliverable submitted for evaluation and potential release.
+Diskrétní jednotka práce nebo dodávka předložená k hodnocení a potenciálnímu uvolnění.
 
-**Properties**:
-- Unique identifier
-- Type classification
-- Submitter identity
-- Creation timestamp
-- Target environment
+**Vlastnosti**:
+- Jedinečný identifikátor
+- Klasifikace typu
+- Identita předkladatele
+- Časové razítko vytvoření
+- Cílové prostředí
 
-**Types**:
-- `PACKAGE_RELEASE`: Software package or library release
-- `CONFIGURATION_CHANGE`: System configuration modification
-- `POLICY_UPDATE`: Governance or operational policy change
-- `KNOWLEDGE_UPDATE`: Knowledge base or documentation update
+**Typy**:
+- `PACKAGE_RELEASE`: Vydání softwarového balíčku nebo knihovny
+- `CONFIGURATION_CHANGE`: Úprava systémové konfigurace
+- `POLICY_UPDATE`: Změna zásad správy nebo provozu
+- `KNOWLEDGE_UPDATE`: Aktualizace znalostní báze nebo dokumentace
 
 ### Claim
 
-An assertion about an artifact's properties, quality, or compliance status.
+Tvrzení o vlastnostech, kvalitě nebo stavu souladu artefaktu.
 
-**Properties**:
-- Claim statement
-- Evidence requirements
-- Verification status
-- Verification authority
+**Vlastnosti**:
+- Prohlášení tvrzení
+- Požadavky na důkazy
+- Stav ověření
+- Autorita ověření
 
-**Examples**:
-- "All unit tests pass"
-- "Security scan shows no critical vulnerabilities"
-- "Documentation is complete and accurate"
-- "Complies with regulatory requirements"
+**Příklady**:
+- "Všechny jednotkové testy prošly"
+- "Bezpečnostní sken nezjistil žádné kritické zranitelnosti"
+- "Dokumentace je úplná a přesná"
+- "Vyhovuje regulačním požadavkům"
 
 ### Evidence
 
-Supporting material that validates or refutes a claim.
+Podpůrný materiál, který validuje nebo vyvrací tvrzení.
 
-**Types**:
-- `TEST_RESULTS`: Automated test execution results
-- `DOCUMENTATION`: Technical or user documentation
-- `CERTIFICATION`: Third-party certifications or attestations
-- `AUDIT_REPORT`: Internal or external audit findings
-- `REVIEW_FINDINGS`: Expert review conclusions
+**Typy**:
+- `TEST_RESULTS`: Výsledky automatizovaného spuštění testů
+- `DOCUMENTATION`: Technická nebo uživatelská dokumentace
+- `CERTIFICATION`: Certifikace nebo osvědčení třetích stran
+- `AUDIT_REPORT`: Zjištění interního nebo externího auditu
+- `REVIEW_FINDINGS`: Závěry odborné kontroly
 
-**Properties**:
-- Evidence type
-- Content reference (URI/path)
-- Verification status
-- Verifier identity
+**Vlastnosti**:
+- Typ důkazu
+- Odkaz na obsah (URI/cesta)
+- Stav ověření
+- Identita ověřovatele
 
 ### Decision
 
-A judgment made by an authorized GPT or authority regarding an artifact's progression.
+Rozhodnutí učiněné autorizovaným GPT nebo autoritou ohledně postupu artefaktu.
 
-**Components**:
-- Decision maker
-- Decision rationale
-- State transition attempted
-- Authority verification
-- Audit trail entry
+**Komponenty**:
+- Tvůrce rozhodnutí
+- Odůvodnění rozhodnutí
+- Pokus o přechod stavu
+- Ověření autority
+- Záznam do auditu
 
 ### Review Lane
 
-A classification mechanism for routing artifacts to appropriate review authorities.
+Klasifikační mechanismus pro směrování artefaktů k příslušným kontrolním autoritám.
 
-**Categories** (ADAPTIVE):
-- `TECHNICAL`: Technical correctness and quality
-- `SECURITY`: Security and vulnerability assessment
-- `COMPLIANCE`: Regulatory and policy compliance
-- `BUSINESS`: Business value and priority
-- `OPERATIONAL`: Operational readiness and impact
+**Kategorie** (ADAPTIVE):
+- `TECHNICAL`: Technická správnost a kvalita
+- `SECURITY`: Posouzení bezpečnosti a zranitelností
+- `COMPLIANCE`: Soulad s regulacemi a zásadami
+- `BUSINESS`: Obchodní hodnota a priorita
+- `OPERATIONAL`: Provozní připravenost a dopad
 
 ### Approval Workflow
 
-A sequence of approval steps required before artifact release.
+Sekvence kroků schválení požadovaných před uvolněním artefaktu.
 
-**Stages** (ADAPTIVE):
-- Technical approval
-- Security approval
-- Business approval
-- Executive approval (for high-impact changes)
+**Fáze** (ADAPTIVE):
+- Technické schválení
+- Bezpečnostní schválení
+- Obchodní schválení
+- Výkonné schválení (pro změny s vysokým dopadem)
 
-## Relationships
+## Vztahy
 
 ```
 Artifact
@@ -110,82 +110,82 @@ Decision
   └─ recordedIn → DecisionLog
 ```
 
-## Domain-Specific Rules (ADAPTIVE)
+## Doménově Specifická Pravidla (ADAPTIVE)
 
-These rules may be adapted per deployment:
+Tato pravidla mohou být přizpůsobena podle nasazení:
 
-### Claim Requirements
+### Požadavky na Tvrzení
 
-- `PACKAGE_RELEASE` requires:
-  - Test coverage claim with test results evidence
-  - Security scan claim with scan results evidence
-  - Documentation claim with documentation artifacts
-  - Breaking change claim with impact analysis
+- `PACKAGE_RELEASE` vyžaduje:
+  - Tvrzení o testovacím pokrytí s důkazy výsledků testů
+  - Tvrzení o bezpečnostním skenu s důkazy výsledků skenu
+  - Tvrzení o dokumentaci s dokumentačními artefakty
+  - Tvrzení o kritických změnách s analýzou dopadu
 
-- `CONFIGURATION_CHANGE` requires:
-  - Validation claim with validation test evidence
-  - Rollback plan claim with rollback procedure evidence
-  - Impact assessment claim with impact analysis evidence
+- `CONFIGURATION_CHANGE` vyžaduje:
+  - Tvrzení o validaci s důkazy validačních testů
+  - Tvrzení o plánu návratu s důkazy postupu návratu
+  - Tvrzení o posouzení dopadu s důkazy analýzy dopadu
 
-- `POLICY_UPDATE` requires:
-  - Legal review claim with legal review evidence
-  - Stakeholder approval claim with approval records evidence
+- `POLICY_UPDATE` vyžaduje:
+  - Tvrzení o právní kontrole s důkazy právní kontroly
+  - Tvrzení o schválení zúčastněných stran s důkazy záznamů schválení
 
-### Review Lane Assignment
+### Přiřazení Review Lane
 
-Assignment is based on:
-1. Artifact type
-2. Target environment
-3. Estimated impact
-4. Compliance requirements
+Přiřazení je založeno na:
+1. Typ artefaktu
+2. Cílové prostředí
+3. Odhadovaný dopad
+4. Požadavky na soulad
 
-### Escalation Triggers
+### Spouštěče Eskalace
 
-Automatic escalation occurs when:
-- High or critical priority artifacts
-- Significant or major impact estimated
-- Production environment targeted
-- Compliance concerns identified
+Automatická eskalace nastává když:
+- Artefakty s vysokou nebo kritickou prioritou
+- Odhadován významný nebo hlavní dopad
+- Cíleno produkční prostředí
+- Identifikovány obavy ohledně souladu
 
-## Terminology
+## Terminologie
 
-### Domain-Specific Terms (ADAPTIVE)
+### Doménově Specifické Termíny (ADAPTIVE)
 
-- **Intake**: Initial evaluation of submitted artifact
-- **Claims Verification**: Process of validating claims against evidence
-- **Review Lane**: Classification for routing to appropriate reviewers
-- **Governance Approval**: Formal approval by governance authority
-- **Operational Veto**: Release block by operational authority
-- **Release Controller**: Authority that executes approved releases
+- **Intake**: Počáteční hodnocení předloženého artefaktu
+- **Claims Verification**: Proces validace tvrzení oproti důkazům
+- **Review Lane**: Klasifikace pro směrování k příslušným kontrolorům
+- **Governance Approval**: Formální schválení správní autoritou
+- **Operational Veto**: Blokování vydání provozní autoritou
+- **Release Controller**: Autorita, která provádí schválená vydání
 
-### Invariant Terms (from Core)
+### Invariantní Termíny (z Jádra)
 
-These terms have fixed meanings from core knowledge:
+Tyto termíny mají pevné významy ze základních znalostí:
 
-- **State**: Canonical state in state machine
-- **Transition**: Movement between states
-- **Authority**: Decision-making power
-- **Audit Trail**: Immutable decision log
-- **Terminal State**: State with no outward transitions
+- **State**: Kanonický stav ve stavovém automatu
+- **Transition**: Přesun mezi stavy
+- **Authority**: Rozhodovací pravomoc
+- **Audit Trail**: Neměnný protokol rozhodnutí
+- **Terminal State**: Stav bez odchozích přechodů
 
-## Extension Points
+## Body Rozšíření
 
-Domains may extend this ontology with:
+Domény mohou rozšířit tuto ontologii o:
 
-- Additional artifact types
-- Custom claim categories
-- Domain-specific evidence types
-- Specialized review lanes
-- Custom approval workflows
-- Domain-specific terminology
+- Dodatečné typy artefaktů
+- Vlastní kategorie tvrzení
+- Doménově specifické typy důkazů
+- Specializované kontrolní linie
+- Vlastní schvalovací workflow
+- Doménově specifickou terminologii
 
-Extensions must not:
+Rozšíření nesmí:
 
-- Conflict with core invariants
-- Weaken governance requirements
-- Bypass audit requirements
-- Compromise authority model
+- Být v rozporu se základními invarianty
+- Oslabovat požadavky na správu
+- Obcházet požadavky na audit
+- Kompromitovat model autority
 
-## Version History
+## Historie Verzí
 
-- 1.0.0 (2026-03-14): Initial default domain ontology
+- 1.0.0 (2026-03-14): Počáteční výchozí doménová ontologie

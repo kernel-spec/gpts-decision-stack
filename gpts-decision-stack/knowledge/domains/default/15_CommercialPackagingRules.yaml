@@ -1,10 +1,10 @@
-# Commercial Packaging Rules - Default Domain
+# Pravidla Komerčního Balení - Výchozí Doména
 # Status: ADAPTIVE
-# Defines how artifacts are packaged for commercial distribution
+# Definuje, jak jsou artefakty baleny pro komerční distribuci
 
 packaging_types:
   internal_use:
-    description: Artifacts for internal organizational use only
+    description: Artefakty pouze pro interní organizační použití
     
     requirements:
       licensing: NOT_REQUIRED
@@ -13,16 +13,16 @@ packaging_types:
       support_commitment: BEST_EFFORT
     
     validation:
-      - Internal approval sufficient
-      - No export control check required
-      - Standard testing required
+      - Postačuje interní schválení
+      - Není vyžadována kontrola exportních kontrol
+      - Vyžadováno standardní testování
     
     distribution_channels:
-      - Internal artifact repository
-      - Internal deployment systems
+      - Interní úložiště artefaktů
+      - Interní systémy nasazení
   
   open_source:
-    description: Artifacts released under open source license
+    description: Artefakty vydané pod open source licencí
     
     requirements:
       licensing: REQUIRED
@@ -33,18 +33,18 @@ packaging_types:
       support_commitment: COMMUNITY
     
     validation:
-      - License compatibility check required
-      - Third-party dependency review required
-      - Source code completeness check required
-      - Documentation standards check required
+      - Vyžadována kontrola kompatibility licence
+      - Vyžadována kontrola závislostí třetích stran
+      - Vyžadována kontrola úplnosti zdrojového kódu
+      - Vyžadována kontrola dokumentačních standardů
     
     distribution_channels:
-      - Public package repositories
-      - Public source control
-      - Official download sites
+      - Veřejné úložiště balíčků
+      - Veřejná správa zdrojového kódu
+      - Oficiální stránky pro stažení
   
   commercial:
-    description: Artifacts for commercial sale or licensing
+    description: Artefakty pro komerční prodej nebo licencování
     
     requirements:
       licensing: REQUIRED
@@ -56,16 +56,16 @@ packaging_types:
       warranty_terms: MUST_DEFINE
     
     validation:
-      - License review required
-      - Legal approval required
-      - Third-party licensing cleared
-      - Support plan validated
-      - Warranty terms reviewed
+      - Vyžadována kontrola licence
+      - Vyžadováno právní schválení
+      - Vyčištěno licencování třetích stran
+      - Validován plán podpory
+      - Zkontrolovány podmínky záruky
     
     distribution_channels:
-      - Licensed customer repositories
-      - Commercial distribution platforms
-      - Customer-specific delivery
+      - Úložiště licencovaných zákazníků
+      - Komerční distribuční platformy
+      - Dodávka specifická pro zákazníka
 
 licensing_constraints:
   third_party_dependencies:
@@ -87,32 +87,32 @@ licensing_constraints:
         - AGPL-3.0
     
     compatibility_rules:
-      - Permissive licenses compatible with all packaging types
-      - Weak copyleft requires source distribution for library
-      - Strong copyleft requires full source distribution
-      - AGPL requires network use source provision
+      - Permisivní licence kompatibilní se všemi typy balení
+      - Slabý copyleft vyžaduje distribuci zdrojů pro knihovnu
+      - Silný copyleft vyžaduje plnou distribuci zdrojů
+      - AGPL vyžaduje poskytnutí zdrojů pro síťové použití
   
   license_verification:
     required_for: ALL_PACKAGING_TYPES
     
     verification_steps:
-      - Enumerate all dependencies
-      - Identify license for each dependency
-      - Check compatibility with packaging type
-      - Verify license text inclusion
-      - Generate third-party notices file
+      - Vypočítat všechny závislosti
+      - Identifikovat licenci pro každou závislost
+      - Zkontrolovat kompatibilitu s typem balení
+      - Ověřit zahrnutí textu licence
+      - Vygenerovat soubor oznámení třetích stran
 
 distribution_restrictions:
   export_control:
     check_required:
-      - Commercial packaging
-      - Open source with encryption
-      - Cross-border distribution
+      - Komerční balení
+      - Open source s šifrováním
+      - Přeshraniční distribuce
     
     validation:
-      - Export control classification
-      - Restricted country check
-      - Encryption registration check
+      - Klasifikace exportních kontrol
+      - Kontrola omezených zemí
+      - Kontrola registrace šifrování
   
   geographic_restrictions:
     by_packaging_type:
@@ -132,9 +132,9 @@ versioning_requirements:
     format: MAJOR.MINOR.PATCH
     
     increment_rules:
-      major: Breaking changes or major features
-      minor: New features, backward compatible
-      patch: Bug fixes, backward compatible
+      major: Kritické změny nebo hlavní funkce
+      minor: Nové funkce, zpětně kompatibilní
+      patch: Opravy chyb, zpětně kompatibilní
   
   version_metadata:
     required_fields:
@@ -148,12 +148,12 @@ versioning_requirements:
     required_for: ALL_PACKAGING_TYPES
     
     required_sections:
-      - Added: New features
-      - Changed: Changes in existing functionality
-      - Deprecated: Soon-to-be removed features
-      - Removed: Removed features
-      - Fixed: Bug fixes
-      - Security: Security-related changes
+      - Added: Nové funkce
+      - Changed: Změny v existující funkcionalitě
+      - Deprecated: Brzy odstraněné funkce
+      - Removed: Odstraněné funkce
+      - Fixed: Opravy chyb
+      - Security: Změny související s bezpečností
 
 support_commitments:
   by_packaging_type:
@@ -161,72 +161,72 @@ support_commitments:
       support_level: BEST_EFFORT
       sla: NONE
       support_channels:
-        - Internal ticketing system
-        - Team communication channels
+        - Interní ticketovací systém
+        - Týmové komunikační kanály
     
     open_source:
       support_level: COMMUNITY
       sla: NONE
       support_channels:
-        - Public issue tracker
-        - Community forums
-        - Documentation
+        - Veřejný tracker problémů
+        - Komunitní fóra
+        - Dokumentace
       
       expectations:
-        - Bug reports welcome
-        - Pull requests considered
-        - No guaranteed response time
+        - Vítány hlášení chyb
+        - Pull requesty zváženy
+        - Žádná garantovaná doba odezvy
     
     commercial:
       support_level: CONTRACTUAL
       sla: PER_CONTRACT
       support_channels:
-        - Dedicated support portal
-        - Email support
-        - Phone support (for premium)
+        - Dedikovaný portál podpory
+        - Emailová podpora
+        - Telefonní podpora (pro premium)
       
       expectations:
-        - Response time per SLA
-        - Issue resolution per SLA
-        - Security patch commitment
+        - Doba odezvy podle SLA
+        - Řešení problémů podle SLA
+        - Závazek bezpečnostních záplat
 
 documentation_requirements:
   all_packaging_types:
     required:
-      - README with overview
-      - Installation instructions
-      - Basic usage examples
-      - License information
-      - Third-party notices
+      - README s přehledem
+      - Instrukce pro instalaci
+      - Základní příklady použití
+      - Informace o licenci
+      - Oznámení třetích stran
   
   open_source_additional:
     required:
-      - Contributing guidelines
-      - Code of conduct
-      - Development setup guide
-      - Architecture documentation
+      - Pokyny pro přispívání
+      - Kodex chování
+      - Průvodce nastavením vývoje
+      - Dokumentace architektury
   
   commercial_additional:
     required:
-      - Comprehensive user guide
-      - API reference
-      - Troubleshooting guide
-      - Support contact information
-      - SLA documentation
+      - Komplexní uživatelská příručka
+      - Reference API
+      - Průvodce odstraňováním problémů
+      - Kontaktní informace podpory
+      - Dokumentace SLA
 
 adaptation_guidelines:
   domains_may_customize:
-    - Packaging types
-    - License policies
-    - Distribution channels
-    - Support commitments
-    - Documentation requirements
+    - Typy balení
+    - Licenční politiky
+    - Distribuční kanály
+    - Závazky podpory
+    - Požadavky na dokumentaci
   
   domains_must_preserve:
-    - License compliance enforcement
-    - Third-party notice requirements
-    - Export control compliance
-    - Version traceability
+    - Vynucování souladu s licencí
+    - Požadavky na oznámení třetích stran
+    - Soulad s exportními kontrolami
+    - Sledovatelnost verze
 
 version: "1.0.0"
 status: ADAPTIVE
