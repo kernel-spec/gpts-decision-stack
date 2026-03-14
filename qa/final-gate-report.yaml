@@ -1,0 +1,236 @@
+schema_version: "1.0.0"
+artifact_type: qa_final_gate_report
+report_date: "2026-03-14"
+repository: gpts-decision-stack
+description: >
+  Finální QA gate report pro repozitář gpts-decision-stack.
+  Tento report odráží aktuální fyzický stav repozitáře k datu sestaven.
+  Report nesmí být upraven za účelem vylepšení výsledku — musí vždy odrážet skutečnost.
+
+overall_status: FAIL
+bundle_classification: REPO-READY SKELETON
+deploy_ready: false
+
+summary: >
+  Repozitář obsahuje kompletní skeleton strukturu systému (řídicí rovina,
+  adaptivní enginy, schémata artefaktů, acceptance testy, governance mapy).
+  Deployment je blokován chybějícím backend bindingem (GPT konfigurace a
+  deployment manifest) a chybějícími knowledge soubory a operačními checklisty.
+  Dokud tyto bloky nejsou odstraněny, musí overall_status zůstat FAIL
+  a bundle_classification zůstat REPO-READY SKELETON.
+
+layer_status:
+  control_plane_prompts:
+    status: PASS
+    files_present:
+      - prompts/core/CP-Governor.system.md
+      - prompts/core/CP-ContractAuditor.system.md
+      - prompts/core/CP-TransitionJudge.system.md
+      - prompts/core/CP-ReleaseArbiter.system.md
+    note: Všechny 4 prompty řídicí roviny fyzicky existují.
+
+  adaptive_engine_prompts:
+    status: PASS
+    files_present:
+      - prompts/adaptive/AE-Intake.system.md
+      - prompts/adaptive/AE-Framing.system.md
+      - prompts/adaptive/AE-Primitive.system.md
+      - prompts/adaptive/AE-Architecture.system.md
+      - prompts/adaptive/AE-Claims.system.md
+      - prompts/adaptive/AE-RiskGov.system.md
+      - prompts/adaptive/AE-Commercial.system.md
+      - prompts/adaptive/AE-ReviewRouter.system.md
+    note: Všechny 8 promptů adaptivních enginů fyzicky existují.
+
+  artifact_schemas:
+    status: PASS
+    count_expected: 10
+    count_present: 10
+    files_present:
+      - schemas/artifacts/ProblemBrief.schema.yaml
+      - schemas/artifacts/FramingAssessment.schema.yaml
+      - schemas/artifacts/OfferDecision.schema.yaml
+      - schemas/artifacts/ArchitectureSpec.schema.yaml
+      - schemas/artifacts/ClaimsDecision.schema.yaml
+      - schemas/artifacts/RiskDecision.schema.yaml
+      - schemas/artifacts/CommercialSpec.schema.yaml
+      - schemas/artifacts/ReviewTopologyPlan.schema.yaml
+      - schemas/artifacts/StateDecisionPacket.schema.yaml
+      - schemas/artifacts/ReleaseDecision.schema.yaml
+    note: Všechna schémata artefaktů fyzicky existují.
+
+  fixture_pack:
+    status: PASS
+    count_expected: 10
+    count_present: 10
+    files_present:
+      - tests/fixtures/founder-led/framing-invalid.yaml
+      - tests/fixtures/founder-led/claims-fail.yaml
+      - tests/fixtures/founder-led/wrong-primitive.yaml
+      - tests/fixtures/founder-led/missing-claims-evidence.yaml
+      - tests/fixtures/founder-led/unsupported-claims.yaml
+      - tests/fixtures/founder-led/partial-intake.yaml
+      - tests/fixtures/enterprise/active-risk-veto.yaml
+      - tests/fixtures/enterprise/procurement-legal-required.yaml
+      - tests/fixtures/regulated/mandatory-approval-matrix.yaml
+      - tests/fixtures/enablement/non-sales-internal.yaml
+    note: Všechny acceptance fixtures fyzicky existují.
+
+  acceptance_test_pack:
+    status: PASS
+    count_expected: 12
+    count_present: 12
+    files_present:
+      - tests/acceptance/AC-001-nonlinear-model.yaml
+      - tests/acceptance/AC-002-allowed-outcomes.yaml
+      - tests/acceptance/AC-003-invalidation.yaml
+      - tests/acceptance/AC-004-veto.yaml
+      - tests/acceptance/AC-005-reentry.yaml
+      - tests/acceptance/AC-006-unresolved.yaml
+      - tests/acceptance/AC-007-packaging-gate.yaml
+      - tests/acceptance/AC-008-claims-gate.yaml
+      - tests/acceptance/AC-009-enterprise-topology.yaml
+      - tests/acceptance/AC-010-regulated-escalation.yaml
+      - tests/acceptance/AC-011-enablement-bypass.yaml
+      - tests/acceptance/AC-012-unknown-discipline.yaml
+    note: Všechny acceptance testy fyzicky existují.
+
+  governance_maps:
+    status: PASS
+    files_present:
+      - operations/operational_ownership_map.yaml
+      - operations/operational_approval_map.yaml
+      - operations/operational_veto_mapping.yaml
+    note: Všechny tři governance mapy fyzicky existují po tomto kroku.
+
+  repo_control_files:
+    status: PASS
+    files_present:
+      - MASTER_SPEC.md
+      - repo.manifest.yaml
+    note: Kanonické repo-control soubory fyzicky existují.
+
+  knowledge_files:
+    status: FAIL
+    files_expected:
+      - knowledge/core/00-system-identity.yaml
+      - knowledge/core/01-pipeline-states.yaml
+      - knowledge/core/02-artifact-contracts.yaml
+      - knowledge/core/03-decision-model.yaml
+      - knowledge/core/04-governance-rules.yaml
+      - knowledge/core/05-fail-semantics.yaml
+      - knowledge/core/06-unknown-discipline.yaml
+      - knowledge/domains/default/10-requestor-types.yaml
+      - knowledge/domains/default/11-offer-primitives.yaml
+      - knowledge/domains/default/12-review-lanes.yaml
+      - knowledge/domains/default/13-risk-classification.yaml
+      - knowledge/domains/default/14-claims-policy.yaml
+      - knowledge/domains/default/15-commercial-policy.yaml
+      - knowledge/domains/default/16-veto-policy.yaml
+      - knowledge/domains/default/17-approval-policy.yaml
+      - knowledge/domains/default/18-release-policy.yaml
+    files_present: []
+    count_expected: 16
+    count_present: 0
+    blocker: true
+    note: >
+      Knowledge soubory nejsou fyzicky přítomny v repozitáři.
+      Skript bootstrap_knowledge_pack.sh existuje, ale soubory nebyly vygenerovány
+      ani commitnuty. Tato mezera blokuje staging a produkci.
+
+  operations_checklists:
+    status: FAIL
+    files_expected:
+      - operations/checklists/local-checklist.md
+      - operations/checklists/dev-checklist.md
+      - operations/checklists/staging-checklist.md
+      - operations/checklists/prod-checklist.md
+    files_present: []
+    count_expected: 4
+    count_present: 0
+    blocker: true
+    note: >
+      Operační checklisty nejsou fyzicky přítomny. Skript bootstrap_checklists_pack.sh
+      existuje, ale soubory nebyly vygenerovány ani commitnuty.
+
+  promotion_gate:
+    status: FAIL
+    file_expected: operations/gates/promotion-gate.yaml
+    file_present: false
+    blocker: true
+    note: >
+      Soubor promotion-gate.yaml není fyzicky přítomen v repozitáři.
+      Tato mezera přímo blokuje formální posouzení deployment readiness.
+
+  backend_binding:
+    status: FAIL
+    description: >
+      Backend binding zahrnuje GPT deployment konfiguraci, API binding,
+      a deployment manifest pro produkci.
+    blocker: true
+    note: >
+      Žádná konfigurace backend bindingu není přítomna v repozitáři.
+      Tato mezera je kritickým blokatorem pro všechna production prostředí.
+      Deployment readiness nelze dosáhnout bez backend bindingu.
+
+blocking_gaps:
+  - id: BLOCK-001
+    layer: knowledge_files
+    severity: critical
+    description: >
+      16 knowledge souborů není fyzicky přítomno.
+      Staging a produkce jsou blokovány.
+    resolution: >
+      Spustit bootstrap_knowledge_pack.sh a commitnout vygenerované soubory,
+      nebo vytvořit soubory ručně podle MASTER_SPEC.md.
+
+  - id: BLOCK-002
+    layer: operations_checklists
+    severity: high
+    description: >
+      4 operační checklisty nejsou fyzicky přítomny.
+    resolution: >
+      Spustit bootstrap_checklists_pack.sh a commitnout vygenerované soubory.
+
+  - id: BLOCK-003
+    layer: promotion_gate
+    severity: high
+    description: >
+      operations/gates/promotion-gate.yaml není fyzicky přítomen.
+    resolution: >
+      Vytvořit promotion-gate.yaml s aktuálním stavem deployment gates.
+
+  - id: BLOCK-004
+    layer: backend_binding
+    severity: critical
+    description: >
+      GPT deployment konfigurace a API binding nejsou přítomny.
+      Bez backend bindingu nelze repozitář označit jako DEPLOY-READY STACK.
+    resolution: >
+      Vytvořit deployment manifest, GPT konfiguraci a API binding soubory.
+
+resolved_gaps:
+  - id: RESOLVED-001
+    layer: prompt_pack
+    description: Všechny 12 systémových promptů fyzicky existují.
+  - id: RESOLVED-002
+    layer: artifact_schemas
+    description: Všechna schémata artefaktů fyzicky existují.
+  - id: RESOLVED-003
+    layer: fixture_pack
+    description: Všechny acceptance fixtures fyzicky existují.
+  - id: RESOLVED-004
+    layer: acceptance_test_pack
+    description: Všechny acceptance testy fyzicky existují.
+  - id: RESOLVED-005
+    layer: governance_maps
+    description: Governance mapy (ownership, approval, veto) fyzicky existují.
+  - id: RESOLVED-006
+    layer: repo_control_files
+    description: MASTER_SPEC.md a repo.manifest.yaml fyzicky existují.
+
+audit_note: >
+  Tento report nesmí být ručně upraven za účelem zlepšení hodnocení.
+  Hodnoty overall_status a bundle_classification musí odpovídat skutečnému
+  fyzickému stavu repozitáře. Falešné PASS je stejně závažné selhání
+  jako falešný proceed v pipeline.

@@ -1,0 +1,123 @@
+schema_version: "1.0.0"
+artifact_type: operational_veto_mapping
+description: >
+  Mapa operačního a modelového veta pro systém gpts-decision-stack.
+  Definuje vlastníky veta, rozsah spouštění a cesty vymáhání.
+  Operační veto a modelové veto jsou odlišné třídy a nesmí být zaměňovány.
+
+veto_classes:
+  operational_veto:
+    description: >
+      Operační veto je vydáno risk governance autoritou nebo řídicí rovinou
+      jako tvrdá blokace release nebo přechodu stavu.
+      Operační veto je absolutní — nelze jej obejít žádným jiným artefaktem.
+    examples:
+      - Aktivní risk veto z risk_governance_review
+      - Security review nezavřen
+      - Legal review nezavřen
+  model_veto:
+    description: >
+      Modelové veto vychází z porušení governance pravidel nebo architektury modelu.
+      Vydáváno CP-Governor nebo CP-TransitionJudge při detekci nepovolených přechodů
+      nebo porušení pipeline invariantů.
+    examples:
+      - Pokus o tichý zpětný vstup (silent re-entry)
+      - Proceed vrácen při aktivních blocking_issues
+      - Přechod do release_decision s forbidden claims
+
+veto_authority_owner:
+  description: >
+    Každá třída veta má přesně jednoho vlastníka autority.
+    Vlastník autority je jediný subjekt, který může veto uvolnit.
+  operational_veto_owner:
+    authority: risk_governance_authority
+    backup_authority: governance_review_authority
+    release_authority: originating_veto_authority
+    note: >
+      Operační veto může uvolnit pouze autorita, která jej vydala.
+      Nelze obejít ani nahradit jiným artefaktem.
+  model_veto_owner:
+    authority: control_plane_governor_function
+    enforcement_agent: CP-Governor
+    note: >
+      Modelové veto je vymáháno řídicí rovinou automaticky při detekci porušení
+      pipeline invariantů.
+
+veto_trigger_scope:
+  description: >
+    Veto je spuštěno za přesně definovaných podmínek.
+    Spuštění mimo definovaný scope není povoleno.
+  operational_veto_triggers:
+    - trigger: active_operational_veto
+      condition: veto_active true
+      scope:
+        - release_decision
+        - production_release
+      blocking_artifact: ReleaseDecision
+      required_field: veto_check.veto_active
+    - trigger: security_review_open
+      condition: security_review_not_closed
+      scope:
+        - risk_governance_validation
+        - release_decision
+    - trigger: legal_review_open
+      condition: legal_review_not_cleared
+      scope:
+        - risk_governance_validation
+        - release_decision
+  model_veto_triggers:
+    - trigger: false_proceed
+      condition: proceed vrácen při neprázdných blocking_issues
+      scope:
+        - všechny stavy pipeline
+    - trigger: silent_reentry
+      condition: re-entry bez záznamu v decision logu
+      scope:
+        - všechny stavy pipeline
+    - trigger: forbidden_claims_proceed
+      condition: proceed nebo allowed vrácen při forbidden_claims neprázdné
+      scope:
+        - claims_validation
+        - commercial_packaging
+        - release_decision
+
+veto_enforcement_path:
+  description: >
+    Cesta vymáhání veta od detekce po blokaci.
+    Vymáhání nesmí být obejito softwarově ani obcházeno jinými artefakty.
+  operational_veto_path:
+    step_1:
+      description: AE-RiskGov detekuje aktivní veto podmínku
+      output: RiskDecision.decision_status stop nebo escalate
+    step_2:
+      description: CP-Governor zaznamenává veto do StateDecisionPacket
+      output: StateDecisionPacket s veto_active true a blocking_issues
+    step_3:
+      description: CP-TransitionJudge odmítá přechod do release_decision
+      output: TransitionDecision.transition_status blocked
+    step_4:
+      description: CP-ReleaseArbiter vrací release_status blocked
+      output: ReleaseDecision.release_status blocked
+      invariant: >
+        CP-ReleaseArbiter nesmí vrátit release_status allowed pokud
+        veto_check.veto_active je true.
+  model_veto_path:
+    step_1:
+      description: CP-Governor detekuje porušení pipeline invariantu
+    step_2:
+      description: CP-Governor vrací StateDecisionPacket s decision_status blocked
+    step_3:
+      description: Pipeline zůstává zablokována bez možnosti pokračování
+
+veto_release_procedure:
+  description: >
+    Veto lze uvolnit pouze explicitním artefaktem veto_release.
+    Artefakt veto_release musí pocházet od autority, která veto vydala.
+  required_fields:
+    - veto_release_authority
+    - veto_release_reason
+    - original_veto_reference
+  prohibited:
+    - Tiché uvolnění veta bez artefaktu
+    - Uvolnění veta jinou autoritou než vydavatelem
+    - Ignorování veta při přechodu do release_decision

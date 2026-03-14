@@ -142,6 +142,23 @@ operations:
     - operations/checklists/prod-checklist.md
   gates:
     - operations/gates/promotion-gate.yaml
+  governance_maps:
+    - operations/operational_ownership_map.yaml
+    - operations/operational_approval_map.yaml
+    - operations/operational_veto_mapping.yaml
+  docs:
+    - operations/Definition_of_Done.md
+    - operations/Management_Summary_Checklist.md
+
+qa:
+  gate_reports:
+    - qa/final-gate-report.yaml
+
+release:
+  authoritative:
+    - release/authoritative_release_notes.md
+  derived:
+    - release/derived_packaging_notes.md
 
 tests:
   fixtures:
@@ -155,6 +172,19 @@ tests:
     - tests/fixtures/enterprise/procurement-legal-required.yaml
     - tests/fixtures/regulated/mandatory-approval-matrix.yaml
     - tests/fixtures/enablement/non-sales-internal.yaml
+  acceptance:
+    - tests/acceptance/AC-001-nonlinear-model.yaml
+    - tests/acceptance/AC-002-allowed-outcomes.yaml
+    - tests/acceptance/AC-003-invalidation.yaml
+    - tests/acceptance/AC-004-veto.yaml
+    - tests/acceptance/AC-005-reentry.yaml
+    - tests/acceptance/AC-006-unresolved.yaml
+    - tests/acceptance/AC-007-packaging-gate.yaml
+    - tests/acceptance/AC-008-claims-gate.yaml
+    - tests/acceptance/AC-009-enterprise-topology.yaml
+    - tests/acceptance/AC-010-regulated-escalation.yaml
+    - tests/acceptance/AC-011-enablement-bypass.yaml
+    - tests/acceptance/AC-012-unknown-discipline.yaml
 
 language_policy:
   human_readable_content: cs
