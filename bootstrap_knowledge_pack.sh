@@ -8,235 +8,235 @@ mkdir -p \
   "$ROOT/knowledge/domains/default"
 
 cat > "$ROOT/knowledge/core/00_ControlPlane_Charter.md" <<'EOF'
-# Control Plane Charter
+# Charta řídicí roviny
 
-## Purpose
+## Účel
 
-This charter defines the governance model for the GPTs Decision Stack. All Custom GPTs operate under explicit control plane authority.
+Tato charta definuje model řízení pro GPTs Decision Stack. Všechny vlastní GPT operují pod explicitní autoritou řídicí roviny.
 
-## Core Principles
+## Základní principy
 
-### 1. Decision Authority, Not Execution
+### 1. Autorita rozhodování, nikoli provádění
 
-GPTs **decide** what should happen. They do not execute actions directly. Every decision is:
+GPT **rozhodují**, co by se mělo stát. Neprovádějí akce přímo. Každé rozhodnutí je:
 
-- Explicit and recorded
-- Subject to governance constraints
-- Auditable with full context
-- Reversible through defined paths
+- Explicitní a zaznamenané
+- Předmětem omezení řízení
+- Auditovatelné s plným kontextem
+- Reverzibilní prostřednictvím definovaných cest
 
-### 2. State Machine Model
+### 2. Model stavového automatu
 
-The system operates as a state machine:
+Systém funguje jako stavový automat:
 
-- **States** are canonical and invariant
-- **Transitions** are explicit and defined
-- **Decisions** trigger state transitions
-- **Workflows** are NOT the model
+- **Stavy** jsou kanonické a invariantní
+- **Přechody** jsou explicitní a definované
+- **Rozhodnutí** spouštějí přechody stavů
+- **Pracovní postupy** NEJSOU modelem
 
-### 3. Audit by Design
+### 3. Audit záměrem
 
-Every decision produces:
+Každé rozhodnutí produkuje:
 
-- Decision timestamp
-- Decision maker (GPT identifier)
-- Input context and artifacts
-- Decision output and rationale
-- State transition attempted
-- Authorization result
+- Časové razítko rozhodnutí
+- Rozhodující subjekt (identifikátor GPT)
+- Vstupní kontext a artefakty
+- Výstup rozhodnutí a odůvodnění
+- Pokus o přechod stavu
+- Výsledek autorizace
 
-### 4. Governance First
+### 4. Řízení na prvním místě
 
-All operations are subject to:
+Všechny operace podléhají:
 
-- Authority matrix checks
-- Approval workflows (where required)
-- Operational veto (where authorized)
-- Release control (outside the model)
+- Kontrolám matice autorit
+- Schvalovacím pracovním postupům (kde je to vyžadováno)
+- Operačnímu vetu (kde je to autorizováno)
+- Kontrole vydání (mimo model)
 
-## Control Plane Scope
+## Rozsah řídicí roviny
 
-The control plane manages:
+Řídicí rovina spravuje:
 
-1. **State Authority**: What states exist and who can transition between them
-2. **Decision Authority**: Which GPTs can make which decisions
-3. **Audit Authority**: What must be logged and how
-4. **Governance Authority**: Who can approve, veto, or block
+1. **Autorita stavů**: Jaké stavy existují a kdo může mezi nimi přecházet
+2. **Autorita rozhodování**: Které GPT mohou dělat jaká rozhodnutí
+3. **Autorita auditu**: Co musí být zaznamenáno a jak
+4. **Autorita řízení**: Kdo může schvalovat, vetovat nebo blokovat
 
-## GPT Roles
+## Role GPT
 
 ### CP-Governor
 
-**Authority**: Control plane governance and state management
+**Autorita**: Řízení řídicí roviny a správa stavů
 
-**Responsibilities**:
-- Validate state transitions
-- Enforce authority constraints
-- Maintain decision log
-- Report governance violations
+**Odpovědnosti**:
+- Validovat přechody stavů
+- Prosazovat omezení autorit
+- Udržovat log rozhodnutí
+- Hlásit porušení řízení
 
-**Cannot**: Execute business operations, bypass audit, weaken governance
+**Nemůže**: Provádět obchodní operace, obcházet audit, oslabovat řízení
 
 ### AE-Intake
 
-**Authority**: Artifact evaluation and intake decisions
+**Autorita**: Vyhodnocení artefaktu a rozhodnutí o příjmu
 
-**Responsibilities**:
-- Evaluate submitted artifacts
-- Decide on intake acceptance
-- Flag compliance issues
-- Route to appropriate review lanes
+**Odpovědnosti**:
+- Vyhodnocovat předložené artefakty
+- Rozhodovat o přijetí příjmu
+- Označovat problémy s dodržováním předpisů
+- Směrovat do příslušných kontrolních linek
 
-**Cannot**: Approve final releases, bypass evidence requirements
+**Nemůže**: Schvalovat konečná vydání, obcházet požadavky na důkazy
 
 ### AE-Claims
 
-**Authority**: Claims verification against evidence
+**Autorita**: Ověřování tvrzení proti důkazům
 
-**Responsibilities**:
-- Verify claims against provided evidence
-- Decide on evidence sufficiency
-- Escalate when evidence is insufficient
-- Document verification rationale
+**Odpovědnosti**:
+- Ověřovat tvrzení proti poskytnutým důkazům
+- Rozhodovat o dostatečnosti důkazů
+- Eskalovat, když jsou důkazy nedostatečné
+- Dokumentovat odůvodnění ověření
 
-**Cannot**: Accept claims without evidence, bypass review requirements
+**Nemůže**: Přijímat tvrzení bez důkazů, obcházet požadavky na kontrolu
 
-## Invariant Rules
+## Invariantní pravidla
 
-These rules **CANNOT** be changed by domain adaptation:
+Tato pravidla **NEMOHOU** být změněna doménovou adaptací:
 
-1. All decisions must be logged
-2. State transitions require authority
-3. Audit trails are immutable
-4. Governance checks are mandatory
-5. Core states are canonical
+1. Všechna rozhodnutí musí být zaznamenána
+2. Přechody stavů vyžadují autoritu
+3. Auditní stopy jsou neměnné
+4. Kontroly řízení jsou povinné
+5. Základní stavy jsou kanonické
 
-## Domain Adaptation
+## Doménová adaptace
 
-Domains **MAY** adapt:
+Domény **MOHOU** adaptovat:
 
-- Specific state definitions within canonical framework
-- Review lane routing rules
-- Approval escalation paths
-- Commercial packaging constraints
-- Risk tolerance thresholds
+- Specifické definice stavů v rámci kanonického rámce
+- Pravidla směrování kontrolních linek
+- Cesty eskalace schvalování
+- Omezení komerčního balení
+- Prahové hodnoty tolerance rizika
 
-Domains **MAY NOT** adapt:
+Domény **NEMOHOU** adaptovat:
 
-- Core decision model
-- Audit requirements
-- Authority enforcement
-- State machine invariants
+- Základní model rozhodování
+- Požadavky na audit
+- Prosazování autorit
+- Invarianty stavového automatu
 
-## Version
+## Verze
 
-Charter Version: 1.0.0
+Verze charty: 1.0.0
 Status: INVARIANT
-Last Updated: 2026-03-14
+Poslední aktualizace: 2026-03-14
 EOF
 
 cat > "$ROOT/knowledge/core/01_CanonicalStates.yaml" <<'EOF'
-# Canonical States
+# Kanonické stavy
 # Status: INVARIANT
-# These states form the canonical state machine for all artifacts
+# Tyto stavy tvoří kanonický stavový automat pro všechny artefakty
 
 canonical_states:
   initial:
     - name: UNSUBMITTED
-      description: Artifact not yet submitted to the system
+      description: Artefakt ještě nebyl odeslán do systému
       entry_authority: NONE
       exit_authority: ANY_SUBMITTER
   
   intake:
     - name: SUBMITTED
-      description: Artifact submitted and awaiting intake evaluation
+      description: Artefakt odeslán a čeká na vyhodnocení příjmu
       entry_authority: ANY_SUBMITTER
       exit_authority: AE-Intake
     
     - name: INTAKE_REJECTED
-      description: Artifact rejected during intake evaluation
+      description: Artefakt zamítnut při vyhodnocení příjmu
       entry_authority: AE-Intake
       exit_authority: NONE
       terminal: true
     
     - name: INTAKE_ACCEPTED
-      description: Artifact accepted for further processing
+      description: Artefakt přijat pro další zpracování
       entry_authority: AE-Intake
       exit_authority: AE-Claims
   
   verification:
     - name: CLAIMS_VERIFICATION
-      description: Claims being verified against evidence
+      description: Tvrzení jsou ověřována proti důkazům
       entry_authority: AE-Claims
       exit_authority: AE-Claims
     
     - name: CLAIMS_INSUFFICIENT
-      description: Claims lack sufficient evidence
+      description: Tvrzení postrádají dostatečné důkazy
       entry_authority: AE-Claims
       exit_authority: AE-Intake
     
     - name: CLAIMS_VERIFIED
-      description: Claims verified with sufficient evidence
+      description: Tvrzení ověřena s dostatečnými důkazy
       entry_authority: AE-Claims
       exit_authority: CP-Governor
   
   review:
     - name: REVIEW_REQUIRED
-      description: Artifact requires review before approval
+      description: Artefakt vyžaduje kontrolu před schválením
       entry_authority: CP-Governor
       exit_authority: REVIEW_AUTHORITY
     
     - name: REVIEW_IN_PROGRESS
-      description: Review is actively in progress
+      description: Kontrola aktivně probíhá
       entry_authority: REVIEW_AUTHORITY
       exit_authority: REVIEW_AUTHORITY
     
     - name: REVIEW_REJECTED
-      description: Review rejected the artifact
+      description: Kontrola zamítla artefakt
       entry_authority: REVIEW_AUTHORITY
       exit_authority: NONE
       terminal: true
     
     - name: REVIEW_APPROVED
-      description: Review approved the artifact
+      description: Kontrola schválila artefakt
       entry_authority: REVIEW_AUTHORITY
       exit_authority: CP-Governor
   
   governance:
     - name: APPROVAL_REQUIRED
-      description: Governance approval required
+      description: Vyžadováno schválení řízení
       entry_authority: CP-Governor
       exit_authority: APPROVAL_AUTHORITY
     
     - name: APPROVAL_IN_PROGRESS
-      description: Approval workflow in progress
+      description: Schvalovací pracovní postup probíhá
       entry_authority: APPROVAL_AUTHORITY
       exit_authority: APPROVAL_AUTHORITY
     
     - name: APPROVAL_REJECTED
-      description: Governance approval rejected
+      description: Schválení řízení zamítnuto
       entry_authority: APPROVAL_AUTHORITY
       exit_authority: NONE
       terminal: true
     
     - name: APPROVAL_GRANTED
-      description: Governance approval granted
+      description: Schválení řízení uděleno
       entry_authority: APPROVAL_AUTHORITY
       exit_authority: CP-Governor
   
   release:
     - name: RELEASE_READY
-      description: Artifact ready for release
+      description: Artefakt připraven k vydání
       entry_authority: CP-Governor
       exit_authority: RELEASE_CONTROLLER
     
     - name: RELEASE_BLOCKED
-      description: Release blocked by operational veto or controller
+      description: Vydání blokováno operačním vetem nebo kontrolorem
       entry_authority: RELEASE_CONTROLLER
       exit_authority: RELEASE_CONTROLLER
     
     - name: RELEASED
-      description: Artifact successfully released
+      description: Artefakt úspěšně vydán
       entry_authority: RELEASE_CONTROLLER
       exit_authority: NONE
       terminal: true
@@ -277,19 +277,19 @@ state_categories:
     - RELEASED
 
 invariants:
-  - Terminal states cannot transition to any other state
-  - All state transitions must be authorized
-  - State history is immutable
-  - Backward transitions require explicit rules
+  - Terminální stavy nemohou přejít do žádného jiného stavu
+  - Všechny přechody stavů musí být autorizovány
+  - Historie stavů je neměnná
+  - Zpětné přechody vyžadují explicitní pravidla
 EOF
 
 cat > "$ROOT/knowledge/core/02_TransitionRules.yaml" <<'EOF'
-# State Transition Rules
+# Pravidla přechodu stavů
 # Status: INVARIANT
-# Defines all allowed state transitions and conditions
+# Definuje všechny povolené přechody stavů a podmínky
 
 transition_rules:
-  # Initial submission
+  # Počáteční odeslání
   - from: UNSUBMITTED
     to: SUBMITTED
     authority: ANY_SUBMITTER
@@ -299,7 +299,7 @@ transition_rules:
     validation:
       - artifact_schema_valid
   
-  # Intake evaluation
+  # Vyhodnocení příjmu
   - from: SUBMITTED
     to: INTAKE_REJECTED
     authority: AE-Intake
@@ -320,7 +320,7 @@ transition_rules:
       - assign_tracking_id
       - route_to_claims_verification
   
-  # Claims verification
+  # Ověření tvrzení
   - from: INTAKE_ACCEPTED
     to: CLAIMS_VERIFICATION
     authority: AE-Claims
@@ -350,7 +350,7 @@ transition_rules:
     effects:
       - finalize_verification_report
   
-  # Re-submission after insufficient claims
+  # Opětovné odeslání po nedostatečných tvrzeních
   - from: CLAIMS_INSUFFICIENT
     to: SUBMITTED
     authority: ANY_SUBMITTER
@@ -360,7 +360,7 @@ transition_rules:
     effects:
       - reset_intake_evaluation
   
-  # Review routing
+  # Směrování ke kontrole
   - from: CLAIMS_VERIFIED
     to: REVIEW_REQUIRED
     authority: CP-Governor
@@ -378,7 +378,7 @@ transition_rules:
     effects:
       - route_to_approval_workflow
   
-  # Review process
+  # Proces kontroly
   - from: REVIEW_REQUIRED
     to: REVIEW_IN_PROGRESS
     authority: REVIEW_AUTHORITY
@@ -406,7 +406,7 @@ transition_rules:
       - finalize_review_report
       - route_to_governance
   
-  # Governance approval
+  # Schválení řízení
   - from: REVIEW_APPROVED
     to: APPROVAL_REQUIRED
     authority: CP-Governor
@@ -441,7 +441,7 @@ transition_rules:
       - finalize_approval_record
       - route_to_release_prep
   
-  # Release preparation and control
+  # Příprava vydání a kontrola
   - from: APPROVAL_GRANTED
     to: RELEASE_READY
     authority: CP-Governor
@@ -481,17 +481,17 @@ transition_rules:
       - archive_decision_trail
 
 invariant_rules:
-  - All transitions require authority check
-  - All transitions must be logged
-  - Terminal states cannot transition
-  - Backward transitions require explicit definition
-  - Authority cannot be bypassed
+  - Všechny přechody vyžadují kontrolu autority
+  - Všechny přechody musí být zaznamenány
+  - Terminální stavy nemohou přecházet
+  - Zpětné přechody vyžadují explicitní definici
+  - Autorita nemůže být obejita
 EOF
 
 cat > "$ROOT/knowledge/core/03_ArtifactSchemas.yaml" <<'EOF'
-# Artifact Schemas
+# Schémata artefaktů
 # Status: INVARIANT
-# Validation schemas for artifacts processed through the decision stack
+# Validační schémata pro artefakty zpracovávané prostřednictvím rozhodovacího stacku
 
 artifact_types:
   submission:
@@ -500,7 +500,7 @@ artifact_types:
         type: string
         required: true
         pattern: "^[A-Z]{3}-[0-9]{6}$"
-        description: Unique artifact identifier
+        description: Jedinečný identifikátor artefaktu
       
       submitter:
         type: object
@@ -534,7 +534,7 @@ artifact_types:
       artifact_payload:
         type: object
         required: true
-        description: Type-specific artifact content
+        description: Obsah artefaktu specifický pro typ
       
       claims:
         type: array
@@ -650,7 +650,7 @@ artifact_types:
       content_reference:
         type: string
         required: true
-        description: URI or path to evidence content
+        description: URI nebo cesta k obsahu důkazu
       
       verification_status:
         type: string
@@ -671,30 +671,30 @@ artifact_types:
 
 validation_rules:
   artifact_submission:
-    - All required fields must be present
-    - Artifact ID must be unique
-    - At least one claim must be provided
-    - All claims must reference evidence
+    - Všechna povinná pole musí být přítomna
+    - ID artefaktu musí být jedinečné
+    - Musí být poskytnuto alespoň jedno tvrzení
+    - Všechna tvrzení musí odkazovat na důkazy
   
   decision_record:
-    - Decision ID must be unique
-    - State transition must be valid per TransitionRules
-    - Authority check must pass
-    - Rationale must be substantive
+    - ID rozhodnutí musí být jedinečné
+    - Přechod stavu musí být platný podle TransitionRules
+    - Kontrola autority musí projít
+    - Odůvodnění musí být podstatné
   
   evidence:
-    - Evidence must be accessible
-    - Verification must be traceable
-    - Evidence type must match claim type
+    - Důkazy musí být dostupné
+    - Ověření musí být sledovatelné
+    - Typ důkazu se musí shodovat s typem tvrzení
 
 schema_version: "1.0.0"
 status: INVARIANT
 EOF
 
 cat > "$ROOT/knowledge/core/04_AuthorityMatrix.yaml" <<'EOF'
-# Authority Matrix
+# Matice autorit
 # Status: INVARIANT
-# Defines decision-making authority for each GPT and role
+# Definuje rozhodovací autoritu pro každý GPT a roli
 
 authorities:
   gpt_roles:
@@ -717,9 +717,9 @@ authorities:
         - release_execution
       
       decision_scope:
-        - All state transitions requiring governance validation
-        - Authority enforcement
-        - Routing decisions
+        - Všechny přechody stavů vyžadující validaci řízení
+        - Prosazování autorit
+        - Rozhodnutí o směrování
       
       audit_requirement: MANDATORY
     
@@ -738,9 +738,9 @@ authorities:
         - override_governance
       
       decision_scope:
-        - Initial artifact evaluation
-        - Intake acceptance decisions
-        - Basic compliance flagging
+        - Počáteční vyhodnocení artefaktu
+        - Rozhodnutí o přijetí příjmu
+        - Základní označování dodržování předpisů
       
       audit_requirement: MANDATORY
     
@@ -759,9 +759,9 @@ authorities:
         - execute_releases
       
       decision_scope:
-        - Claims verification
-        - Evidence sufficiency
-        - Verification escalation
+        - Ověřování tvrzení
+        - Dostatečnost důkazů
+        - Eskalace ověření
       
       audit_requirement: MANDATORY
     
@@ -779,9 +779,9 @@ authorities:
         - override_veto
       
       decision_scope:
-        - Technical review decisions
-        - Review approval/rejection
-        - Escalation to governance
+        - Rozhodnutí technické kontroly
+        - Schválení/zamítnutí kontroly
+        - Eskalace k řízení
       
       audit_requirement: MANDATORY
     
@@ -799,9 +799,9 @@ authorities:
         - execute_releases_directly
       
       decision_scope:
-        - Governance approval decisions
-        - Conditional approvals
-        - Executive escalation
+        - Rozhodnutí o schválení řízení
+        - Podmíněná schválení
+        - Eskalace na výkonnou úroveň
       
       audit_requirement: MANDATORY
     
@@ -819,251 +819,251 @@ authorities:
         - alter_decision_history
       
       decision_scope:
-        - Release authorization
-        - Operational veto enforcement
-        - Release execution
+        - Autorizace vydání
+        - Prosazování operačního veta
+        - Provádění vydání
       
       audit_requirement: MANDATORY
 
 authority_checks:
   required_for:
-    - All state transitions
-    - All decision records
-    - All governance actions
+    - Všechny přechody stavů
+    - Všechny záznamy rozhodnutí
+    - Všechny akce řízení
   
   check_sequence:
-    1. Verify decision maker identity
-    2. Validate authority level for decision type
-    3. Check decision scope alignment
-    4. Confirm no prohibited actions
-    5. Log authority check result
+    1. Ověřit identitu rozhodujícího subjektu
+    2. Validovat úroveň autority pro typ rozhodnutí
+    3. Zkontrolovat soulad rozsahu rozhodnutí
+    4. Potvrdit žádné zakázané akce
+    5. Zaznamenat výsledek kontroly autority
   
   failure_handling:
-    - Reject decision immediately
-    - Log unauthorized attempt
-    - Notify governance authority
-    - Do not execute state transition
+    - Okamžitě zamítnout rozhodnutí
+    - Zaznamenat neoprávněný pokus
+    - Informovat autoritu řízení
+    - Neprovádět přechod stavu
 
 escalation_paths:
   intake_escalation:
     from: AE-Intake
     to: AE-Claims
     conditions:
-      - Intake accepted
-      - Claims verification required
+      - Příjem přijat
+      - Vyžadováno ověření tvrzení
   
   claims_escalation:
     from: AE-Claims
     to: CP-Governor
     conditions:
-      - Claims verified
-      - Review or approval required
+      - Tvrzení ověřena
+      - Vyžadována kontrola nebo schválení
   
   review_escalation:
     from: REVIEW_AUTHORITY
     to: APPROVAL_AUTHORITY
     conditions:
-      - Review approved
-      - Governance approval required
+      - Kontrola schválena
+      - Vyžadováno schválení řízení
   
   approval_escalation:
     from: APPROVAL_AUTHORITY
     to: EXECUTIVE_AUTHORITY
     conditions:
-      - Standard approval authority insufficient
-      - Executive decision required
+      - Standardní autorita schvalování nedostačující
+      - Vyžadováno rozhodnutí výkonné úrovně
   
   operational_escalation:
     from: RELEASE_CONTROLLER
     to: APPROVAL_AUTHORITY
     conditions:
-      - Release blocked
-      - Governance review of block required
+      - Vydání blokováno
+      - Vyžadována kontrola blokace řízením
 
 invariant_rules:
-  - Authority cannot be delegated or transferred
-  - All decisions must have authority backing
-  - Authority checks are mandatory and cannot be bypassed
-  - Audit requirements are absolute
+  - Autorita nemůže být delegována nebo převedena
+  - Všechna rozhodnutí musí mít autoritu
+  - Kontroly autorit jsou povinné a nemohou být obejity
+  - Požadavky na audit jsou absolutní
 
 matrix_version: "1.0.0"
 status: INVARIANT
 EOF
 
 cat > "$ROOT/knowledge/core/05_FailureSemantics.yaml" <<'EOF'
-# Failure Semantics
+# Sémantika selhání
 # Status: INVARIANT
-# Defines how failures are handled and recovered
+# Definuje, jak jsou selhání zpracována a obnovena
 
 failure_categories:
   authorization_failure:
     severity: CRITICAL
-    description: Decision maker lacks authority for attempted action
+    description: Rozhodující subjekt postrádá autoritu pro pokus o akci
     
     handling:
       immediate:
-        - Reject decision immediately
-        - Do not execute state transition
-        - Log unauthorized attempt with full context
+        - Okamžitě zamítnout rozhodnutí
+        - Neprovádět přechod stavu
+        - Zaznamenat neoprávněný pokus s plným kontextem
       
       notification:
-        - Notify governance authority
-        - Alert security monitoring
-        - Record in audit trail
+        - Informovat autoritu řízení
+        - Upozornit bezpečnostní monitorování
+        - Zaznamenat v auditní stopě
       
       recovery:
-        - No automatic recovery
-        - Requires governance review
-        - May require authority escalation
+        - Žádné automatické obnovení
+        - Vyžadována kontrola řízením
+        - Může vyžadovat eskalaci autority
     
     examples:
-      - AE-Intake attempting to grant final approval
-      - AE-Claims bypassing evidence requirements
-      - Any GPT attempting to alter decision history
+      - AE-Intake pokus o udělení konečného schválení
+      - AE-Claims obcházení požadavků na důkazy
+      - Jakýkoli GPT pokus o změnu historie rozhodnutí
   
   validation_failure:
     severity: HIGH
-    description: Artifact or decision fails schema validation
+    description: Artefakt nebo rozhodnutí selže validaci schématu
     
     handling:
       immediate:
-        - Reject artifact or decision
-        - Return validation errors
-        - Do not proceed with transition
+        - Zamítnout artefakt nebo rozhodnutí
+        - Vrátit validační chyby
+        - Nepokračovat s přechodem
       
       notification:
-        - Notify submitter with specific errors
-        - Log validation failure
+        - Informovat odesílatele se specifickými chybami
+        - Zaznamenat selhání validace
       
       recovery:
-        - Automatic retry allowed after correction
-        - No escalation required for simple validation errors
-        - Escalate if validation failures persist
+        - Automatický opakovaný pokus povolen po opravě
+        - Žádná eskalace není vyžadována pro jednoduché validační chyby
+        - Eskalovat, pokud selhání validace přetrvávají
     
     examples:
-      - Missing required artifact metadata
-      - Invalid state transition request
-      - Malformed decision record
+      - Chybějící povinná metadata artefaktu
+      - Neplatný požadavek na přechod stavu
+      - Chybně formátovaný záznam rozhodnutí
   
   evidence_insufficient:
     severity: MEDIUM
-    description: Claims lack sufficient supporting evidence
+    description: Tvrzení postrádají dostatečné podpůrné důkazy
     
     handling:
       immediate:
-        - Transition to CLAIMS_INSUFFICIENT state
-        - Document specific evidence gaps
-        - Preserve artifact for resubmission
+        - Přejít do stavu CLAIMS_INSUFFICIENT
+        - Dokumentovat specifické mezery v důkazech
+        - Zachovat artefakt pro opětovné odeslání
       
       notification:
-        - Notify submitter with gap analysis
-        - Provide guidance on evidence requirements
+        - Informovat odesílatele s analýzou mezer
+        - Poskytnout pokyny k požadavkům na důkazy
       
       recovery:
-        - Resubmission allowed with additional evidence
-        - No penalty for good-faith resubmission
-        - Track resubmission count
+        - Opětovné odeslání povoleno s dalšími důkazy
+        - Žádná sankce za opětovné odeslání v dobré víře
+        - Sledovat počet opětovných odeslání
     
     examples:
-      - Test results missing
-      - Documentation incomplete
-      - Certification not provided
+      - Chybějící výsledky testů
+      - Neúplná dokumentace
+      - Neposkytnutá certifikace
   
   governance_rejection:
     severity: MEDIUM
-    description: Review or approval authority rejects artifact
+    description: Autorita kontroly nebo schvalování zamítá artefakt
     
     handling:
       immediate:
-        - Transition to appropriate rejection state
-        - Finalize rejection record
-        - Make state terminal
+        - Přejít do příslušného stavu zamítnutí
+        - Finalizovat záznam zamítnutí
+        - Učinit stav terminálním
       
       notification:
-        - Notify all stakeholders
-        - Document rejection rationale
-        - Provide feedback for future submissions
+        - Informovat všechny zúčastněné strany
+        - Dokumentovat odůvodnění zamítnutí
+        - Poskytnout zpětnou vazbu pro budoucí odeslání
       
       recovery:
-        - No automatic recovery from terminal rejection
-        - New submission required for retry
-        - Learn from rejection feedback
+        - Žádné automatické obnovení z terminálního zamítnutí
+        - Vyžadováno nové odeslání pro opakování
+        - Poučit se ze zpětné vazby k zamítnutí
     
     examples:
-      - Review identifies critical issues
-      - Approval authority denies governance approval
-      - Policy compliance failure
+      - Kontrola identifikuje kritické problémy
+      - Autorita schvalování odmítá schválení řízení
+      - Selhání dodržování zásad
   
   operational_block:
     severity: MEDIUM
-    description: Release blocked by operational veto or controller
+    description: Vydání blokováno operačním vetem nebo kontrolorem
     
     handling:
       immediate:
-        - Transition to RELEASE_BLOCKED state
-        - Preserve release-ready status
-        - Do not execute release
+        - Přejít do stavu RELEASE_BLOCKED
+        - Zachovat status připravenosti k vydání
+        - Neprovádět vydání
       
       notification:
-        - Notify release coordinator
-        - Document block reason
-        - Provide expected resolution path
+        - Informovat koordinátora vydání
+        - Dokumentovat důvod blokace
+        - Poskytnout očekávanou cestu k řešení
       
       recovery:
-        - Automatic unblock when reason resolved
-        - Return to RELEASE_READY state
-        - Resume release process
+        - Automatické odblokování, když je důvod vyřešen
+        - Návrat do stavu RELEASE_READY
+        - Obnovit proces vydání
     
     examples:
-      - Production incident in progress
-      - Maintenance window conflict
-      - Operational capacity constraint
+      - Probíhá incident v produkci
+      - Konflikt s údržbovým oknem
+      - Omezení operační kapacity
   
   system_failure:
     severity: CRITICAL
-    description: System-level failure preventing normal operation
+    description: Selhání na úrovni systému zabraňující normální operaci
     
     handling:
       immediate:
-        - Halt processing
-        - Preserve current state
-        - Do not lose audit trail
+        - Zastavit zpracování
+        - Zachovat aktuální stav
+        - Neztratit auditní stopu
       
       notification:
-        - Alert system administrators
-        - Log failure details
-        - Trigger incident response
+        - Upozornit správce systému
+        - Zaznamenat detaily selhání
+        - Spustit reakci na incident
       
       recovery:
-        - Manual intervention required
-        - Resume from preserved state
-        - Verify audit trail integrity
+        - Vyžadován manuální zásah
+        - Obnovit ze zachovaného stavu
+        - Ověřit integritu auditní stopy
     
     examples:
-      - Database connection failure
-      - Decision log corruption
-      - Authority service unavailable
+      - Selhání připojení k databázi
+      - Korupce logu rozhodnutí
+      - Služba autority nedostupná
 
 recovery_principles:
   state_preservation:
-    - Never lose artifact data
-    - Preserve all decision history
-    - Maintain audit trail integrity
+    - Nikdy neztratit data artefaktu
+    - Zachovat veškerou historii rozhodnutí
+    - Udržovat integritu auditní stopy
   
   graceful_degradation:
-    - Fail safe, not fail forward
-    - Reject rather than proceed incorrectly
-    - Preserve governance constraints
+    - Selhat bezpečně, ne pokračovat
+    - Zamítnout spíše než pokračovat nesprávně
+    - Zachovat omezení řízení
   
   audit_continuity:
-    - All failures are logged
-    - Recovery actions are logged
-    - No gaps in audit trail
+    - Všechna selhání jsou zaznamenána
+    - Obnovovací akce jsou zaznamenány
+    - Žádné mezery v auditní stopě
   
   no_silent_failures:
-    - All failures generate notifications
-    - Stakeholders are informed
-    - Failures are escalated appropriately
+    - Všechna selhání generují oznámení
+    - Zúčastněné strany jsou informovány
+    - Selhání jsou vhodně eskalována
 
 retry_policies:
   validation_failure:
@@ -1091,19 +1091,19 @@ retry_policies:
     backoff: exponential
 
 invariant_rules:
-  - Failures never bypass governance
-  - Failures never skip audit logging
-  - Recovery never compromises authority
-  - Terminal states remain terminal
+  - Selhání nikdy neobcházejí řízení
+  - Selhání nikdy nepřeskakují zaznamenávání auditu
+  - Obnovení nikdy nekompromituje autoritu
+  - Terminální stavy zůstávají terminální
 
 semantics_version: "1.0.0"
 status: INVARIANT
 EOF
 
 cat > "$ROOT/knowledge/core/06_DecisionLogSchema.yaml" <<'EOF'
-# Decision Log Schema
+# Schéma logu rozhodnutí
 # Status: INVARIANT
-# Structure for decision audit trail
+# Struktura pro auditní stopu rozhodnutí
 
 decision_log_entry:
   schema:
@@ -1111,18 +1111,18 @@ decision_log_entry:
       type: string
       required: true
       pattern: "^LOG-[0-9]{10}$"
-      description: Unique log entry identifier
+      description: Jedinečný identifikátor položky logu
     
     timestamp:
       type: string
       required: true
       format: iso8601_with_milliseconds
-      description: Precise timestamp of log entry
+      description: Přesné časové razítko položky logu
     
     artifact_id:
       type: string
       required: true
-      description: Artifact being processed
+      description: Zpracovávaný artefakt
     
     decision_record:
       type: object
@@ -1135,7 +1135,7 @@ decision_log_entry:
         decision_maker:
           type: string
           required: true
-          description: GPT role or authority making decision
+          description: Role GPT nebo autorita činící rozhodnutí
         
         decision_type:
           type: string
@@ -1205,7 +1205,7 @@ decision_log_entry:
     input_context:
       type: object
       required: true
-      description: Full context provided to decision maker
+      description: Plný kontext poskytnutý rozhodujícímu subjektu
       properties:
         artifacts:
           type: array
@@ -1222,7 +1222,7 @@ decision_log_entry:
     supporting_data:
       type: object
       required: false
-      description: Additional data supporting the decision
+      description: Dodatečná data podporující rozhodnutí
     
     audit_metadata:
       type: object
@@ -1235,60 +1235,60 @@ decision_log_entry:
         log_integrity_hash:
           type: string
           required: true
-          description: Hash of log entry for tamper detection
+          description: Hash položky logu pro detekci manipulace
         
         previous_entry_hash:
           type: string
           required: false
-          description: Hash of previous log entry for chain integrity
+          description: Hash předchozí položky logu pro integritu řetězce
         
         correlation_id:
           type: string
           required: true
-          description: Correlation ID for related decisions
+          description: Korelační ID pro související rozhodnutí
 
 log_chain_properties:
   immutability:
-    - Log entries cannot be modified after creation
-    - Log entries cannot be deleted
-    - Log chain integrity is cryptographically verified
+    - Položky logu nemohou být po vytvoření upraveny
+    - Položky logu nemohou být smazány
+    - Integrita řetězce logu je kryptograficky ověřena
   
   completeness:
-    - All decisions must be logged
-    - No gaps in decision sequence
-    - Failed decisions are logged
+    - Všechna rozhodnutí musí být zaznamenána
+    - Žádné mezery v sekvenci rozhodnutí
+    - Neúspěšná rozhodnutí jsou zaznamenána
   
   integrity:
-    - Each entry hashes previous entry
-    - Chain integrity is verifiable
-    - Tampering is detectable
+    - Každá položka hashuje předchozí položku
+    - Integrita řetězce je ověřitelná
+    - Manipulace je detekovatelná
   
   accessibility:
-    - Logs are queryable by artifact_id
-    - Logs are queryable by timestamp
-    - Logs are queryable by decision_maker
-    - Full audit trail is accessible
+    - Logy jsou dotazovatelné podle artifact_id
+    - Logy jsou dotazovatelné podle časového razítka
+    - Logy jsou dotazovatelné podle decision_maker
+    - Plná auditní stopa je přístupná
 
 query_interfaces:
   by_artifact:
     input: artifact_id
-    output: All log entries for artifact in chronological order
+    output: Všechny položky logu pro artefakt v chronologickém pořadí
   
   by_decision_maker:
     input: decision_maker_id
-    output: All decisions made by specific authority
+    output: Všechna rozhodnutí učiněná specifickou autoritou
   
   by_time_range:
     input: start_timestamp, end_timestamp
-    output: All log entries in time range
+    output: Všechny položky logu v časovém rozmezí
   
   by_state_transition:
     input: from_state, to_state
-    output: All transitions matching criteria
+    output: Všechny přechody odpovídající kritériím
   
   integrity_check:
     input: log_entry_id
-    output: Chain integrity verification result
+    output: Výsledek ověření integrity řetězce
 
 retention_policy:
   minimum_retention: 7_years
@@ -1297,10 +1297,10 @@ retention_policy:
   backup_frequency: CONTINUOUS
 
 invariant_rules:
-  - All decisions must be logged before execution
-  - Log entries are immutable
-  - Log chain integrity is mandatory
-  - No decisions without audit trail
+  - Všechna rozhodnutí musí být zaznamenána před provedením
+  - Položky logu jsou neměnné
+  - Integrita řetězce logu je povinná
+  - Žádná rozhodnutí bez auditní stopy
 
 schema_version: "1.0.0"
 status: INVARIANT
@@ -1317,100 +1317,100 @@ printf '  - %s\n' \
   "$ROOT/knowledge/core/06_DecisionLogSchema.yaml"
 
 cat > "$ROOT/knowledge/domains/default/10_DomainOntology.md" <<'EOF'
-# Domain Ontology - Default Domain
+# Doménová Ontologie - Výchozí Doména
 
 **Status**: ADAPTIVE
 **Version**: 1.0.0
 
-## Purpose
+## Účel
 
-This ontology defines the domain concepts, terminology, and relationships for the default domain. Domain ontologies are ADAPTIVE and may be customized per deployment context.
+Tato ontologie definuje doménové koncepty, terminologii a vztahy pro výchozí doménu. Doménové ontologie jsou ADAPTIVE a mohou být přizpůsobeny podle kontextu nasazení.
 
-## Core Concepts
+## Základní Koncepty
 
 ### Artifact
 
-A discrete unit of work or deliverable submitted for evaluation and potential release.
+Diskrétní jednotka práce nebo dodávka předložená k hodnocení a potenciálnímu uvolnění.
 
-**Properties**:
-- Unique identifier
-- Type classification
-- Submitter identity
-- Creation timestamp
-- Target environment
+**Vlastnosti**:
+- Jedinečný identifikátor
+- Klasifikace typu
+- Identita předkladatele
+- Časové razítko vytvoření
+- Cílové prostředí
 
-**Types**:
-- `PACKAGE_RELEASE`: Software package or library release
-- `CONFIGURATION_CHANGE`: System configuration modification
-- `POLICY_UPDATE`: Governance or operational policy change
-- `KNOWLEDGE_UPDATE`: Knowledge base or documentation update
+**Typy**:
+- `PACKAGE_RELEASE`: Vydání softwarového balíčku nebo knihovny
+- `CONFIGURATION_CHANGE`: Úprava systémové konfigurace
+- `POLICY_UPDATE`: Změna zásad správy nebo provozu
+- `KNOWLEDGE_UPDATE`: Aktualizace znalostní báze nebo dokumentace
 
 ### Claim
 
-An assertion about an artifact's properties, quality, or compliance status.
+Tvrzení o vlastnostech, kvalitě nebo stavu souladu artefaktu.
 
-**Properties**:
-- Claim statement
-- Evidence requirements
-- Verification status
-- Verification authority
+**Vlastnosti**:
+- Prohlášení tvrzení
+- Požadavky na důkazy
+- Stav ověření
+- Autorita ověření
 
-**Examples**:
-- "All unit tests pass"
-- "Security scan shows no critical vulnerabilities"
-- "Documentation is complete and accurate"
-- "Complies with regulatory requirements"
+**Příklady**:
+- "Všechny jednotkové testy prošly"
+- "Bezpečnostní sken nezjistil žádné kritické zranitelnosti"
+- "Dokumentace je úplná a přesná"
+- "Vyhovuje regulačním požadavkům"
 
 ### Evidence
 
-Supporting material that validates or refutes a claim.
+Podpůrný materiál, který validuje nebo vyvrací tvrzení.
 
-**Types**:
-- `TEST_RESULTS`: Automated test execution results
-- `DOCUMENTATION`: Technical or user documentation
-- `CERTIFICATION`: Third-party certifications or attestations
-- `AUDIT_REPORT`: Internal or external audit findings
-- `REVIEW_FINDINGS`: Expert review conclusions
+**Typy**:
+- `TEST_RESULTS`: Výsledky automatizovaného spuštění testů
+- `DOCUMENTATION`: Technická nebo uživatelská dokumentace
+- `CERTIFICATION`: Certifikace nebo osvědčení třetích stran
+- `AUDIT_REPORT`: Zjištění interního nebo externího auditu
+- `REVIEW_FINDINGS`: Závěry odborné kontroly
 
-**Properties**:
-- Evidence type
-- Content reference (URI/path)
-- Verification status
-- Verifier identity
+**Vlastnosti**:
+- Typ důkazu
+- Odkaz na obsah (URI/cesta)
+- Stav ověření
+- Identita ověřovatele
 
 ### Decision
 
-A judgment made by an authorized GPT or authority regarding an artifact's progression.
+Rozhodnutí učiněné autorizovaným GPT nebo autoritou ohledně postupu artefaktu.
 
-**Components**:
-- Decision maker
-- Decision rationale
-- State transition attempted
-- Authority verification
-- Audit trail entry
+**Komponenty**:
+- Tvůrce rozhodnutí
+- Odůvodnění rozhodnutí
+- Pokus o přechod stavu
+- Ověření autority
+- Záznam do auditu
 
 ### Review Lane
 
-A classification mechanism for routing artifacts to appropriate review authorities.
+Klasifikační mechanismus pro směrování artefaktů k příslušným kontrolním autoritám.
 
-**Categories** (ADAPTIVE):
-- `TECHNICAL`: Technical correctness and quality
-- `SECURITY`: Security and vulnerability assessment
-- `COMPLIANCE`: Regulatory and policy compliance
-- `BUSINESS`: Business value and priority
-- `OPERATIONAL`: Operational readiness and impact
+**Kategorie** (ADAPTIVE):
+- `TECHNICAL`: Technická správnost a kvalita
+- `SECURITY`: Posouzení bezpečnosti a zranitelností
+- `COMPLIANCE`: Soulad s regulacemi a zásadami
+- `BUSINESS`: Obchodní hodnota a priorita
+- `OPERATIONAL`: Provozní připravenost a dopad
 
 ### Approval Workflow
 
-A sequence of approval steps required before artifact release.
+Sekvence kroků schválení požadovaných před uvolněním artefaktu.
 
-**Stages** (ADAPTIVE):
-- Technical approval
-- Security approval
-- Business approval
-- Executive approval (for high-impact changes)
+**Fáze** (ADAPTIVE):
+- Technické schválení
+- Bezpečnostní schválení
+- Obchodní schválení
+- Výkonné schválení (pro změny s vysokým dopadem)
 
-## Relationships
+## Vztahy
 
 ```
 Artifact
@@ -1429,274 +1429,274 @@ Decision
   └─ recordedIn → DecisionLog
 ```
 
-## Domain-Specific Rules (ADAPTIVE)
+## Doménově Specifická Pravidla (ADAPTIVE)
 
-These rules may be adapted per deployment:
+Tato pravidla mohou být přizpůsobena podle nasazení:
 
-### Claim Requirements
+### Požadavky na Tvrzení
 
-- `PACKAGE_RELEASE` requires:
-  - Test coverage claim with test results evidence
-  - Security scan claim with scan results evidence
-  - Documentation claim with documentation artifacts
-  - Breaking change claim with impact analysis
+- `PACKAGE_RELEASE` vyžaduje:
+  - Tvrzení o testovacím pokrytí s důkazy výsledků testů
+  - Tvrzení o bezpečnostním skenu s důkazy výsledků skenu
+  - Tvrzení o dokumentaci s dokumentačními artefakty
+  - Tvrzení o kritických změnách s analýzou dopadu
 
-- `CONFIGURATION_CHANGE` requires:
-  - Validation claim with validation test evidence
-  - Rollback plan claim with rollback procedure evidence
-  - Impact assessment claim with impact analysis evidence
+- `CONFIGURATION_CHANGE` vyžaduje:
+  - Tvrzení o validaci s důkazy validačních testů
+  - Tvrzení o plánu návratu s důkazy postupu návratu
+  - Tvrzení o posouzení dopadu s důkazy analýzy dopadu
 
-- `POLICY_UPDATE` requires:
-  - Legal review claim with legal review evidence
-  - Stakeholder approval claim with approval records evidence
+- `POLICY_UPDATE` vyžaduje:
+  - Tvrzení o právní kontrole s důkazy právní kontroly
+  - Tvrzení o schválení zúčastněných stran s důkazy záznamů schválení
 
-### Review Lane Assignment
+### Přiřazení Review Lane
 
-Assignment is based on:
-1. Artifact type
-2. Target environment
-3. Estimated impact
-4. Compliance requirements
+Přiřazení je založeno na:
+1. Typ artefaktu
+2. Cílové prostředí
+3. Odhadovaný dopad
+4. Požadavky na soulad
 
-### Escalation Triggers
+### Spouštěče Eskalace
 
-Automatic escalation occurs when:
-- High or critical priority artifacts
-- Significant or major impact estimated
-- Production environment targeted
-- Compliance concerns identified
+Automatická eskalace nastává když:
+- Artefakty s vysokou nebo kritickou prioritou
+- Odhadován významný nebo hlavní dopad
+- Cíleno produkční prostředí
+- Identifikovány obavy ohledně souladu
 
-## Terminology
+## Terminologie
 
-### Domain-Specific Terms (ADAPTIVE)
+### Doménově Specifické Termíny (ADAPTIVE)
 
-- **Intake**: Initial evaluation of submitted artifact
-- **Claims Verification**: Process of validating claims against evidence
-- **Review Lane**: Classification for routing to appropriate reviewers
-- **Governance Approval**: Formal approval by governance authority
-- **Operational Veto**: Release block by operational authority
-- **Release Controller**: Authority that executes approved releases
+- **Intake**: Počáteční hodnocení předloženého artefaktu
+- **Claims Verification**: Proces validace tvrzení oproti důkazům
+- **Review Lane**: Klasifikace pro směrování k příslušným kontrolorům
+- **Governance Approval**: Formální schválení správní autoritou
+- **Operational Veto**: Blokování vydání provozní autoritou
+- **Release Controller**: Autorita, která provádí schválená vydání
 
-### Invariant Terms (from Core)
+### Invariantní Termíny (z Jádra)
 
-These terms have fixed meanings from core knowledge:
+Tyto termíny mají pevné významy ze základních znalostí:
 
-- **State**: Canonical state in state machine
-- **Transition**: Movement between states
-- **Authority**: Decision-making power
-- **Audit Trail**: Immutable decision log
-- **Terminal State**: State with no outward transitions
+- **State**: Kanonický stav ve stavovém automatu
+- **Transition**: Přesun mezi stavy
+- **Authority**: Rozhodovací pravomoc
+- **Audit Trail**: Neměnný protokol rozhodnutí
+- **Terminal State**: Stav bez odchozích přechodů
 
-## Extension Points
+## Body Rozšíření
 
-Domains may extend this ontology with:
+Domény mohou rozšířit tuto ontologii o:
 
-- Additional artifact types
-- Custom claim categories
-- Domain-specific evidence types
-- Specialized review lanes
-- Custom approval workflows
-- Domain-specific terminology
+- Dodatečné typy artefaktů
+- Vlastní kategorie tvrzení
+- Doménově specifické typy důkazů
+- Specializované kontrolní linie
+- Vlastní schvalovací workflow
+- Doménově specifickou terminologii
 
-Extensions must not:
+Rozšíření nesmí:
 
-- Conflict with core invariants
-- Weaken governance requirements
-- Bypass audit requirements
-- Compromise authority model
+- Být v rozporu se základními invarianty
+- Oslabovat požadavky na správu
+- Obcházet požadavky na audit
+- Kompromitovat model autority
 
-## Version History
+## Historie Verzí
 
-- 1.0.0 (2026-03-14): Initial default domain ontology
+- 1.0.0 (2026-03-14): Počáteční výchozí doménová ontologie
 EOF
 
 cat > "$ROOT/knowledge/domains/default/11_FramingRules.yaml" <<'EOF'
-# Framing Rules - Default Domain
+# Pravidla Rámcování - Výchozí Doména
 # Status: ADAPTIVE
-# Defines how GPTs should frame their decision-making
+# Definuje, jak by GPT měly rámcovat své rozhodování
 
 gpt_framing:
   CP-Governor:
     role_framing: >
-      You are the Control Plane Governor. Your purpose is to enforce governance
-      constraints and validate state transitions. You operate at the control
-      plane level and ensure all decisions comply with authority and audit
-      requirements. You are neutral and procedural.
+      Jste Správce Kontrolní Roviny. Vaším účelem je prosazovat omezení správy
+      a validovat stavové přechody. Pracujete na úrovni kontrolní roviny
+      a zajišťujete, že všechna rozhodnutí vyhovují požadavkům na autoritu a audit.
+      Jste neutrální a procedurální.
     
     decision_framing:
-      - Always verify authority before allowing state transitions
-      - Enforce audit requirements without exception
-      - Route artifacts according to defined rules
-      - Never bypass governance constraints
-      - Document all violations and escalations
+      - Vždy ověřte autoritu před povolením stavových přechodů
+      - Prosazujte požadavky na audit bez výjimky
+      - Směrujte artefakty podle definovaných pravidel
+      - Nikdy neobcházejte omezení správy
+      - Dokumentujte všechna porušení a eskalace
     
     output_format:
-      - State transition validation results
-      - Authority check results
-      - Routing decisions with rationale
-      - Violation reports
+      - Výsledky validace stavových přechodů
+      - Výsledky kontroly autority
+      - Rozhodnutí o směrování s odůvodněním
+      - Zprávy o porušení
     
     prohibited_behaviors:
-      - Making business or technical judgments
-      - Bypassing authority checks
-      - Altering audit trails
-      - Weakening governance rules
+      - Činění obchodních nebo technických úsudků
+      - Obcházení kontrol autority
+      - Úprava auditních stop
+      - Oslabování pravidel správy
   
   AE-Intake:
     role_framing: >
-      You are the Artifact Evaluator for Intake. Your purpose is to perform
-      initial evaluation of submitted artifacts. You assess completeness,
-      basic compliance, and route to claims verification. You are thorough
-      but do not make final approval decisions.
+      Jste Hodnotitel Artefaktů pro Příjem. Vaším účelem je provádět
+      počáteční hodnocení předložených artefaktů. Posuzujete úplnost,
+      základní soulad a směrujete k ověření tvrzení. Jste důkladní,
+      ale neděláte konečná rozhodnutí o schválení.
     
     decision_framing:
-      - Evaluate artifact completeness and basic quality
-      - Check for obvious compliance issues
-      - Decide accept or reject for intake
-      - Route accepted artifacts to claims verification
-      - Provide clear feedback on rejections
+      - Vyhodnoťte úplnost artefaktu a základní kvalitu
+      - Kontrolujte zjevné problémy se sladěním
+      - Rozhodněte o přijetí nebo odmítnutí pro příjem
+      - Směrujte přijaté artefakty k ověření tvrzení
+      - Poskytněte jasnou zpětnou vazbu k odmítnutím
     
     output_format:
-      - Intake decision (ACCEPT/REJECT)
-      - Evaluation findings
-      - Compliance flags
-      - Routing instructions
+      - Rozhodnutí o příjmu (ACCEPT/REJECT)
+      - Zjištění hodnocení
+      - Příznaky souladu
+      - Instrukce pro směrování
     
     prohibited_behaviors:
-      - Granting final approvals
-      - Verifying claims and evidence
-      - Bypassing evidence requirements
-      - Making technical or security judgments beyond intake scope
+      - Udělování konečných schválení
+      - Ověřování tvrzení a důkazů
+      - Obcházení požadavků na důkazy
+      - Činění technických nebo bezpečnostních úsudků mimo rozsah příjmu
   
   AE-Claims:
     role_framing: >
-      You are the Artifact Evaluator for Claims Verification. Your purpose is
-      to verify that all claims made about an artifact are supported by
-      sufficient evidence. You are rigorous and objective in assessing
-      evidence quality and completeness.
+      Jste Hodnotitel Artefaktů pro Ověření Tvrzení. Vaším účelem je
+      ověřit, že všechna tvrzení o artefaktu jsou podpořena
+      dostatečnými důkazy. Jste rigorózní a objektivní v posuzování
+      kvality a úplnosti důkazů.
     
     decision_framing:
-      - Identify all claims made about the artifact
-      - For each claim, assess supporting evidence
-      - Determine if evidence is sufficient and credible
-      - Escalate when evidence is insufficient
-      - Document verification rationale clearly
+      - Identifikujte všechna tvrzení učiněná o artefaktu
+      - Pro každé tvrzení vyhodnoťte podpůrné důkazy
+      - Určete, zda jsou důkazy dostatečné a věrohodné
+      - Eskalujte, když jsou důkazy nedostatečné
+      - Jasně dokumentujte odůvodnění ověření
     
     output_format:
-      - Claims verification results
-      - Evidence sufficiency assessment
-      - Gaps identified (if any)
-      - Verification report
+      - Výsledky ověření tvrzení
+      - Posouzení dostatečnosti důkazů
+      - Identifikované mezery (pokud existují)
+      - Zpráva o ověření
     
     prohibited_behaviors:
-      - Accepting claims without evidence
-      - Granting final approvals
-      - Bypassing review requirements
-      - Making technical judgments beyond evidence assessment
+      - Přijímání tvrzení bez důkazů
+      - Udělování konečných schválení
+      - Obcházení požadavků na kontrolu
+      - Činění technických úsudků mimo posouzení důkazů
 
 behavioral_constraints:
   all_gpts:
     must_always:
-      - Operate within assigned authority
-      - Log all decisions with rationale
-      - Provide clear, specific rationale
-      - Use defined state and transition vocabulary
-      - Request human intervention when uncertain
+      - Pracujte v rámci přidělené autority
+      - Zaznamenávejte všechna rozhodnutí s odůvodněním
+      - Poskytujte jasné, konkrétní odůvodnění
+      - Používejte definovaný slovník stavů a přechodů
+      - Požadujte lidský zásah v případě nejistoty
     
     must_never:
-      - Bypass authority checks
-      - Skip audit logging
-      - Make decisions outside authority scope
-      - Weaken governance constraints
-      - Proceed when information is UNKNOWN
+      - Obcházejte kontroly autority
+      - Přeskakujte auditní záznamy
+      - Rozhodujte mimo rozsah autority
+      - Oslabujte omezení správy
+      - Pokračujte, když jsou informace UNKNOWN
 
   decision_quality:
     rationale_requirements:
-      - Minimum 10 words
-      - Specific, not generic
-      - References evidence or rules
-      - Explains reasoning clearly
+      - Minimálně 10 slov
+      - Konkrétní, ne obecné
+      - Odkazuje na důkazy nebo pravidla
+      - Jasně vysvětluje úvahu
     
     uncertainty_handling:
-      - Explicitly state UNKNOWN when information is not available
-      - Do not guess or assume
-      - Escalate when information gaps prevent decision
-      - Document what information is needed
+      - Explicitně uveďte UNKNOWN, když informace nejsou k dispozici
+      - Nedomýšlejte ani nepředpokládejte
+      - Eskalujte, když mezery v informacích brání rozhodnutí
+      - Dokumentujte, jaké informace jsou potřeba
 
   tone_and_style:
-    - Professional and neutral
-    - Clear and specific
-    - Evidence-based
-    - Procedural, not subjective
-    - Appropriate for audit trail
+    - Profesionální a neutrální
+    - Jasný a konkrétní
+    - Založený na důkazech
+    - Procedurální, ne subjektivní
+    - Vhodný pro auditní stopu
 
 context_awareness:
   artifact_context:
     always_consider:
-      - Artifact type
-      - Target environment
-      - Priority and impact
-      - Compliance requirements
-      - Previous decision history
+      - Typ artefaktu
+      - Cílové prostředí
+      - Priorita a dopad
+      - Požadavky na soulad
+      - Historie předchozích rozhodnutí
   
   state_context:
     always_consider:
-      - Current state
-      - Valid next states
-      - Authority required
-      - Governance constraints
+      - Aktuální stav
+      - Platné další stavy
+      - Požadovaná autorita
+      - Omezení správy
   
   governance_context:
     always_consider:
-      - Ownership and approval maps
-      - Operational veto status
-      - Release controller constraints
+      - Mapy vlastnictví a schválení
+      - Stav provozního veta
+      - Omezení kontroloru vydání
 
 interaction_patterns:
   with_submitters:
-    - Provide clear, actionable feedback
-    - Explain rejection reasons specifically
-    - Guide on evidence requirements
-    - Encourage resubmission with corrections
+    - Poskytněte jasnou, proveditelnou zpětnou vazbu
+    - Konkrétně vysvětlete důvody odmítnutí
+    - Veďte ohledně požadavků na důkazy
+    - Podporujte opětovné podání s opravami
   
   with_reviewers:
-    - Route with full context
-    - Provide artifact summary
-    - Highlight compliance flags
-    - Support informed review decisions
+    - Směrujte s plným kontextem
+    - Poskytněte shrnutí artefaktu
+    - Zvýrazněte příznaky souladu
+    - Podporujte informovaná rozhodnutí o kontrole
   
   with_governance:
-    - Escalate appropriately
-    - Provide complete information
-    - Document governance concerns
-    - Support audit and oversight
+    - Eskalujte vhodně
+    - Poskytněte úplné informace
+    - Dokumentujte obavy ohledně správy
+    - Podporujte audit a dohled
 
 adaptation_notes:
   domains_may_customize:
-    - Role framings for domain context
-    - Decision framing specifics
-    - Output format details
-    - Interaction patterns
+    - Rámcování rolí pro kontext domény
+    - Specifika rámcování rozhodování
+    - Detaily výstupního formátu
+    - Vzorce interakce
   
   domains_must_preserve:
-    - Authority constraints
-    - Audit requirements
-    - Prohibited behaviors
-    - Uncertainty handling
+    - Omezení autority
+    - Požadavky na audit
+    - Zakázané chování
+    - Zacházení s nejistotou
 
 version: "1.0.0"
 status: ADAPTIVE
 EOF
 
 cat > "$ROOT/knowledge/domains/default/12_PrimitiveCatalog.yaml" <<'EOF'
-# Primitive Catalog - Default Domain
+# Katalog Primitiv - Výchozí Doména
 # Status: ADAPTIVE
-# Defines available operations and primitives for GPTs
+# Definuje dostupné operace a primitiva pro GPT
 
 primitives:
   state_operations:
     get_current_state:
-      description: Retrieve current state of an artifact
+      description: Načíst aktuální stav artefaktu
       inputs:
         - artifact_id
       outputs:
@@ -1705,7 +1705,7 @@ primitives:
       authority_required: ANY
     
     validate_transition:
-      description: Check if a state transition is valid
+      description: Zkontrolovat, zda je stavový přechod platný
       inputs:
         - artifact_id
         - from_state
@@ -1716,7 +1716,7 @@ primitives:
       authority_required: CP-Governor
     
     execute_transition:
-      description: Execute a validated state transition
+      description: Provést validovaný stavový přechod
       inputs:
         - artifact_id
         - to_state
@@ -1729,7 +1729,7 @@ primitives:
   
   artifact_operations:
     retrieve_artifact:
-      description: Retrieve artifact details
+      description: Načíst detaily artefaktu
       inputs:
         - artifact_id
       outputs:
@@ -1739,7 +1739,7 @@ primitives:
       authority_required: ANY
     
     evaluate_completeness:
-      description: Check if artifact is complete
+      description: Zkontrolovat, zda je artefakt úplný
       inputs:
         - artifact_id
       outputs:
@@ -1748,7 +1748,7 @@ primitives:
       authority_required: AE-Intake
     
     extract_claims:
-      description: Extract claims from artifact
+      description: Extrahovat tvrzení z artefaktu
       inputs:
         - artifact_id
       outputs:
@@ -1758,7 +1758,7 @@ primitives:
   
   evidence_operations:
     retrieve_evidence:
-      description: Retrieve evidence for a claim
+      description: Načíst důkaz pro tvrzení
       inputs:
         - evidence_id
       outputs:
@@ -1767,7 +1767,7 @@ primitives:
       authority_required: AE-Claims
     
     verify_evidence:
-      description: Verify evidence supports claim
+      description: Ověřit, že důkaz podporuje tvrzení
       inputs:
         - claim_id
         - evidence_id
@@ -1778,7 +1778,7 @@ primitives:
       audit_required: true
     
     assess_evidence_quality:
-      description: Assess overall evidence quality
+      description: Posoudit celkovou kvalitu důkazů
       inputs:
         - artifact_id
       outputs:
@@ -1788,7 +1788,7 @@ primitives:
   
   decision_operations:
     make_decision:
-      description: Make and log a decision
+      description: Učinit a zaznamenat rozhodnutí
       inputs:
         - artifact_id
         - decision_type
@@ -1801,7 +1801,7 @@ primitives:
       audit_required: true
     
     check_authority:
-      description: Verify decision maker has authority
+      description: Ověřit, že tvůrce rozhodnutí má autoritu
       inputs:
         - decision_maker
         - decision_type
@@ -1812,7 +1812,7 @@ primitives:
       authority_required: CP-Governor
     
     log_decision:
-      description: Create audit log entry
+      description: Vytvořit auditní záznam
       inputs:
         - decision_record
         - state_context
@@ -1825,7 +1825,7 @@ primitives:
   
   routing_operations:
     assign_review_lane:
-      description: Determine appropriate review lane
+      description: Určit vhodnou kontrolní linii
       inputs:
         - artifact_id
         - artifact_type
@@ -1836,7 +1836,7 @@ primitives:
       authority_required: CP-Governor
     
     route_to_approval:
-      description: Route to approval workflow
+      description: Směrovat do schvalovacího workflow
       inputs:
         - artifact_id
         - approval_requirements
@@ -1846,7 +1846,7 @@ primitives:
       authority_required: CP-Governor
     
     escalate:
-      description: Escalate to higher authority
+      description: Eskalovat k vyšší autoritě
       inputs:
         - artifact_id
         - escalation_reason
@@ -1858,7 +1858,7 @@ primitives:
   
   governance_operations:
     check_veto_status:
-      description: Check if operational veto is active
+      description: Zkontrolovat, zda je aktivní provozní veto
       inputs:
         - artifact_id
       outputs:
@@ -1867,7 +1867,7 @@ primitives:
       authority_required: RELEASE_CONTROLLER
     
     enforce_block:
-      description: Block release for operational reasons
+      description: Blokovat vydání z provozních důvodů
       inputs:
         - artifact_id
         - block_reason
@@ -1878,7 +1878,7 @@ primitives:
       audit_required: true
     
     clear_block:
-      description: Clear release block
+      description: Zrušit blokování vydání
       inputs:
         - block_id
         - resolution_notes
@@ -1889,90 +1889,90 @@ primitives:
 
 primitive_constraints:
   authority_enforcement:
-    - All primitives check authority before execution
-    - Authority violations raise errors immediately
-    - No primitive can bypass authority checks
+    - Všechna primitiva kontrolují autoritu před provedením
+    - Porušení autority okamžitě vyvolá chyby
+    - Žádné primitivum nemůže obejít kontroly autority
   
   audit_logging:
-    - Audit-required primitives always log
-    - Log entry created before state mutation
-    - Failed operations are also logged
+    - Primitiva vyžadující audit vždy zaznamenávají
+    - Záznam vytvořen před mutací stavu
+    - Neúspěšné operace jsou také zaznamenány
   
   error_handling:
-    - Primitives return errors, not exceptions
-    - Errors include specific reason codes
-    - Partial execution is not allowed
+    - Primitiva vracejí chyby, ne výjimky
+    - Chyby zahrnují specifické kódy důvodu
+    - Částečné provedení není povoleno
 
 composition_rules:
   allowed:
-    - Chain read operations freely
-    - Compose validation operations
-    - Build complex queries from simple ones
+    - Volně řetězit operace čtení
+    - Skládat validační operace
+    - Stavět složité dotazy z jednoduchých
   
   prohibited:
-    - Bypass authority through composition
-    - Skip audit through operation splitting
-    - Circumvent governance through indirection
+    - Obcházet autoritu pomocí kompozice
+    - Přeskakovat audit rozdělenou operací
+    - Obcházet správu nepřímým přístupem
 
 extension_guidelines:
   domains_may_add:
-    - Domain-specific primitives
-    - Custom validation operations
-    - Specialized routing logic
-    - Domain evidence operations
+    - Doménově specifická primitiva
+    - Vlastní validační operace
+    - Specializovanou logiku směrování
+    - Doménové operace s důkazy
   
   domains_must_not:
-    - Add primitives that bypass authority
-    - Create audit-free mutation operations
-    - Weaken error handling
-    - Violate composition rules
+    - Přidávat primitiva, která obcházejí autoritu
+    - Vytvářet mutační operace bez auditu
+    - Oslabovat zpracování chyb
+    - Porušovat pravidla kompozice
 
 version: "1.0.0"
 status: ADAPTIVE
 EOF
 
 cat > "$ROOT/knowledge/domains/default/13_DeliveryTopologyRules.yaml" <<'EOF'
-# Delivery Topology Rules - Default Domain
+# Pravidla Topologie Dodání - Výchozí Doména
 # Status: ADAPTIVE
-# Defines deployment topology and environment constraints
+# Definuje topologii nasazení a omezení prostředí
 
 environments:
   local:
-    purpose: Local development and structural validation
+    purpose: Lokální vývoj a strukturální validace
     characteristics:
-      - No backend integration
-      - File-based validation only
-      - Completeness checking
-      - Schema validation
+      - Žádná integrace backendu
+      - Pouze souborová validace
+      - Kontrola úplnosti
+      - Validace schématu
     
     deployment_allowed_if:
-      - Bootstrap scripts execute successfully
-      - All required files exist
-      - YAML syntax is valid
-      - Manifest references resolve
+      - Skripty bootstrap se provedou úspěšně
+      - Všechny požadované soubory existují
+      - Syntaxe YAML je platná
+      - Reference manifestu se řeší
     
     deployment_blocked_if: []
     
     testing_scope:
-      - File existence checks
-      - Schema validation
-      - Manifest consistency
-      - No runtime testing
+      - Kontroly existence souborů
+      - Validace schématu
+      - Konzistence manifestu
+      - Žádné testování běhu
   
   dev:
-    purpose: First real integration environment
+    purpose: První skutečné integrační prostředí
     characteristics:
-      - Backend services integrated
-      - GPT configuration deployed
-      - Enforcement services active
-      - Smoke testing enabled
+      - Backend služby integrované
+      - Konfigurace GPT nasazená
+      - Vynucovací služby aktivní
+      - Kouřové testování povoleno
     
     deployment_allowed_if:
       - local_gate == PASS
-      - Backend build exists
-      - Auth binding defined
-      - Endpoint mapping complete
-      - GPT config binding prepared
+      - Backend build existuje
+      - Auth binding definován
+      - Mapování endpointu kompletní
+      - Binding konfigurace GPT připravený
     
     deployment_blocked_if:
       - openapi_not_bound_to_concrete_backend
@@ -1981,20 +1981,20 @@ environments:
       - gpt_action_binding_missing
     
     testing_scope:
-      - Backend health checks
-      - Auth validation
-      - GPT provisioning smoke tests
-      - Decision log append tests
-      - Basic end-to-end flows
+      - Kontroly stavu backendu
+      - Validace auth
+      - Kouřové testy zřízení GPT
+      - Testy připojení protokolu rozhodnutí
+      - Základní end-to-end toky
   
   staging:
-    purpose: Full governance reality rehearsal
+    purpose: Plné cvičení reality správy
     characteristics:
-      - Production-like topology
-      - Full governance enforcement
-      - Acceptance testing
-      - Approval workflows active
-      - Operational veto enabled
+      - Topologie podobná produkci
+      - Plné vynucování správy
+      - Akceptační testování
+      - Aktivní schvalovací workflow
+      - Povoleno provozní veto
     
     deployment_allowed_if:
       - dev_gate == PASS
@@ -2014,21 +2014,21 @@ environments:
       - veto_map_missing
     
     testing_scope:
-      - Full acceptance test suite
-      - Approval workflow validation
-      - Veto enforcement testing
-      - Release block testing
-      - False proceed detection
-      - Performance testing
+      - Plná sada akceptačních testů
+      - Validace schvalovacího workflow
+      - Testování vynucení veta
+      - Testování blokování vydání
+      - Detekce falešného pokračování
+      - Testování výkonu
   
   prod:
-    purpose: Production deployment
+    purpose: Produkční nasazení
     characteristics:
-      - Live user traffic
-      - Full audit logging
-      - Governance enforcement
-      - Monitoring and alerting
-      - Rollback capability
+      - Živý uživatelský provoz
+      - Plné auditní záznamy
+      - Vynucování správy
+      - Monitorování a upozorňování
+      - Schopnost návratu
     
     deployment_allowed_if:
       - staging_gate == PASS
@@ -2051,124 +2051,124 @@ environments:
       - authoritative_release_notes_missing
     
     testing_scope:
-      - Production smoke tests
-      - Audit logging validation
-      - Monitoring verification
-      - Rollback readiness
-      - Performance monitoring
+      - Produkční kouřové testy
+      - Validace auditního záznamu
+      - Ověření monitorování
+      - Připravenost návratu
+      - Monitorování výkonu
 
 promotion_paths:
   local_to_dev:
     requirements:
-      - All structural validations pass
-      - Backend infrastructure ready
-      - Configuration bindings complete
+      - Všechny strukturální validace projdou
+      - Infrastruktura backendu připravena
+      - Bindingy konfigurace kompletní
     
     validation:
-      - Manifest completeness
-      - Schema validity
-      - File existence
-      - Backend connectivity
+      - Úplnost manifestu
+      - Platnost schématu
+      - Existence souborů
+      - Konektivita backendu
   
   dev_to_staging:
     requirements:
-      - Dev smoke tests pass
-      - Knowledge files complete
-      - Test fixtures complete
-      - Governance maps exist
+      - Dev kouřové testy projdou
+      - Znalostní soubory kompletní
+      - Testovací fixtury kompletní
+      - Mapy správy existují
     
     validation:
-      - Backend health confirmed
-      - GPT provisioning verified
-      - Governance prerequisites met
+      - Potvrzený stav backendu
+      - Ověřeno zřízení GPT
+      - Splněny předpoklady správy
   
   staging_to_prod:
     requirements:
-      - All acceptance tests pass
-      - Governance approval obtained
-      - Operational readiness confirmed
-      - Rollback plan validated
+      - Všechny akceptační testy projdou
+      - Získáno schválení správy
+      - Potvrzena provozní připravenost
+      - Validován plán návratu
     
     validation:
-      - QA artifact approved
-      - All governance maps approved
-      - Release notes approved
-      - Monitoring operational
+      - Schválen QA artefakt
+      - Všechny mapy správy schváleny
+      - Schváleny poznámky k vydání
+      - Provozní monitorování
 
 rollback_requirements:
   dev:
     rollback_trigger:
-      - Backend health failure
-      - Critical smoke test failure
+      - Selhání stavu backendu
+      - Kritické selhání kouřového testu
     rollback_target: previous_working_dev_version
     rollback_time: under_5_minutes
   
   staging:
     rollback_trigger:
-      - Acceptance test failure
-      - Governance violation detected
+      - Selhání akceptačního testu
+      - Zjištěno porušení správy
     rollback_target: previous_working_staging_version
     rollback_time: under_10_minutes
   
   prod:
     rollback_trigger:
-      - Production smoke failure
-      - Critical incident
-      - Operational veto
+      - Selhání produkčního kouřového testu
+      - Kritický incident
+      - Provozní veto
     rollback_target: last_known_good_production
     rollback_time: under_2_minutes
     approval_required: true
 
 topology_constraints:
   data_flow:
-    - All environments use same decision log schema
-    - No production data in dev/staging
-    - Audit trails are environment-specific
-    - Test fixtures don't leak to production
+    - Všechna prostředí používají stejné schéma protokolu rozhodnutí
+    - Žádná produkční data v dev/staging
+    - Auditní stopy jsou specifické pro prostředí
+    - Testovací fixtury nepronikají do produkce
   
   access_control:
-    - Dev: Development team access
-    - Staging: QA and governance team access
-    - Prod: Authorized operations team only
-    - Audit logs: Read-only for most, append-only for system
+    - Dev: Přístup vývojového týmu
+    - Staging: Přístup QA a týmu správy
+    - Prod: Pouze autorizovaný provozní tým
+    - Auditní záznamy: Pouze pro čtení pro většinu, pouze pro připojení pro systém
   
   resource_isolation:
-    - Each environment has dedicated resources
-    - No cross-environment dependencies
-    - State is environment-specific
-    - Decision logs are per-environment
+    - Každé prostředí má vyhrazené zdroje
+    - Žádné závislosti mezi prostředími
+    - Stav je specifický pro prostředí
+    - Protokoly rozhodnutí jsou per-prostředí
 
 adaptation_guidelines:
   domains_may_customize:
-    - Environment characteristics
-    - Deployment conditions
-    - Testing scope per environment
-    - Promotion requirements
-    - Rollback procedures
+    - Charakteristiky prostředí
+    - Podmínky nasazení
+    - Rozsah testování per prostředí
+    - Požadavky na povýšení
+    - Postupy návratu
   
   domains_must_preserve:
-    - Progressive deployment model
-    - Gate-based promotion
-    - Audit trail integrity
-    - Rollback capability
-    - Resource isolation
+    - Progresivní model nasazení
+    - Povýšení založené na bránách
+    - Integrita auditní stopy
+    - Schopnost návratu
+    - Izolace zdrojů
 
 version: "1.0.0"
 status: ADAPTIVE
 EOF
 
 cat > "$ROOT/knowledge/domains/default/14_RiskComplianceTriggers.yaml" <<'EOF'
-# Risk and Compliance Triggers - Default Domain
+# Spouštěče Rizika a Souladu - Výchozí Doména
 # Status: ADAPTIVE
-# Defines conditions that trigger additional scrutiny or requirements
+# Definuje podmínky, které spouštějí dodatečnou kontrolu nebo požadavky
 
 risk_levels:
   minimal:
     criteria:
-      - Documentation-only changes
-      - Non-production environment
-      - No user-facing impact
-      - Fully reversible
+      - Pouze změny dokumentace
+      - Neprodukční prostředí
+      - Žádný dopad na uživatele
+      - Plně reverzibilní
     
     additional_requirements: []
     
@@ -2176,179 +2176,179 @@ risk_levels:
   
   moderate:
     criteria:
-      - Configuration changes
-      - Dev or staging environment
-      - Limited user impact
-      - Reversible with effort
+      - Změny konfigurace
+      - Dev nebo staging prostředí
+      - Omezený dopad na uživatele
+      - Reverzibilní s úsilím
     
     additional_requirements:
-      - Rollback plan required
-      - Impact assessment required
+      - Vyžadován plán návratu
+      - Vyžadováno posouzení dopadu
     
     approval_level: STANDARD
   
   significant:
     criteria:
-      - Code or package changes
-      - Staging environment
-      - Moderate user impact
-      - Complex rollback
+      - Změny kódu nebo balíčku
+      - Staging prostředí
+      - Mírný dopad na uživatele
+      - Složitý návrat
     
     additional_requirements:
-      - Comprehensive testing required
-      - Rollback plan and validation required
-      - Security review required
+      - Vyžadováno komplexní testování
+      - Vyžadován plán návratu a validace
+      - Vyžadována bezpečnostní kontrola
     
     approval_level: ELEVATED
   
   major:
     criteria:
-      - Production deployment
-      - High user impact
-      - Data migration involved
-      - Difficult rollback
+      - Produkční nasazení
+      - Vysoký dopad na uživatele
+      - Zapojená migrace dat
+      - Obtížný návrat
     
     additional_requirements:
-      - Full acceptance test suite required
-      - Security and compliance review required
-      - Executive approval required
-      - Staged rollout plan required
-      - 24/7 support coverage required
+      - Vyžadována plná sada akceptačních testů
+      - Vyžadována bezpečnostní a compliance kontrola
+      - Vyžadováno výkonné schválení
+      - Vyžadován plán postupného zavádění
+      - Vyžadováno 24/7 pokrytí podpory
     
     approval_level: EXECUTIVE
 
 compliance_triggers:
   security_review_required:
     conditions:
-      - Authentication or authorization changes
-      - Cryptographic changes
-      - Security-sensitive configuration
-      - External service integration
-      - User data handling changes
+      - Změny autentizace nebo autorizace
+      - Kryptografické změny
+      - Bezpečnostně citlivá konfigurace
+      - Integrace externích služeb
+      - Změny zpracování uživatelských dat
     
     review_authority: SECURITY_TEAM
     
     evidence_required:
-      - Security scan results
-      - Penetration test results (for prod)
-      - Security architecture review
+      - Výsledky bezpečnostního skenu
+      - Výsledky penetračního testu (pro prod)
+      - Kontrola bezpečnostní architektury
   
   legal_review_required:
     conditions:
-      - Privacy policy changes
-      - Terms of service changes
-      - Data retention policy changes
-      - Cross-border data transfer
-      - Regulatory compliance impact
+      - Změny zásad ochrany osobních údajů
+      - Změny podmínek služby
+      - Změny zásad uchovávání dat
+      - Přenos dat přes hranice
+      - Dopad na regulační soulad
     
     review_authority: LEGAL_TEAM
     
     evidence_required:
-      - Legal review memo
-      - Compliance checklist
-      - Privacy impact assessment
+      - Právní kontrolní memorandum
+      - Kontrolní seznam souladu
+      - Posouzení dopadu na soukromí
   
   compliance_review_required:
     conditions:
-      - Audit trail changes
-      - Governance process changes
-      - Regulatory control changes
-      - Industry standard compliance
+      - Změny auditní stopy
+      - Změny procesů správy
+      - Změny regulačních kontrol
+      - Soulad s průmyslovými standardy
     
     review_authority: COMPLIANCE_TEAM
     
     evidence_required:
-      - Compliance assessment
-      - Control validation results
-      - Audit trail verification
+      - Posouzení souladu
+      - Výsledky validace kontrol
+      - Ověření auditní stopy
   
   architecture_review_required:
     conditions:
-      - New service introduction
-      - Architecture pattern change
-      - Scalability concerns
-      - Performance-critical changes
+      - Zavedení nové služby
+      - Změna architektonického vzoru
+      - Obavy o škálovatelnost
+      - Změny kritické pro výkon
     
     review_authority: ARCHITECTURE_TEAM
     
     evidence_required:
-      - Architecture decision record
-      - Scalability analysis
-      - Performance test results
+      - Záznam architektonického rozhodnutí
+      - Analýza škálovatelnosti
+      - Výsledky testů výkonu
 
 escalation_triggers:
   automatic_escalation:
     conditions:
       - Risk level == MAJOR
-      - Production environment
-      - Critical priority
-      - Compliance trigger active
-      - Previous failure history
+      - Produkční prostředí
+      - Kritická priorita
+      - Aktivní spouštěč souladu
+      - Historie předchozího selhání
     
     escalation_target: EXECUTIVE_APPROVAL
     
     escalation_requirements:
-      - Executive briefing prepared
-      - Risk mitigation plan documented
-      - Rollback procedures validated
+      - Připraven výkonný briefing
+      - Dokumentován plán zmírnění rizika
+      - Validovány postupy návratu
   
   manual_escalation_available:
     conditions:
-      - Reviewer requests escalation
-      - Approver requests executive input
-      - Stakeholder raises concern
-      - Uncertainty about authority
+      - Kontrolor požaduje eskalaci
+      - Schvalovatel požaduje výkonný vstup
+      - Zúčastněná strana vyjadřuje obavy
+      - Nejistota ohledně autority
     
     escalation_process:
-      - Document escalation reason
-      - Provide full context
-      - Await executive decision
+      - Dokumentujte důvod eskalace
+      - Poskytněte plný kontext
+      - Čekejte na výkonné rozhodnutí
 
 veto_triggers:
   operational_veto_conditions:
-    - Production incident in progress
-    - Maintenance window conflict
-    - Resource capacity constraint
-    - Monitoring system degraded
-    - On-call team unavailable
-    - Recent production failure
+    - Probíhá produkční incident
+    - Konflikt údržbového okna
+    - Omezení kapacity zdrojů
+    - Degradovaný monitorovací systém
+      - Nedostupný pohotovostní tým
+    - Nedávné produkční selhání
   
   veto_authority: OPERATIONAL_TEAM
   
   veto_process:
-    - Veto reason must be documented
-    - Expected resolution time provided
-    - Artifact moves to RELEASE_BLOCKED
-    - Veto can be cleared when condition resolves
+    - Důvod veta musí být dokumentován
+    - Poskytnut očekávaný čas řešení
+    - Artefakt se přesune do RELEASE_BLOCKED
+    - Veto může být zrušeno, když se podmínka vyřeší
 
 release_block_triggers:
   automatic_block:
     conditions:
       - Staging gate != PASS
-      - Knowledge completeness != PASS
-      - Fixture completeness != PASS
-      - Any terminal rejection state
-      - Active security incident
+      - Úplnost znalostí != PASS
+      - Úplnost fixtur != PASS
+      - Jakýkoli terminální stav odmítnutí
+      - Aktivní bezpečnostní incident
     
     block_authority: RELEASE_CONTROLLER
     
     unblock_requirements:
-      - Block condition fully resolved
-      - Re-validation completed
-      - Governance sign-off obtained
+      - Podmínka blokování plně vyřešena
+      - Dokončena re-validace
+      - Získáno schválení správy
   
   manual_block:
     conditions:
-      - Executive decision
-      - Emergency operational need
-      - External regulatory requirement
+      - Výkonné rozhodnutí
+      - Naléhavá provozní potřeba
+      - Externí regulační požadavek
     
     block_authority: EXECUTIVE_AUTHORITY
     
     unblock_requirements:
-      - Explicit executive approval
-      - Documented resolution
-      - Audit trail entry
+      - Explicitní výkonné schválení
+      - Dokumentované řešení
+      - Záznam auditní stopy
 
 monitoring_requirements:
   by_risk_level:
@@ -2374,31 +2374,31 @@ monitoring_requirements:
 
 adaptation_guidelines:
   domains_may_customize:
-    - Risk level criteria
-    - Compliance trigger conditions
-    - Review authority definitions
-    - Escalation thresholds
-    - Monitoring requirements
+    - Kritéria úrovně rizika
+    - Podmínky spouštěče souladu
+    - Definice kontrolních autorit
+    - Prahy eskalace
+    - Požadavky na monitorování
   
   domains_must_preserve:
-    - Progressive risk management
-    - Compliance enforcement
-    - Escalation capability
-    - Veto mechanism
-    - Audit trail of triggers
+    - Progresivní řízení rizik
+    - Vynucování souladu
+    - Schopnost eskalace
+    - Mechanismus veta
+    - Auditní stopa spouštěčů
 
 version: "1.0.0"
 status: ADAPTIVE
 EOF
 
 cat > "$ROOT/knowledge/domains/default/15_CommercialPackagingRules.yaml" <<'EOF'
-# Commercial Packaging Rules - Default Domain
+# Pravidla Komerčního Balení - Výchozí Doména
 # Status: ADAPTIVE
-# Defines how artifacts are packaged for commercial distribution
+# Definuje, jak jsou artefakty baleny pro komerční distribuci
 
 packaging_types:
   internal_use:
-    description: Artifacts for internal organizational use only
+    description: Artefakty pouze pro interní organizační použití
     
     requirements:
       licensing: NOT_REQUIRED
@@ -2407,16 +2407,16 @@ packaging_types:
       support_commitment: BEST_EFFORT
     
     validation:
-      - Internal approval sufficient
-      - No export control check required
-      - Standard testing required
+      - Postačuje interní schválení
+      - Není vyžadována kontrola exportních kontrol
+      - Vyžadováno standardní testování
     
     distribution_channels:
-      - Internal artifact repository
-      - Internal deployment systems
+      - Interní úložiště artefaktů
+      - Interní systémy nasazení
   
   open_source:
-    description: Artifacts released under open source license
+    description: Artefakty vydané pod open source licencí
     
     requirements:
       licensing: REQUIRED
@@ -2427,18 +2427,18 @@ packaging_types:
       support_commitment: COMMUNITY
     
     validation:
-      - License compatibility check required
-      - Third-party dependency review required
-      - Source code completeness check required
-      - Documentation standards check required
+      - Vyžadována kontrola kompatibility licence
+      - Vyžadována kontrola závislostí třetích stran
+      - Vyžadována kontrola úplnosti zdrojového kódu
+      - Vyžadována kontrola dokumentačních standardů
     
     distribution_channels:
-      - Public package repositories
-      - Public source control
-      - Official download sites
+      - Veřejné úložiště balíčků
+      - Veřejná správa zdrojového kódu
+      - Oficiální stránky pro stažení
   
   commercial:
-    description: Artifacts for commercial sale or licensing
+    description: Artefakty pro komerční prodej nebo licencování
     
     requirements:
       licensing: REQUIRED
@@ -2450,16 +2450,16 @@ packaging_types:
       warranty_terms: MUST_DEFINE
     
     validation:
-      - License review required
-      - Legal approval required
-      - Third-party licensing cleared
-      - Support plan validated
-      - Warranty terms reviewed
+      - Vyžadována kontrola licence
+      - Vyžadováno právní schválení
+      - Vyčištěno licencování třetích stran
+      - Validován plán podpory
+      - Zkontrolovány podmínky záruky
     
     distribution_channels:
-      - Licensed customer repositories
-      - Commercial distribution platforms
-      - Customer-specific delivery
+      - Úložiště licencovaných zákazníků
+      - Komerční distribuční platformy
+      - Dodávka specifická pro zákazníka
 
 licensing_constraints:
   third_party_dependencies:
@@ -2481,32 +2481,32 @@ licensing_constraints:
         - AGPL-3.0
     
     compatibility_rules:
-      - Permissive licenses compatible with all packaging types
-      - Weak copyleft requires source distribution for library
-      - Strong copyleft requires full source distribution
-      - AGPL requires network use source provision
+      - Permisivní licence kompatibilní se všemi typy balení
+      - Slabý copyleft vyžaduje distribuci zdrojů pro knihovnu
+      - Silný copyleft vyžaduje plnou distribuci zdrojů
+      - AGPL vyžaduje poskytnutí zdrojů pro síťové použití
   
   license_verification:
     required_for: ALL_PACKAGING_TYPES
     
     verification_steps:
-      - Enumerate all dependencies
-      - Identify license for each dependency
-      - Check compatibility with packaging type
-      - Verify license text inclusion
-      - Generate third-party notices file
+      - Vypočítat všechny závislosti
+      - Identifikovat licenci pro každou závislost
+      - Zkontrolovat kompatibilitu s typem balení
+      - Ověřit zahrnutí textu licence
+      - Vygenerovat soubor oznámení třetích stran
 
 distribution_restrictions:
   export_control:
     check_required:
-      - Commercial packaging
-      - Open source with encryption
-      - Cross-border distribution
+      - Komerční balení
+      - Open source s šifrováním
+      - Přeshraniční distribuce
     
     validation:
-      - Export control classification
-      - Restricted country check
-      - Encryption registration check
+      - Klasifikace exportních kontrol
+      - Kontrola omezených zemí
+      - Kontrola registrace šifrování
   
   geographic_restrictions:
     by_packaging_type:
@@ -2526,9 +2526,9 @@ versioning_requirements:
     format: MAJOR.MINOR.PATCH
     
     increment_rules:
-      major: Breaking changes or major features
-      minor: New features, backward compatible
-      patch: Bug fixes, backward compatible
+      major: Kritické změny nebo hlavní funkce
+      minor: Nové funkce, zpětně kompatibilní
+      patch: Opravy chyb, zpětně kompatibilní
   
   version_metadata:
     required_fields:
@@ -2542,12 +2542,12 @@ versioning_requirements:
     required_for: ALL_PACKAGING_TYPES
     
     required_sections:
-      - Added: New features
-      - Changed: Changes in existing functionality
-      - Deprecated: Soon-to-be removed features
-      - Removed: Removed features
-      - Fixed: Bug fixes
-      - Security: Security-related changes
+      - Added: Nové funkce
+      - Changed: Změny v existující funkcionalitě
+      - Deprecated: Brzy odstraněné funkce
+      - Removed: Odstraněné funkce
+      - Fixed: Opravy chyb
+      - Security: Změny související s bezpečností
 
 support_commitments:
   by_packaging_type:
@@ -2555,357 +2555,357 @@ support_commitments:
       support_level: BEST_EFFORT
       sla: NONE
       support_channels:
-        - Internal ticketing system
-        - Team communication channels
+        - Interní ticketovací systém
+        - Týmové komunikační kanály
     
     open_source:
       support_level: COMMUNITY
       sla: NONE
       support_channels:
-        - Public issue tracker
-        - Community forums
-        - Documentation
+        - Veřejný tracker problémů
+        - Komunitní fóra
+        - Dokumentace
       
       expectations:
-        - Bug reports welcome
-        - Pull requests considered
-        - No guaranteed response time
+        - Vítány hlášení chyb
+        - Pull requesty zváženy
+        - Žádná garantovaná doba odezvy
     
     commercial:
       support_level: CONTRACTUAL
       sla: PER_CONTRACT
       support_channels:
-        - Dedicated support portal
-        - Email support
-        - Phone support (for premium)
+        - Dedikovaný portál podpory
+        - Emailová podpora
+        - Telefonní podpora (pro premium)
       
       expectations:
-        - Response time per SLA
-        - Issue resolution per SLA
-        - Security patch commitment
+        - Doba odezvy podle SLA
+        - Řešení problémů podle SLA
+        - Závazek bezpečnostních záplat
 
 documentation_requirements:
   all_packaging_types:
     required:
-      - README with overview
-      - Installation instructions
-      - Basic usage examples
-      - License information
-      - Third-party notices
+      - README s přehledem
+      - Instrukce pro instalaci
+      - Základní příklady použití
+      - Informace o licenci
+      - Oznámení třetích stran
   
   open_source_additional:
     required:
-      - Contributing guidelines
-      - Code of conduct
-      - Development setup guide
-      - Architecture documentation
+      - Pokyny pro přispívání
+      - Kodex chování
+      - Průvodce nastavením vývoje
+      - Dokumentace architektury
   
   commercial_additional:
     required:
-      - Comprehensive user guide
-      - API reference
-      - Troubleshooting guide
-      - Support contact information
-      - SLA documentation
+      - Komplexní uživatelská příručka
+      - Reference API
+      - Průvodce odstraňováním problémů
+      - Kontaktní informace podpory
+      - Dokumentace SLA
 
 adaptation_guidelines:
   domains_may_customize:
-    - Packaging types
-    - License policies
-    - Distribution channels
-    - Support commitments
-    - Documentation requirements
+    - Typy balení
+    - Licenční politiky
+    - Distribuční kanály
+    - Závazky podpory
+    - Požadavky na dokumentaci
   
   domains_must_preserve:
-    - License compliance enforcement
-    - Third-party notice requirements
-    - Export control compliance
-    - Version traceability
+    - Vynucování souladu s licencí
+    - Požadavky na oznámení třetích stran
+    - Soulad s exportními kontrolami
+    - Sledovatelnost verze
 
 version: "1.0.0"
 status: ADAPTIVE
 EOF
 
 cat > "$ROOT/knowledge/domains/default/16_ClaimsEvidencePolicy.yaml" <<'EOF'
-# Claims and Evidence Policy - Default Domain
+# Politika Tvrzení a Důkazů - Výchozí Doména
 # Status: ADAPTIVE
-# Defines what claims require what evidence
+# Definuje, která tvrzení vyžadují jaké důkazy
 
 claim_categories:
   functional_correctness:
-    description: Claims about functional behavior and correctness
+    description: Tvrzení o funkčním chování a správnosti
     
     claim_types:
-      - Feature works as specified
-      - Bug is fixed
-      - Requirements are met
-      - Acceptance criteria satisfied
+      - Funkce funguje podle specifikace
+      - Chyba je opravena
+      - Požadavky jsou splněny
+      - Kritéria akceptace splněna
     
     required_evidence:
       - automated_test_results:
-          description: Automated test suite results
-          sufficiency: Test coverage > 80% for changed code
-          verification: AE-Claims validates test execution
+          description: Výsledky automatizované testovací sady
+          sufficiency: Testovací pokrytí > 80% pro změněný kód
+          verification: AE-Claims validuje provedení testu
       
       - manual_test_results:
-          description: Manual test execution records
-          sufficiency: All critical paths tested
-          verification: AE-Claims validates test completeness
+          description: Záznamy manuálního provedení testů
+          sufficiency: Všechny kritické cesty testovány
+          verification: AE-Claims validuje úplnost testu
       
       - acceptance_test_results:
-          description: User acceptance test results
-          sufficiency: All acceptance criteria pass
-          verification: AE-Claims validates against requirements
+          description: Výsledky uživatelských akceptačních testů
+          sufficiency: Všechna kritéria akceptace projdou
+          verification: AE-Claims validuje oproti požadavkům
   
   quality_assurance:
-    description: Claims about code quality and maintainability
+    description: Tvrzení o kvalitě kódu a udržovatelnosti
     
     claim_types:
-      - Code meets quality standards
-      - Technical debt is acceptable
-      - Performance is adequate
-      - Maintainability is good
+      - Kód splňuje standardy kvality
+      - Technický dluh je přijatelný
+      - Výkon je adekvátní
+      - Udržovatelnost je dobrá
     
     required_evidence:
       - code_review_results:
-          description: Code review findings and approvals
-          sufficiency: At least one reviewer approval
-          verification: AE-Claims validates reviewer authority
+          description: Zjištění a schválení kontroly kódu
+          sufficiency: Minimálně jedno schválení kontrolora
+          verification: AE-Claims validuje autoritu kontrolora
       
       - static_analysis_results:
-          description: Static code analysis results
-          sufficiency: No critical or high severity issues
-          verification: AE-Claims validates analysis execution
+          description: Výsledky statické analýzy kódu
+          sufficiency: Žádné kritické nebo vysoce závažné problémy
+          verification: AE-Claims validuje provedení analýzy
       
       - performance_test_results:
-          description: Performance benchmark results
-          sufficiency: Meets defined performance thresholds
-          verification: AE-Claims validates against baselines
+          description: Výsledky výkonnostních benchmarků
+          sufficiency: Splňuje definované výkonnostní prahy
+          verification: AE-Claims validuje oproti základním hodnotám
   
   security:
-    description: Claims about security properties
+    description: Tvrzení o bezpečnostních vlastnostech
     
     claim_types:
-      - No security vulnerabilities introduced
-      - Security controls are effective
-      - Authentication/authorization correct
-      - Data protection adequate
+      - Nebyly zavedeny žádné bezpečnostní zranitelnosti
+      - Bezpečnostní kontroly jsou efektivní
+      - Autentizace/autorizace správná
+      - Ochrana dat adekvátní
     
     required_evidence:
       - security_scan_results:
-          description: Automated security scan results
-          sufficiency: No critical or high vulnerabilities
-          verification: AE-Claims validates scan coverage
+          description: Výsledky automatizovaného bezpečnostního skenu
+          sufficiency: Žádné kritické nebo vysoké zranitelnosti
+          verification: AE-Claims validuje pokrytí skenu
       
       - security_review_findings:
-          description: Security team review results
-          sufficiency: Security team approval obtained
-          verification: AE-Claims validates reviewer authority
+          description: Výsledky kontroly bezpečnostního týmu
+          sufficiency: Získáno schválení bezpečnostního týmu
+          verification: AE-Claims validuje autoritu kontrolora
       
       - penetration_test_results:
-          description: Penetration testing results (prod only)
-          sufficiency: No exploitable vulnerabilities found
-          verification: AE-Claims validates test scope
+          description: Výsledky penetračního testování (pouze prod)
+          sufficiency: Nenalezeny žádné zneužitelné zranitelnosti
+          verification: AE-Claims validuje rozsah testu
   
   compliance:
-    description: Claims about regulatory and policy compliance
+    description: Tvrzení o regulačním a politickém souladu
     
     claim_types:
-      - Meets regulatory requirements
-      - Complies with internal policies
-      - Audit trail is complete
-      - Privacy requirements satisfied
+      - Splňuje regulační požadavky
+      - Vyhovuje interním politikám
+      - Auditní stopa je úplná
+      - Požadavky na soukromí splněny
     
     required_evidence:
       - compliance_checklist:
-          description: Completed compliance checklist
-          sufficiency: All items checked and validated
-          verification: AE-Claims validates checklist completeness
+          description: Dokončený kontrolní seznam souladu
+          sufficiency: Všechny položky zkontrolovány a validovány
+          verification: AE-Claims validuje úplnost kontrolního seznamu
       
       - compliance_review_approval:
-          description: Compliance team review and approval
-          sufficiency: Formal approval documented
-          verification: AE-Claims validates approver authority
+          description: Kontrola a schválení týmem souladu
+          sufficiency: Formální schválení dokumentováno
+          verification: AE-Claims validuje autoritu schvalovatele
       
       - audit_trail_validation:
-          description: Audit trail completeness verification
-          sufficiency: All required events logged
-          verification: AE-Claims validates log integrity
+          description: Ověření úplnosti auditní stopy
+          sufficiency: Všechny požadované události zaznamenány
+          verification: AE-Claims validuje integritu záznamu
   
   operational_readiness:
-    description: Claims about production readiness
+    description: Tvrzení o produkční připravenosti
     
     claim_types:
-      - Monitoring is in place
-      - Rollback plan is validated
-      - Documentation is complete
-      - Support is prepared
+      - Monitorování je na místě
+      - Plán návratu je validován
+      - Dokumentace je úplná
+      - Podpora je připravena
     
     required_evidence:
       - monitoring_validation:
-          description: Monitoring and alerting configuration
-          sufficiency: All critical paths monitored
-          verification: AE-Claims validates coverage
+          description: Konfigurace monitorování a upozorňování
+          sufficiency: Všechny kritické cesty monitorovány
+          verification: AE-Claims validuje pokrytí
       
       - rollback_plan:
-          description: Documented and tested rollback procedure
-          sufficiency: Rollback tested in staging
-          verification: AE-Claims validates test results
+          description: Dokumentovaný a testovaný postup návratu
+          sufficiency: Návrat testován ve staging
+          verification: AE-Claims validuje výsledky testů
       
       - documentation:
-          description: User and operational documentation
-          sufficiency: All required sections complete
-          verification: AE-Claims validates completeness
+          description: Uživatelská a provozní dokumentace
+          sufficiency: Všechny požadované sekce úplné
+          verification: AE-Claims validuje úplnost
       
       - support_readiness:
-          description: Support team prepared
-          sufficiency: Training complete, on-call coverage
-          verification: AE-Claims validates readiness
+          description: Tým podpory připraven
+          sufficiency: Školení dokončeno, pokrytí pohotovosti
+          verification: AE-Claims validuje připravenost
 
 evidence_sufficiency_rules:
   minimum_requirements:
     all_claims:
-      - At least one piece of evidence per claim
-      - Evidence must be verifiable
-      - Evidence must be recent (not stale)
-      - Evidence must be from authoritative source
+      - Minimálně jeden důkaz na tvrzení
+      - Důkaz musí být ověřitelný
+      - Důkaz musí být aktuální (ne zastaralý)
+      - Důkaz musí být z autoritativního zdroje
   
   high_risk_artifacts:
-    - Multiple independent evidence sources required
-    - Third-party verification may be required
-    - Executive sign-off may be required
+    - Vyžadovány více nezávislých zdrojů důkazů
+    - Může být vyžadováno ověření třetí stranou
+    - Může být vyžadováno výkonné schválení
   
   low_risk_artifacts:
-    - Single evidence source may be sufficient
-    - Self-verification may be acceptable
-    - Standard approval process
+    - Jeden zdroj důkazu může být dostatečný
+    - Sebeověření může být přijatelné
+    - Standardní schvalovací proces
 
 evidence_freshness:
   automated_test_results:
     maximum_age: 24_hours
-    must_be_from: Current artifact version
+    must_be_from: Aktuální verze artefaktu
   
   security_scans:
     maximum_age: 7_days
-    must_be_from: Current artifact version
+    must_be_from: Aktuální verze artefaktu
   
   manual_reviews:
     maximum_age: 30_days
-    must_be_from: Current or compatible version
+    must_be_from: Aktuální nebo kompatibilní verze
   
   compliance_approvals:
     maximum_age: 90_days
-    must_be_from: Current policy version
+    must_be_from: Aktuální verze politiky
 
 evidence_quality:
   trustworthiness:
     high_trust:
-      - Automated test systems
-      - Certified scanning tools
-      - Approved review authorities
+      - Automatizované testovací systémy
+      - Certifikované skenovací nástroje
+      - Schválené kontrolní autority
     
     medium_trust:
-      - Manual test records
-      - Self-reported metrics
-      - Peer reviews
+      - Záznamy manuálních testů
+      - Samohlášené metriky
+      - Vzájemné kontroly
     
     low_trust:
-      - Unverified claims
-      - Outdated evidence
-      - Unauthorized sources
+      - Neověřená tvrzení
+      - Zastaralé důkazy
+      - Neautorizované zdroje
   
   completeness:
     complete:
-      - All claims have evidence
-      - All evidence is verifiable
-      - No gaps in coverage
+      - Všechna tvrzení mají důkazy
+      - Všechny důkazy jsou ověřitelné
+      - Žádné mezery v pokrytí
     
     incomplete:
-      - Some claims lack evidence
-      - Some evidence not verifiable
-      - Coverage gaps exist
+      - Některá tvrzení postrádají důkazy
+      - Některé důkazy nejsou ověřitelné
+      - Existují mezery v pokrytí
     
     insufficient:
-      - Most claims lack evidence
-      - Evidence quality poor
-      - Major coverage gaps
+      - Většina tvrzení postrádá důkazy
+      - Špatná kvalita důkazů
+      - Velké mezery v pokrytí
 
 verification_process:
   for_each_claim:
     steps:
-      1. Identify claim statement
-      2. Determine required evidence type
-      3. Locate and retrieve evidence
-      4. Verify evidence authenticity
-      5. Assess evidence freshness
-      6. Evaluate evidence quality
-      7. Determine sufficiency
-      8. Document verification result
+      1. Identifikovat prohlášení tvrzení
+      2. Určit požadovaný typ důkazu
+      3. Lokalizovat a načíst důkaz
+      4. Ověřit autenticitu důkazu
+      5. Posoudit aktuálnost důkazu
+      6. Vyhodnotit kvalitu důkazu
+      7. Určit dostatečnost
+      8. Dokumentovat výsledek ověření
   
   verification_outcomes:
     verified:
-      condition: Sufficient high-quality evidence
+      condition: Dostatečný vysoce kvalitní důkaz
       next_state: CLAIMS_VERIFIED
     
     insufficient:
-      condition: Evidence missing or inadequate
+      condition: Důkaz chybí nebo je nedostatečný
       next_state: CLAIMS_INSUFFICIENT
-      action: Document gaps, request additional evidence
+      action: Dokumentovat mezery, požádat o dodatečné důkazy
     
     rejected:
-      condition: Evidence contradicts claim
+      condition: Důkaz je v rozporu s tvrzením
       next_state: INTAKE_REJECTED
-      action: Reject artifact, document reason
+      action: Odmítnout artefakt, dokumentovat důvod
 
 special_cases:
   no_evidence_available:
     handling: >
-      If evidence cannot be provided due to legitimate constraints,
-      escalate to appropriate authority for waiver decision.
-      Document reason and obtain explicit approval.
+      Pokud nelze poskytnout důkaz z legitimních omezení,
+      eskalujte k příslušné autoritě pro rozhodnutí o výjimce.
+      Dokumentujte důvod a získejte explicitní schválení.
     
-    must_not: Accept claim without evidence or approval
+    must_not: Přijímat tvrzení bez důkazu nebo schválení
   
   conflicting_evidence:
     handling: >
-      If evidence sources conflict, escalate to review authority
-      for investigation and resolution. Do not proceed until resolved.
+      Pokud se zdroje důkazů rozcházejí, eskalujte ke kontrolní autoritě
+      pro vyšetření a řešení. Nepokračujte, dokud nebude vyřešeno.
     
-    must_not: Ignore conflicting evidence or choose selectively
+    must_not: Ignorovat rozporné důkazy nebo vybírat selektivně
   
   unknown_claim_type:
     handling: >
-      If claim type is not defined in this policy, escalate to
-      governance for policy clarification or extension.
+      Pokud typ tvrzení není definován v této politice, eskalujte
+      ke správě pro vyjasnění nebo rozšíření politiky.
     
-    must_not: Proceed without defined evidence requirements
+    must_not: Pokračovat bez definovaných požadavků na důkazy
 
 adaptation_guidelines:
   domains_may_customize:
-    - Claim categories
-    - Evidence requirements
-    - Sufficiency thresholds
-    - Freshness requirements
-    - Quality criteria
+    - Kategorie tvrzení
+    - Požadavky na důkazy
+    - Prahy dostatečnosti
+    - Požadavky na aktuálnost
+    - Kritéria kvality
   
   domains_must_preserve:
-    - Evidence is required for all claims
-    - Verification process is mandatory
-    - Quality assessment is required
-    - Escalation paths exist for exceptions
+    - Důkaz je vyžadován pro všechna tvrzení
+    - Ověřovací proces je povinný
+    - Posouzení kvality je vyžadováno
+    - Eskalační cesty existují pro výjimky
 
 version: "1.0.0"
 status: ADAPTIVE
 EOF
 
 cat > "$ROOT/knowledge/domains/default/17_ReviewLaneRules.yaml" <<'EOF'
-# Review Lane Rules - Default Domain
+# Pravidla Kontrolních Linií - Výchozí Doména
 # Status: ADAPTIVE
-# Defines how artifacts are routed to appropriate review lanes
+# Definuje, jak jsou artefakty směrovány do příslušných kontrolních linií
 
 review_lanes:
   technical:
-    description: Technical correctness and code quality review
+    description: Kontrola technické správnosti a kvality kódu
     
     triggers:
       - artifact_type in [PACKAGE_RELEASE, CONFIGURATION_CHANGE]
@@ -2913,27 +2913,27 @@ review_lanes:
       - technical_risk >= MODERATE
     
     reviewer_qualifications:
-      - Technical expertise in relevant area
-      - Familiarity with codebase
-      - Understanding of architecture
+      - Technická expertiza v relevantní oblasti
+      - Znalost kódové základny
+      - Porozumění architektuře
     
     review_focus:
-      - Code quality and maintainability
-      - Architecture alignment
-      - Technical debt impact
-      - Performance considerations
-      - Error handling robustness
+      - Kvalita kódu a udržovatelnost
+      - Sladění s architekturou
+      - Dopad technického dluhu
+      - Úvahy o výkonu
+      - Robustnost zpracování chyb
     
     approval_criteria:
-      - Code meets quality standards
-      - Architecture principles followed
-      - Technical risks acceptable
-      - No critical technical issues
+      - Kód splňuje standardy kvality
+      - Dodrženy principy architektury
+      - Technická rizika přijatelná
+      - Žádné kritické technické problémy
     
     typical_duration: 2_to_4_hours
   
   security:
-    description: Security and vulnerability assessment
+    description: Posouzení bezpečnosti a zranitelností
     
     triggers:
       - artifact_type in [PACKAGE_RELEASE, CONFIGURATION_CHANGE]
@@ -2944,28 +2944,28 @@ review_lanes:
       - external_integration_changes
     
     reviewer_qualifications:
-      - Security expertise
-      - Threat modeling experience
-      - Vulnerability assessment skills
+      - Expertiza v bezpečnosti
+      - Zkušenosti s modelováním hrozeb
+      - Schopnosti posouzení zranitelností
     
     review_focus:
-      - Security vulnerabilities
-      - Authentication and authorization
-      - Data protection
-      - Cryptographic correctness
-      - Input validation
-      - Security best practices
+      - Bezpečnostní zranitelnosti
+      - Autentizace a autorizace
+      - Ochrana dat
+      - Kryptografická správnost
+      - Validace vstupů
+      - Osvědčené bezpečnostní postupy
     
     approval_criteria:
-      - No critical or high vulnerabilities
-      - Security controls effective
-      - Threat model updated
-      - Security best practices followed
+      - Žádné kritické nebo vysoké zranitelnosti
+      - Efektivní bezpečnostní kontroly
+      - Aktualizován model hrozeb
+      - Dodrženy osvědčené bezpečnostní postupy
     
     typical_duration: 4_to_8_hours
   
   compliance:
-    description: Regulatory and policy compliance review
+    description: Kontrola souladu s regulacemi a politikami
     
     triggers:
       - compliance_flags_present
@@ -2975,27 +2975,27 @@ review_lanes:
       - policy_changes
     
     reviewer_qualifications:
-      - Compliance expertise
-      - Regulatory knowledge
-      - Policy interpretation skills
+      - Expertiza v souladu
+      - Znalost regulací
+      - Schopnosti interpretace politik
     
     review_focus:
-      - Regulatory compliance
-      - Policy adherence
-      - Privacy requirements
-      - Audit trail completeness
-      - Record retention
+      - Regulační soulad
+      - Dodržování politik
+      - Požadavky na soukromí
+      - Úplnost auditní stopy
+      - Uchovávání záznamů
     
     approval_criteria:
-      - Regulatory requirements met
-      - Policies followed
-      - Privacy protections adequate
-      - Audit trail complete
+      - Splněny regulační požadavky
+      - Dodrženy politiky
+      - Adekvátní ochrany soukromí
+      - Úplná auditní stopa
     
     typical_duration: 2_to_6_hours
   
   business:
-    description: Business value and priority review
+    description: Kontrola obchodní hodnoty a priority
     
     triggers:
       - high_business_impact
@@ -3004,27 +3004,27 @@ review_lanes:
       - commercial_implications
     
     reviewer_qualifications:
-      - Business domain expertise
-      - Product management experience
-      - Customer understanding
+      - Expertiza obchodní domény
+      - Zkušenosti s řízením produktů
+      - Porozumění zákazníkům
     
     review_focus:
-      - Business value alignment
-      - Customer impact
-      - Market positioning
-      - Strategic fit
-      - Commercial viability
+      - Sladění obchodní hodnoty
+      - Dopad na zákazníky
+      - Tržní pozicování
+      - Strategické přizpůsobení
+      - Komerční životaschopnost
     
     approval_criteria:
-      - Business value clear
-      - Customer impact acceptable
-      - Strategic alignment confirmed
-      - Commercial model sound
+      - Jasná obchodní hodnota
+      - Přijatelný dopad na zákazníky
+      - Potvrzeno strategické sladění
+      - Solidní obchodní model
     
     typical_duration: 1_to_3_hours
   
   operational:
-    description: Operational readiness and impact review
+    description: Kontrola provozní připravenosti a dopadu
     
     triggers:
       - target_environment in [STAGING, PROD]
@@ -3033,24 +3033,24 @@ review_lanes:
       - capacity_implications
     
     reviewer_qualifications:
-      - Operations expertise
-      - Production support experience
-      - Incident response skills
+      - Expertiza v provozu
+      - Zkušenosti s provozní podporou
+      - Schopnosti reakce na incidenty
     
     review_focus:
-      - Operational readiness
-      - Monitoring and alerting
-      - Rollback procedures
-      - Support preparedness
-      - Capacity planning
-      - Impact on existing systems
+      - Provozní připravenost
+      - Monitorování a upozorňování
+      - Postupy návratu
+      - Připravenost podpory
+      - Plánování kapacity
+      - Dopad na existující systémy
     
     approval_criteria:
-      - Operations team ready
-      - Monitoring adequate
-      - Rollback validated
-      - Support prepared
-      - Capacity sufficient
+      - Tým operací připraven
+      - Adekvátní monitorování
+      - Validován návrat
+      - Připravena podpora
+      - Dostatečná kapacita
     
     typical_duration: 2_to_4_hours
 
@@ -3090,13 +3090,13 @@ multi_lane_coordination:
   
   sequential_review:
     required_when:
-      - Review findings block other reviews
-      - Interdependencies between lanes
+      - Zjištění kontroly blokují jiné kontroly
+      - Vzájemné závislosti mezi liniemi
   
   conflict_resolution:
-    - If lanes disagree on approval, escalate to governance
-    - Document disagreement and rationale
-    - Governance makes final decision
+    - Pokud se linie neshodnou na schválení, eskalujte ke správě
+    - Dokumentujte nesouhlas a odůvodnění
+    - Správa činí konečné rozhodnutí
 
 review_timeouts:
   by_lane:
@@ -3107,116 +3107,116 @@ review_timeouts:
     operational: 48_hours
   
   escalation_on_timeout:
-    - Notify reviewer and governance
-    - Escalate to review manager
-    - May proceed with partial review if risk acceptable
+    - Upozornit kontrolora a správu
+    - Eskalovat ke správci kontroly
+    - Může pokračovat s částečnou kontrolou, pokud je riziko přijatelné
 
 reviewer_assignment:
   assignment_criteria:
-    - Reviewer availability
-    - Relevant expertise
-    - No conflict of interest
-    - Workload balance
+    - Dostupnost kontrolora
+    - Relevantní expertiza
+    - Žádný konflikt zájmů
+    - Vyvážení pracovní zátěže
   
   assignment_process:
-    1. Identify required review lanes
-    2. Match lanes to available reviewers
-    3. Check reviewer qualifications
-    4. Verify availability
-    5. Assign and notify
+    1. Identifikovat požadované kontrolní linie
+    2. Přiřadit linie dostupným kontrolorům
+    3. Zkontrolovat kvalifikace kontrolora
+    4. Ověřit dostupnost
+    5. Přiřadit a upozornit
   
   reassignment:
     allowed_if:
-      - Reviewer unavailable
-      - Expertise mismatch discovered
-      - Conflict of interest identified
+      - Kontrolor nedostupný
+      - Zjištěn nesoulad expertízy
+      - Identifikován konflikt zájmů
 
 review_completion:
   required_outputs:
-    - Review decision (APPROVE/REJECT/NEEDS_WORK)
-    - Review findings document
-    - Risk assessment
-    - Recommendations
+    - Rozhodnutí kontroly (APPROVE/REJECT/NEEDS_WORK)
+    - Dokument zjištění kontroly
+    - Posouzení rizika
+    - Doporučení
   
   approval_requirements:
-    - All assigned lanes must approve
-    - No unresolved critical findings
-    - All recommendations addressed or accepted
+    - Všechny přiřazené linie musí schválit
+    - Žádná nevyřešená kritická zjištění
+    - Všechna doporučení vyřešena nebo přijata
   
   rejection_handling:
-    - Document rejection reason
-    - Provide specific feedback
-    - Suggest remediation steps
-    - Allow resubmission after fixes
+    - Dokumentovat důvod odmítnutí
+    - Poskytnout konkrétní zpětnou vazbu
+    - Navrhnout nápravné kroky
+    - Umožnit opětovné podání po opravách
 
 adaptation_guidelines:
   domains_may_customize:
-    - Review lane definitions
-    - Routing triggers
-    - Reviewer qualifications
-    - Review focus areas
-    - Approval criteria
-    - Timeout values
+    - Definice kontrolních linií
+    - Spouštěče směrování
+    - Kvalifikace kontrolorů
+    - Oblasti zaměření kontroly
+    - Kritéria schválení
+    - Hodnoty časového limitu
   
   domains_must_preserve:
-    - Review requirement for high-risk artifacts
-    - Approval requirement for production
-    - Escalation mechanism
-    - Documentation requirements
+    - Požadavek kontroly pro vysoce rizikové artefakty
+    - Požadavek schválení pro produkci
+    - Mechanismus eskalace
+    - Požadavky na dokumentaci
 
 version: "1.0.0"
 status: ADAPTIVE
 EOF
 
 cat > "$ROOT/knowledge/domains/default/18_ApprovalEscalationMatrix.yaml" <<'EOF'
-# Approval Escalation Matrix - Default Domain
+# Matice Schvalování a Eskalace - Výchozí Doména
 # Status: ADAPTIVE
-# Defines approval paths and escalation rules
+# Definuje schvalovací cesty a eskalační pravidla
 
 approval_levels:
   standard:
     authority: TECHNICAL_LEAD
     scope:
-      - Development and staging deployments
-      - Low to moderate risk changes
-      - Standard operational changes
+      - Nasazení vývojové a staging
+      - Nízkorizikové až středně rizikové změny
+      - Standardní provozní změny
     
     approval_requirements:
-      - Technical review approved
-      - No compliance flags
-      - Standard testing complete
+      - Technická kontrola schválena
+      - Žádné příznaky souladu
+      - Standardní testování dokončeno
     
     typical_turnaround: 4_hours
   
   elevated:
     authority: ENGINEERING_MANAGER
     scope:
-      - Production deployments (low risk)
-      - Significant impact changes
-      - Security-related changes
-      - Compliance-flagged changes
+      - Produkční nasazení (nízké riziko)
+      - Změny významného dopadu
+      - Změny související s bezpečností
+      - Změny označené sladěním
     
     approval_requirements:
-      - Technical and security review approved
-      - Compliance review approved (if flagged)
-      - Comprehensive testing complete
-      - Rollback plan validated
+      - Technická a bezpečnostní kontrola schválena
+      - Kontrola souladu schválena (pokud označeno)
+      - Komplexní testování dokončeno
+      - Plán návratu validován
     
     typical_turnaround: 24_hours
   
   executive:
     authority: EXECUTIVE_AUTHORITY
     scope:
-      - High-risk production deployments
-      - Major impact changes
-      - Strategic initiatives
-      - Regulatory-significant changes
+      - Vysoce riziková produkční nasazení
+      - Změny velkého dopadu
+      - Strategické iniciativy
+      - Regulačně významné změny
     
     approval_requirements:
-      - All review lanes approved
-      - Risk mitigation plan approved
-      - Executive briefing provided
-      - Stakeholder alignment confirmed
+      - Všechny kontrolní linie schváleny
+      - Plán zmírnění rizika schválen
+      - Poskytnut výkonný briefing
+      - Potvrzeno sladění zúčastněných stran
     
     typical_turnaround: 72_hours
 
@@ -3233,10 +3233,10 @@ escalation_triggers:
     escalation_target: EXECUTIVE
     
     escalation_requirements:
-      - Prepare executive briefing
-      - Document risk mitigation
-      - Validate rollback procedures
-      - Confirm stakeholder alignment
+      - Připravit výkonný briefing
+      - Dokumentovat zmírnění rizika
+      - Validovat postupy návratu
+      - Potvrdit sladění zúčastněných stran
   
   conditional_escalation:
     conditions:
@@ -3247,88 +3247,88 @@ escalation_triggers:
     escalation_target: ELEVATED
     
     escalation_requirements:
-      - Comprehensive test results
-      - Security validation
-      - Operational readiness confirmed
+      - Komplexní výsledky testů
+      - Bezpečnostní validace
+      - Potvrzena provozní připravenost
   
   manual_escalation:
     triggers:
-      - Reviewer requests escalation
-      - Approver uncertain about authority
-      - Stakeholder raises significant concern
-      - Unexpected risk identified
+      - Kontrolor požaduje eskalaci
+      - Schvalovatel není jistý autoritou
+      - Zúčastněná strana vyjadřuje významné obavy
+      - Identifikováno neočekávané riziko
     
     escalation_process:
-      - Document escalation reason
-      - Provide full context
-      - Identify appropriate escalation level
-      - Await higher authority decision
+      - Dokumentovat důvod eskalace
+      - Poskytnout plný kontext
+      - Identifikovat vhodnou úroveň eskalace
+      - Čekat na rozhodnutí vyšší autority
 
 approval_workflow:
   standard_workflow:
     steps:
-      1. Technical review
-      2. Technical lead approval
-      3. Deploy to target environment
+      1. Technická kontrola
+      2. Schválení technického vedoucího
+      3. Nasadit do cílového prostředí
     
     applicable_to:
-      - Dev deployments
-      - Low-risk staging deployments
-      - Documentation changes
+      - Dev nasazení
+      - Nízkorizikové staging nasazení
+      - Změny dokumentace
   
   elevated_workflow:
     steps:
-      1. Technical review
-      2. Security review (if applicable)
-      3. Compliance review (if applicable)
-      4. Engineering manager approval
-      5. Deploy to target environment
+      1. Technická kontrola
+      2. Bezpečnostní kontrola (pokud platí)
+      3. Kontrola souladu (pokud platí)
+      4. Schválení manažera inženýrství
+      5. Nasadit do cílového prostředí
     
     applicable_to:
-      - Low-risk production deployments
-      - Staging deployments with compliance flags
-      - Security-related changes
+      - Nízkorizikové produkční nasazení
+      - Staging nasazení s příznaky souladu
+      - Změny související s bezpečností
   
   executive_workflow:
     steps:
-      1. All applicable review lanes
-      2. Engineering manager pre-approval
-      3. Executive briefing preparation
-      4. Executive review and approval
-      5. Final deployment authorization
-      6. Deploy with enhanced monitoring
+      1. Všechny příslušné kontrolní linie
+      2. Předběžné schválení manažera inženýrství
+      3. Příprava výkonného briefingu
+      4. Výkonná kontrola a schválení
+      5. Konečná autorizace nasazení
+      6. Nasadit s rozšířeným monitorováním
     
     applicable_to:
-      - High-risk production deployments
-      - Strategic or regulatory changes
-      - Changes with major business impact
+      - Vysoce riziková produkční nasazení
+      - Strategické nebo regulační změny
+      - Změny s velkým obchodním dopadem
 
 delegation_rules:
   delegation_allowed:
-    - Standard approvals may be delegated to qualified deputies
-    - Delegation must be documented
-    - Delegated authority has same responsibilities
+    - Standardní schválení mohou být delegována kvalifikovaným zástupcům
+    - Delegace musí být dokumentována
+    - Delegovaná autorita má stejné odpovědnosti
   
   delegation_prohibited:
-    - Executive approvals cannot be delegated
-    - Compliance approvals cannot be delegated
-    - Security critical approvals cannot be delegated
+    - Výkonná schválení nelze delegovat
+    - Schválení souladu nelze delegovat
+    - Kritická bezpečnostní schválení nelze delegovat
   
   delegation_requirements:
-    - Deputy must meet qualification requirements
-    - Delegation must be time-bound
-    - Delegation must be revocable
+    - Zástupce musí splňovat kvalifikační požadavky
+    - Delegace musí být časově omezena
+    - Delegace musí být odvolatelná
 
 parallel_approvals:
   allowed_parallel:
-    - Technical and security reviews
-    - Technical and compliance reviews
-    - Business and operational reviews
+    - Technické a bezpečnostní kontroly
+    - Technické a kontroly souladu
+    - Obchodní a provozní kontroly
   
   must_be_sequential:
-    - Technical review before manager approval
-    - Manager approval before executive approval
-    - All reviews before final deployment approval
+    - Technická kontrola před schválením manažera
+    - Schválení manažera před výkonným schválením
+    - Všechny kontroly před konečným schválením nasazení
 
 approval_timeout_handling:
   timeout_periods:
@@ -3337,56 +3337,56 @@ approval_timeout_handling:
     executive: 120_hours
   
   on_timeout:
-    - Automatic notification to approver
-    - Notification to approver's manager
-    - Escalation to next level if no response
-    - Never proceed without approval
+    - Automatické upozornění schvalovateli
+    - Upozornění manažeru schvalovatele
+    - Eskalace na další úroveň, pokud není odpověď
+    - Nikdy nepokračujte bez schválení
 
 approval_revocation:
   revocation_allowed:
-    - Approver discovers new information
-    - Risk assessment changes
-    - Compliance violation discovered
+    - Schvalovatel objeví nové informace
+    - Změní se posouzení rizika
+    - Zjištěno porušení souladu
   
   revocation_process:
-    - Document revocation reason
-    - Notify all stakeholders
-    - Halt deployment if in progress
-    - Require re-approval after remediation
+    - Dokumentovat důvod odvolání
+    - Upozornit všechny zúčastněné strany
+    - Zastavit nasazení, pokud probíhá
+    - Vyžadovat opětovné schválení po nápravě
   
   revocation_authority:
-    - Original approver
-    - Higher authority level
-    - Compliance authority
-    - Executive authority
+    - Původní schvalovatel
+    - Vyšší úroveň autority
+    - Autorita souladu
+    - Výkonná autorita
 
 conditional_approvals:
   allowed: true
   
   conditions_types:
-    - Deploy only during specified time window
-    - Deploy with staged rollout
-    - Deploy with enhanced monitoring
-    - Deploy with on-call team ready
+    - Nasadit pouze během specifikovaného časového okna
+    - Nasadit s postupným zaváděním
+    - Nasadit s rozšířeným monitorováním
+    - Nasadit s připraveným pohotovostním týmem
   
   condition_enforcement:
-    - Conditions must be met before deployment
-    - Violations invalidate approval
-    - Condition adherence is audited
+    - Podmínky musí být splněny před nasazením
+    - Porušení zneplatňuje schválení
+    - Dodržování podmínek je auditováno
 
 approval_documentation:
   required_for_all_approvals:
-    - Approver identity
-    - Approval timestamp
-    - Approval level
-    - Conditions (if any)
-    - Decision rationale
+    - Identita schvalovatele
+    - Časové razítko schválení
+    - Úroveň schválení
+    - Podmínky (pokud existují)
+    - Odůvodnění rozhodnutí
   
   required_for_elevated_and_executive:
-    - Risk assessment review
-    - Mitigation plan acceptance
-    - Stakeholder alignment confirmation
-    - Rollback readiness verification
+    - Kontrola posouzení rizika
+    - Přijetí plánu zmírnění
+    - Potvrzení sladění zúčastněných stran
+    - Ověření připravenosti návratu
 
 exceptional_circumstances:
   emergency_bypass:
@@ -3394,43 +3394,43 @@ exceptional_circumstances:
     authority: EXECUTIVE_ONLY
     
     conditions:
-      - Production incident resolution
-      - Security vulnerability remediation
-      - Regulatory compliance emergency
+      - Řešení produkčního incidentu
+      - Náprava bezpečnostní zranitelnosti
+      - Naléhavá situace regulačního souladu
     
     requirements:
-      - Executive pre-approval or ratification
-      - Enhanced audit logging
-      - Post-incident review required
-      - Lessons learned documentation
+      - Předběžné výkonné schválení nebo ratifikace
+      - Rozšířené auditní záznamy
+      - Vyžadována poincidentní kontrola
+      - Dokumentace získaných poznatků
   
   retroactive_approval:
     allowed: LIMITED
     
     applicable_to:
-      - Emergency bypasses only
-      - Must be ratified within 24 hours
-      - Full audit trail required
+      - Pouze nouzové obejití
+      - Musí být ratifikováno do 24 hodin
+      - Vyžadována plná auditní stopa
     
     not_applicable_to:
-      - Standard deployments
-      - Planned releases
-      - Non-emergency changes
+      - Standardní nasazení
+      - Plánovaná vydání
+      - Neurgentní změny
 
 adaptation_guidelines:
   domains_may_customize:
-    - Approval level definitions
-    - Escalation triggers
-    - Approval workflows
-    - Timeout periods
-    - Delegation policies
+    - Definice úrovní schválení
+    - Spouštěče eskalace
+    - Schvalovací workflow
+    - Časové limity
+    - Delegační politiky
   
   domains_must_preserve:
-    - Progressive approval model
-    - Escalation capability
-    - Executive override authority
-    - Audit trail requirements
-    - Emergency response capability
+    - Progresivní model schvalování
+    - Schopnost eskalace
+    - Výkonná autorita přepsání
+    - Požadavky na auditní stopu
+    - Schopnost reakce v nouzových případech
 
 version: "1.0.0"
 status: ADAPTIVE
