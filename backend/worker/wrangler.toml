@@ -9,7 +9,7 @@ compatibility_flags = ["nodejs_compat"]
 binding = "DECISIONS_DB"
 database_name = "gpts-decision-stack-db"
 # Set database_id after running: wrangler d1 create gpts-decision-stack-db
-database_id = "d10b83ff-29a0-4ddd-99a"
+database_id = "d10b83ff-29a0-4ddd-99ac-c8fecf0a8ef3"
 
 [[r2_buckets]]
 binding = "ARTIFACTS_BUCKET"
@@ -32,7 +32,7 @@ name = "gpts-decision-stack-dev"
 [[env.dev.d1_databases]]
 binding = "DECISIONS_DB"
 database_name = "gpts-decision-stack-db-dev"
-database_id = "597ae973-2869-4ebb-89l"
+database_id = "597ae973-2869-4ebb-89bd-1ebc62ac6674"
 
 [[env.dev.r2_buckets]]
 binding = "ARTIFACTS_BUCKET"
