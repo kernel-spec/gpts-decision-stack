@@ -1,68 +1,68 @@
 # MASTER_SPEC: GPTs Decision Stack
 
-## Overview
+## Přehled
 
-The GPTs Decision Stack is a governance-first architecture for deploying Custom GPTs with explicit decision authority, state management, and audit trails.
+GPTs Decision Stack je architektura s důrazem na správu pro nasazování vlastních GPT s explicitní rozhodovací pravomocí, řízením stavů a auditními záznamy.
 
-## Architecture Principles
+## Architektonické principy
 
-1. **Control Plane First**: All GPTs operate under explicit governance constraints
-2. **State Invariance**: Core decision states are immutable and canonical
-3. **Audit by Design**: Every decision is logged with full context
-4. **Adaptive Domains**: Domain-specific rules can adapt while core remains invariant
-5. **No Workflow Conversion**: This is a decision model, not a workflow engine
+1. **Kontrolní rovina na prvním místě**: Všechny GPT pracují pod explicitními omezeními správy
+2. **Invariance stavů**: Základní rozhodovací stavy jsou neměnné a kanonické
+3. **Audit od návrhu**: Každé rozhodnutí je zaznamenáno s plným kontextem
+4. **Adaptivní domény**: Pravidla specifická pro doménu se mohou přizpůsobit, zatímco jádro zůstává neměnné
+5. **Žádná konverze na workflow**: Toto je model rozhodování, nikoliv engine pro workflow
 
-## Core Components
+## Základní komponenty
 
-### Knowledge Layer
+### Vrstva znalostí
 
-The knowledge layer provides the canonical truth for:
+Vrstva znalostí poskytuje kanonickou pravdu pro:
 
-- **Core Knowledge** (`/knowledge/core/`): Invariant control plane rules
-  - Charter and authority definitions
-  - Canonical states and transitions
-  - Artifact schemas and validation rules
-  - Failure semantics and recovery paths
-  - Decision log structure
+- **Základní znalosti** (`/knowledge/core/`): Neměnná pravidla kontrolní roviny
+  - Charta a definice pravomocí
+  - Kanonické stavy a přechody
+  - Schémata artefaktů a validační pravidla
+  - Sémantika selhání a cesty obnovy
+  - Struktura záznamu rozhodnutí
 
-- **Domain Knowledge** (`/knowledge/domains/default/`): Adaptive domain rules
-  - Domain ontology and concepts
-  - Framing rules for GPT behavior
-  - Primitive catalogs and operations
-  - Delivery topology constraints
-  - Risk and compliance triggers
-  - Commercial packaging rules
-  - Claims evidence policies
-  - Review lane routing
-  - Approval escalation matrix
+- **Doménové znalosti** (`/knowledge/domains/default/`): Adaptivní pravidla domény
+  - Ontologie a koncepty domény
+  - Pravidla rámování pro chování GPT
+  - Katalogy primitiv a operací
+  - Omezení topologie dodání
+  - Spouštěče rizik a compliance
+  - Pravidla komerčního balení
+  - Politiky důkazů pro tvrzení
+  - Směrování kontrolních řad
+  - Matice eskalace schvalování
 
-### Deployment Gates
+### Brány nasazení
 
-Progressive deployment through four environments:
+Progresivní nasazení přes čtyři prostředí:
 
-1. **Local**: Structural validation and completeness checks
-2. **Dev**: Integration testing with backend services
-3. **Staging**: Full governance reality with acceptance testing
-4. **Prod**: Authorized production deployment
+1. **Local**: Strukturální validace a kontroly úplnosti
+2. **Dev**: Integrační testování s backendovými službami
+3. **Staging**: Plná realita správy s akceptačním testováním
+4. **Prod**: Autorizované produkční nasazení
 
-### Governance Model
+### Model správy
 
-- **Ownership Maps**: Define who owns what components
-- **Approval Maps**: Define approval workflows
-- **Veto Maps**: Define operational veto authority
-- **Release Controller**: Outside-the-model release blocking
+- **Mapy vlastnictví**: Definují, kdo vlastní které komponenty
+- **Mapy schvalování**: Definují workflow schvalování
+- **Mapy veta**: Definují pravomoc provozního veta
+- **Kontroler vydání**: Blokování vydání mimo model
 
-## File Structure
+## Struktura souborů
 
 ```
 /
-├── MASTER_SPEC.md                    # This file
-├── repo.manifest.yaml                # File inventory and references
-├── README.md                         # Repository overview
-├── bootstrap_checklists_pack.sh      # Generate operational checklists
-├── bootstrap_knowledge_pack.sh       # Generate knowledge files
+├── MASTER_SPEC.md                    # Tento soubor
+├── repo.manifest.yaml                # Inventář souborů a reference
+├── README.md                         # Přehled repozitáře
+├── bootstrap_checklists_pack.sh      # Generování provozních checklistů
+├── bootstrap_knowledge_pack.sh       # Generování souborů znalostí
 ├── knowledge/
-│   ├── core/                         # Invariant core knowledge
+│   ├── core/                         # Neměnné základní znalosti
 │   │   ├── 00_ControlPlane_Charter.md
 │   │   ├── 01_CanonicalStates.yaml
 │   │   ├── 02_TransitionRules.yaml
@@ -71,7 +71,7 @@ Progressive deployment through four environments:
 │   │   ├── 05_FailureSemantics.yaml
 │   │   └── 06_DecisionLogSchema.yaml
 │   └── domains/
-│       └── default/                  # Adaptive domain knowledge
+│       └── default/                  # Adaptivní doménové znalosti
 │           ├── 10_DomainOntology.md
 │           ├── 11_FramingRules.yaml
 │           ├── 12_PrimitiveCatalog.yaml
@@ -81,37 +81,37 @@ Progressive deployment through four environments:
 │           ├── 16_ClaimsEvidencePolicy.yaml
 │           ├── 17_ReviewLaneRules.yaml
 │           └── 18_ApprovalEscalationMatrix.yaml
-├── prompts/                          # GPT instruction sets (future)
-├── schemas/                          # Validation schemas (future)
+├── prompts/                          # Sady instrukcí GPT (budoucí)
+├── schemas/                          # Validační schémata (budoucí)
 ├── tests/
-│   ├── acceptance/                   # Acceptance test definitions (future)
-│   └── fixtures/                     # Test fixtures (future)
+│   ├── acceptance/                   # Definice akceptačních testů (budoucí)
+│   └── fixtures/                     # Testovací fixtury (budoucí)
 └── operations/
-    ├── checklists/                   # Environment readiness checklists
-    └── gates/                        # Promotion gate rules
+    ├── checklists/                   # Checklisty připravenosti prostředí
+    └── gates/                        # Pravidla bran propagace
 ```
 
-## State Machine Model
+## Model stavového automatu
 
-The system operates as a state machine, NOT a workflow:
+Systém funguje jako stavový automat, NIKOLIV workflow:
 
-- **States are canonical**: Defined once, never altered
-- **Transitions are explicit**: All paths are defined upfront
-- **Decisions trigger transitions**: GPTs don't execute; they decide
-- **Audit is mandatory**: Every transition is logged
+- **Stavy jsou kanonické**: Definovány jednou, nikdy nezměněny
+- **Přechody jsou explicitní**: Všechny cesty jsou definovány předem
+- **Rozhodnutí spouštějí přechody**: GPT neexekuují; rozhodují
+- **Audit je povinný**: Každý přechod je zaznamenán
 
-## Deployment Readiness
+## Připravenost k nasazení
 
-Deployment to staging/prod is BLOCKED if:
+Nasazení do staging/prod je BLOKOVÁNO, pokud:
 
-- Any knowledge file is missing content
-- Any test fixture is missing or empty
-- QA artifacts are incomplete
-- Ownership/approval/veto maps are not approved
+- Kterýkoli soubor znalostí nemá obsah
+- Kterákoli testovací fixtura chybí nebo je prázdná
+- QA artefakty jsou neúplné
+- Mapy vlastnictví/schvalování/veta nejsou schváleny
 
-Current status: Knowledge files are being created in this phase.
+Aktuální stav: Soubory znalostí jsou vytvářeny v této fázi.
 
-## Version
+## Verze
 
-Specification Version: 1.0.0
-Last Updated: 2026-03-14
+Verze specifikace: 1.0.0
+Poslední aktualizace: 2026-03-14

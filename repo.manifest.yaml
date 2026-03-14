@@ -1,6 +1,6 @@
 manifest_version: "1.0.0"
 repository: gpts-decision-stack
-purpose: Governance-first Custom GPT deployment stack with explicit decision authority
+purpose: Zásobník nasazení vlastních GPT s důrazem na správu a explicitní rozhodovací pravomocí
 
 documentation:
   master_spec: MASTER_SPEC.md
@@ -8,10 +8,10 @@ documentation:
 
 bootstrap_scripts:
   - name: bootstrap_checklists_pack.sh
-    purpose: Generate operational checklists and gate rules
+    purpose: Generování provozních checklistů a pravidel bran
     output_path: gpts-decision-stack/operations/
   - name: bootstrap_knowledge_pack.sh
-    purpose: Generate core and domain knowledge files
+    purpose: Generování souborů základních a doménových znalostí
     output_path: gpts-decision-stack/knowledge/
 
 knowledge_files:
@@ -20,25 +20,25 @@ knowledge_files:
     invariant: true
     files:
       - name: 00_ControlPlane_Charter.md
-        purpose: Control plane charter and governance model
+        purpose: Charta kontrolní roviny a model správy
         type: markdown
       - name: 01_CanonicalStates.yaml
-        purpose: Canonical state definitions
+        purpose: Definice kanonických stavů
         type: yaml
       - name: 02_TransitionRules.yaml
-        purpose: State transition rules
+        purpose: Pravidla přechodů mezi stavy
         type: yaml
       - name: 03_ArtifactSchemas.yaml
-        purpose: Artifact validation schemas
+        purpose: Validační schémata artefaktů
         type: yaml
       - name: 04_AuthorityMatrix.yaml
-        purpose: Decision authority matrix
+        purpose: Matice rozhodovacích pravomocí
         type: yaml
       - name: 05_FailureSemantics.yaml
-        purpose: Failure handling semantics
+        purpose: Sémantika zpracování selhání
         type: yaml
       - name: 06_DecisionLogSchema.yaml
-        purpose: Decision log structure
+        purpose: Struktura záznamu rozhodnutí
         type: yaml
   
   domains:
@@ -47,31 +47,31 @@ knowledge_files:
       adaptive: true
       files:
         - name: 10_DomainOntology.md
-          purpose: Domain concepts and ontology
+          purpose: Koncepty a ontologie domény
           type: markdown
         - name: 11_FramingRules.yaml
-          purpose: GPT behavior framing rules
+          purpose: Pravidla rámování chování GPT
           type: yaml
         - name: 12_PrimitiveCatalog.yaml
-          purpose: Available primitives and operations
+          purpose: Dostupná primitiva a operace
           type: yaml
         - name: 13_DeliveryTopologyRules.yaml
-          purpose: Delivery topology constraints
+          purpose: Omezení topologie dodání
           type: yaml
         - name: 14_RiskComplianceTriggers.yaml
-          purpose: Risk and compliance trigger conditions
+          purpose: Podmínky spouštění rizik a compliance
           type: yaml
         - name: 15_CommercialPackagingRules.yaml
-          purpose: Commercial packaging constraints
+          purpose: Omezení komerčního balení
           type: yaml
         - name: 16_ClaimsEvidencePolicy.yaml
-          purpose: Claims and evidence requirements
+          purpose: Požadavky na tvrzení a důkazy
           type: yaml
         - name: 17_ReviewLaneRules.yaml
-          purpose: Review lane routing rules
+          purpose: Pravidla směrování kontrolních řad
           type: yaml
         - name: 18_ApprovalEscalationMatrix.yaml
-          purpose: Approval escalation paths
+          purpose: Cesty eskalace schvalování
           type: yaml
 
 operations:

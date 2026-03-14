@@ -98,5 +98,5 @@ current_gate_position:
     - knowledge_content
     - fixture_content
   reason: >
-    Final deployment readiness cannot pass until all knowledge_files and
-    tests/fixtures content are explicitly present and auditable.
+    Finální připravenost k nasazení nemůže projít, dokud není veškerý obsah
+    knowledge_files a tests/fixtures explicitně přítomen a auditovatelný.
