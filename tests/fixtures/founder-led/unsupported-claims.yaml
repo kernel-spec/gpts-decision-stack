@@ -1,0 +1,40 @@
+fixture_type: acceptance_fixture
+scenario_id: founder_led_unsupported_claims
+domain: founder-led
+linked_acceptance_tests:
+  - AC-008
+current_state: claims_validation
+trigger_conditions:
+  claim_candidates_present: true
+  supporting_evidence_insufficient: true
+input_artifacts:
+  ClaimsDecision:
+    artifact_type: ClaimsDecision
+    claim_candidates_reviewed:
+      - garantujeme regulatorní compliance
+      - máme ověřený enterprise rollout pattern
+    permitted_claims: []
+    restricted_claims:
+      - máme ověřený enterprise rollout pattern
+    forbidden_claims:
+      - garantujeme regulatorní compliance
+    claim_to_evidence_map:
+      garantujeme regulatorní compliance: []
+      máme ověřený enterprise rollout pattern:
+        - anecdotal_founder_note
+    evidence_gaps:
+      - compliance_audit
+      - deployment_evidence
+    claim_fit_status: fail
+    decision_status: stop
+    blocking_issues:
+      - forbidden claims non-empty
+      - insufficient evidence
+    invalidation_rule: Unsupported claims musí zablokovat release do doby doplnění evidence nebo odstranění claims.
+    version: 1.0.0
+expected_observations:
+  forbidden_claims_non_empty: true
+  claim_fit_status_expected:
+    - fail
+    - unresolved
+  release_blocked: true

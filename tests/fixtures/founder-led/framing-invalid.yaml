@@ -1,0 +1,69 @@
+fixture_type: acceptance_fixture
+scenario_id: founder_led_framing_invalid
+domain: founder-led
+linked_acceptance_tests:
+  - AC-001
+current_state: problem_framing
+trigger_conditions:
+  framing_validity: invalid
+  buyer_fit_status: mismatch
+  deliverable_fit_status: unknown
+  explicit_reentry_required: true
+input_artifacts:
+  ProblemBrief:
+    artifact_type: ProblemBrief
+    problem_statement: Zakladatel chce okamžitě prodávat enterprise governance stack bez potvrzeného buyer fit.
+    target_outcome: Získat komerční nabídku pro první prodej.
+    requestor_type: founder-led
+    stakeholders:
+      - founder
+    in_scope:
+      - buyer fit
+      - scope validation
+    out_of_scope:
+      - enterprise procurement approval
+    constraints:
+      - žádné potvrzené enterprise reference
+      - omezený čas na discovery
+    assumptions:
+      - buyer bude akceptovat lightweight nabídku
+    unknowns:
+      - skutečný buyer type
+      - approval path
+      - požadovaná governance hloubka
+    available_evidence:
+      - founder_notes_v1
+    initial_success_criteria:
+      - potvrdit buyer fit
+    decision_status: proceed
+    blocking_issues: []
+    invalidation_rule: Pokud buyer fit není potvrzen, framing se musí vrátit k revise nebo invalidate.
+    version: 1.0.0
+  FramingAssessment:
+    artifact_type: FramingAssessment
+    framing_validity: invalid
+    buyer_fit_status: mismatch
+    deliverable_fit_status: unknown
+    task_fit_status: mismatch
+    mismatch_hypotheses:
+      - požadavek je formulován jako enterprise nabídka bez enterprise buyer evidence
+      - deliverable je předčasně komercializovaný
+    earliest_falsification_point: Buyer interview nebo discovery call nepotvrdí enterprise procurement potřeby.
+    required_clarifications:
+      - kdo je skutečný buyer
+      - zda existuje procurement nebo legal lane
+    recommended_reframe:
+      - vrátit se na intake a zpřesnit buyer type
+      - přerámovat nabídku jako founder-led discovery místo enterprise release
+    decision_status: invalidate
+    blocking_issues:
+      - buyer mismatch
+      - missing buyer evidence
+    invalidation_rule: Invalid framing nesmí pokračovat do primitive selection bez re-entry.
+    version: 1.0.0
+expected_observations:
+  preferred_outcome: invalidate
+  valid_reentry_targets:
+    - intake
+    - problem_framing
+  false_proceed_forbidden: true
