@@ -1,9 +1,9 @@
-# State Transition Rules
+# Pravidla přechodu stavů
 # Status: INVARIANT
-# Defines all allowed state transitions and conditions
+# Definuje všechny povolené přechody stavů a podmínky
 
 transition_rules:
-  # Initial submission
+  # Počáteční odeslání
   - from: UNSUBMITTED
     to: SUBMITTED
     authority: ANY_SUBMITTER
@@ -13,7 +13,7 @@ transition_rules:
     validation:
       - artifact_schema_valid
   
-  # Intake evaluation
+  # Vyhodnocení příjmu
   - from: SUBMITTED
     to: INTAKE_REJECTED
     authority: AE-Intake
@@ -34,7 +34,7 @@ transition_rules:
       - assign_tracking_id
       - route_to_claims_verification
   
-  # Claims verification
+  # Ověření tvrzení
   - from: INTAKE_ACCEPTED
     to: CLAIMS_VERIFICATION
     authority: AE-Claims
@@ -64,7 +64,7 @@ transition_rules:
     effects:
       - finalize_verification_report
   
-  # Re-submission after insufficient claims
+  # Opětovné odeslání po nedostatečných tvrzeních
   - from: CLAIMS_INSUFFICIENT
     to: SUBMITTED
     authority: ANY_SUBMITTER
@@ -74,7 +74,7 @@ transition_rules:
     effects:
       - reset_intake_evaluation
   
-  # Review routing
+  # Směrování ke kontrole
   - from: CLAIMS_VERIFIED
     to: REVIEW_REQUIRED
     authority: CP-Governor
@@ -92,7 +92,7 @@ transition_rules:
     effects:
       - route_to_approval_workflow
   
-  # Review process
+  # Proces kontroly
   - from: REVIEW_REQUIRED
     to: REVIEW_IN_PROGRESS
     authority: REVIEW_AUTHORITY
@@ -120,7 +120,7 @@ transition_rules:
       - finalize_review_report
       - route_to_governance
   
-  # Governance approval
+  # Schválení řízení
   - from: REVIEW_APPROVED
     to: APPROVAL_REQUIRED
     authority: CP-Governor
@@ -155,7 +155,7 @@ transition_rules:
       - finalize_approval_record
       - route_to_release_prep
   
-  # Release preparation and control
+  # Příprava vydání a kontrola
   - from: APPROVAL_GRANTED
     to: RELEASE_READY
     authority: CP-Governor
@@ -195,8 +195,8 @@ transition_rules:
       - archive_decision_trail
 
 invariant_rules:
-  - All transitions require authority check
-  - All transitions must be logged
-  - Terminal states cannot transition
-  - Backward transitions require explicit definition
-  - Authority cannot be bypassed
+  - Všechny přechody vyžadují kontrolu autority
+  - Všechny přechody musí být zaznamenány
+  - Terminální stavy nemohou přecházet
+  - Zpětné přechody vyžadují explicitní definici
+  - Autorita nemůže být obejita

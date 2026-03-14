@@ -1,6 +1,6 @@
-# Authority Matrix
+# Matice autorit
 # Status: INVARIANT
-# Defines decision-making authority for each GPT and role
+# Definuje rozhodovací autoritu pro každý GPT a roli
 
 authorities:
   gpt_roles:
@@ -23,9 +23,9 @@ authorities:
         - release_execution
       
       decision_scope:
-        - All state transitions requiring governance validation
-        - Authority enforcement
-        - Routing decisions
+        - Všechny přechody stavů vyžadující validaci řízení
+        - Prosazování autorit
+        - Rozhodnutí o směrování
       
       audit_requirement: MANDATORY
     
@@ -44,9 +44,9 @@ authorities:
         - override_governance
       
       decision_scope:
-        - Initial artifact evaluation
-        - Intake acceptance decisions
-        - Basic compliance flagging
+        - Počáteční vyhodnocení artefaktu
+        - Rozhodnutí o přijetí příjmu
+        - Základní označování dodržování předpisů
       
       audit_requirement: MANDATORY
     
@@ -65,9 +65,9 @@ authorities:
         - execute_releases
       
       decision_scope:
-        - Claims verification
-        - Evidence sufficiency
-        - Verification escalation
+        - Ověřování tvrzení
+        - Dostatečnost důkazů
+        - Eskalace ověření
       
       audit_requirement: MANDATORY
     
@@ -85,9 +85,9 @@ authorities:
         - override_veto
       
       decision_scope:
-        - Technical review decisions
-        - Review approval/rejection
-        - Escalation to governance
+        - Rozhodnutí technické kontroly
+        - Schválení/zamítnutí kontroly
+        - Eskalace k řízení
       
       audit_requirement: MANDATORY
     
@@ -105,9 +105,9 @@ authorities:
         - execute_releases_directly
       
       decision_scope:
-        - Governance approval decisions
-        - Conditional approvals
-        - Executive escalation
+        - Rozhodnutí o schválení řízení
+        - Podmíněná schválení
+        - Eskalace na výkonnou úroveň
       
       audit_requirement: MANDATORY
     
@@ -125,72 +125,72 @@ authorities:
         - alter_decision_history
       
       decision_scope:
-        - Release authorization
-        - Operational veto enforcement
-        - Release execution
+        - Autorizace vydání
+        - Prosazování operačního veta
+        - Provádění vydání
       
       audit_requirement: MANDATORY
 
 authority_checks:
   required_for:
-    - All state transitions
-    - All decision records
-    - All governance actions
+    - Všechny přechody stavů
+    - Všechny záznamy rozhodnutí
+    - Všechny akce řízení
   
   check_sequence:
-    1. Verify decision maker identity
-    2. Validate authority level for decision type
-    3. Check decision scope alignment
-    4. Confirm no prohibited actions
-    5. Log authority check result
+    1. Ověřit identitu rozhodujícího subjektu
+    2. Validovat úroveň autority pro typ rozhodnutí
+    3. Zkontrolovat soulad rozsahu rozhodnutí
+    4. Potvrdit žádné zakázané akce
+    5. Zaznamenat výsledek kontroly autority
   
   failure_handling:
-    - Reject decision immediately
-    - Log unauthorized attempt
-    - Notify governance authority
-    - Do not execute state transition
+    - Okamžitě zamítnout rozhodnutí
+    - Zaznamenat neoprávněný pokus
+    - Informovat autoritu řízení
+    - Neprovádět přechod stavu
 
 escalation_paths:
   intake_escalation:
     from: AE-Intake
     to: AE-Claims
     conditions:
-      - Intake accepted
-      - Claims verification required
+      - Příjem přijat
+      - Vyžadováno ověření tvrzení
   
   claims_escalation:
     from: AE-Claims
     to: CP-Governor
     conditions:
-      - Claims verified
-      - Review or approval required
+      - Tvrzení ověřena
+      - Vyžadována kontrola nebo schválení
   
   review_escalation:
     from: REVIEW_AUTHORITY
     to: APPROVAL_AUTHORITY
     conditions:
-      - Review approved
-      - Governance approval required
+      - Kontrola schválena
+      - Vyžadováno schválení řízení
   
   approval_escalation:
     from: APPROVAL_AUTHORITY
     to: EXECUTIVE_AUTHORITY
     conditions:
-      - Standard approval authority insufficient
-      - Executive decision required
+      - Standardní autorita schvalování nedostačující
+      - Vyžadováno rozhodnutí výkonné úrovně
   
   operational_escalation:
     from: RELEASE_CONTROLLER
     to: APPROVAL_AUTHORITY
     conditions:
-      - Release blocked
-      - Governance review of block required
+      - Vydání blokováno
+      - Vyžadována kontrola blokace řízením
 
 invariant_rules:
-  - Authority cannot be delegated or transferred
-  - All decisions must have authority backing
-  - Authority checks are mandatory and cannot be bypassed
-  - Audit requirements are absolute
+  - Autorita nemůže být delegována nebo převedena
+  - Všechna rozhodnutí musí mít autoritu
+  - Kontroly autorit jsou povinné a nemohou být obejity
+  - Požadavky na audit jsou absolutní
 
 matrix_version: "1.0.0"
 status: INVARIANT

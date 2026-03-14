@@ -1,104 +1,104 @@
-# Canonical States
+# Kanonické stavy
 # Status: INVARIANT
-# These states form the canonical state machine for all artifacts
+# Tyto stavy tvoří kanonický stavový automat pro všechny artefakty
 
 canonical_states:
   initial:
     - name: UNSUBMITTED
-      description: Artifact not yet submitted to the system
+      description: Artefakt ještě nebyl odeslán do systému
       entry_authority: NONE
       exit_authority: ANY_SUBMITTER
   
   intake:
     - name: SUBMITTED
-      description: Artifact submitted and awaiting intake evaluation
+      description: Artefakt odeslán a čeká na vyhodnocení příjmu
       entry_authority: ANY_SUBMITTER
       exit_authority: AE-Intake
     
     - name: INTAKE_REJECTED
-      description: Artifact rejected during intake evaluation
+      description: Artefakt zamítnut při vyhodnocení příjmu
       entry_authority: AE-Intake
       exit_authority: NONE
       terminal: true
     
     - name: INTAKE_ACCEPTED
-      description: Artifact accepted for further processing
+      description: Artefakt přijat pro další zpracování
       entry_authority: AE-Intake
       exit_authority: AE-Claims
   
   verification:
     - name: CLAIMS_VERIFICATION
-      description: Claims being verified against evidence
+      description: Tvrzení jsou ověřována proti důkazům
       entry_authority: AE-Claims
       exit_authority: AE-Claims
     
     - name: CLAIMS_INSUFFICIENT
-      description: Claims lack sufficient evidence
+      description: Tvrzení postrádají dostatečné důkazy
       entry_authority: AE-Claims
       exit_authority: AE-Intake
     
     - name: CLAIMS_VERIFIED
-      description: Claims verified with sufficient evidence
+      description: Tvrzení ověřena s dostatečnými důkazy
       entry_authority: AE-Claims
       exit_authority: CP-Governor
   
   review:
     - name: REVIEW_REQUIRED
-      description: Artifact requires review before approval
+      description: Artefakt vyžaduje kontrolu před schválením
       entry_authority: CP-Governor
       exit_authority: REVIEW_AUTHORITY
     
     - name: REVIEW_IN_PROGRESS
-      description: Review is actively in progress
+      description: Kontrola aktivně probíhá
       entry_authority: REVIEW_AUTHORITY
       exit_authority: REVIEW_AUTHORITY
     
     - name: REVIEW_REJECTED
-      description: Review rejected the artifact
+      description: Kontrola zamítla artefakt
       entry_authority: REVIEW_AUTHORITY
       exit_authority: NONE
       terminal: true
     
     - name: REVIEW_APPROVED
-      description: Review approved the artifact
+      description: Kontrola schválila artefakt
       entry_authority: REVIEW_AUTHORITY
       exit_authority: CP-Governor
   
   governance:
     - name: APPROVAL_REQUIRED
-      description: Governance approval required
+      description: Vyžadováno schválení řízení
       entry_authority: CP-Governor
       exit_authority: APPROVAL_AUTHORITY
     
     - name: APPROVAL_IN_PROGRESS
-      description: Approval workflow in progress
+      description: Schvalovací pracovní postup probíhá
       entry_authority: APPROVAL_AUTHORITY
       exit_authority: APPROVAL_AUTHORITY
     
     - name: APPROVAL_REJECTED
-      description: Governance approval rejected
+      description: Schválení řízení zamítnuto
       entry_authority: APPROVAL_AUTHORITY
       exit_authority: NONE
       terminal: true
     
     - name: APPROVAL_GRANTED
-      description: Governance approval granted
+      description: Schválení řízení uděleno
       entry_authority: APPROVAL_AUTHORITY
       exit_authority: CP-Governor
   
   release:
     - name: RELEASE_READY
-      description: Artifact ready for release
+      description: Artefakt připraven k vydání
       entry_authority: CP-Governor
       exit_authority: RELEASE_CONTROLLER
     
     - name: RELEASE_BLOCKED
-      description: Release blocked by operational veto or controller
+      description: Vydání blokováno operačním vetem nebo kontrolorem
       entry_authority: RELEASE_CONTROLLER
       exit_authority: RELEASE_CONTROLLER
     
     - name: RELEASED
-      description: Artifact successfully released
+      description: Artefakt úspěšně vydán
       entry_authority: RELEASE_CONTROLLER
       exit_authority: NONE
       terminal: true
@@ -139,7 +139,7 @@ state_categories:
     - RELEASED
 
 invariants:
-  - Terminal states cannot transition to any other state
-  - All state transitions must be authorized
-  - State history is immutable
-  - Backward transitions require explicit rules
+  - Terminální stavy nemohou přejít do žádného jiného stavu
+  - Všechny přechody stavů musí být autorizovány
+  - Historie stavů je neměnná
+  - Zpětné přechody vyžadují explicitní pravidla

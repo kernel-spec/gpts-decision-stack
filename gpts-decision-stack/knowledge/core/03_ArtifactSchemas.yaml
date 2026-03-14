@@ -1,6 +1,6 @@
-# Artifact Schemas
+# Schémata artefaktů
 # Status: INVARIANT
-# Validation schemas for artifacts processed through the decision stack
+# Validační schémata pro artefakty zpracovávané prostřednictvím rozhodovacího stacku
 
 artifact_types:
   submission:
@@ -9,7 +9,7 @@ artifact_types:
         type: string
         required: true
         pattern: "^[A-Z]{3}-[0-9]{6}$"
-        description: Unique artifact identifier
+        description: Jedinečný identifikátor artefaktu
       
       submitter:
         type: object
@@ -43,7 +43,7 @@ artifact_types:
       artifact_payload:
         type: object
         required: true
-        description: Type-specific artifact content
+        description: Obsah artefaktu specifický pro typ
       
       claims:
         type: array
@@ -159,7 +159,7 @@ artifact_types:
       content_reference:
         type: string
         required: true
-        description: URI or path to evidence content
+        description: URI nebo cesta k obsahu důkazu
       
       verification_status:
         type: string
@@ -180,21 +180,21 @@ artifact_types:
 
 validation_rules:
   artifact_submission:
-    - All required fields must be present
-    - Artifact ID must be unique
-    - At least one claim must be provided
-    - All claims must reference evidence
+    - Všechna povinná pole musí být přítomna
+    - ID artefaktu musí být jedinečné
+    - Musí být poskytnuto alespoň jedno tvrzení
+    - Všechna tvrzení musí odkazovat na důkazy
   
   decision_record:
-    - Decision ID must be unique
-    - State transition must be valid per TransitionRules
-    - Authority check must pass
-    - Rationale must be substantive
+    - ID rozhodnutí musí být jedinečné
+    - Přechod stavu musí být platný podle TransitionRules
+    - Kontrola autority musí projít
+    - Odůvodnění musí být podstatné
   
   evidence:
-    - Evidence must be accessible
-    - Verification must be traceable
-    - Evidence type must match claim type
+    - Důkazy musí být dostupné
+    - Ověření musí být sledovatelné
+    - Typ důkazu se musí shodovat s typem tvrzení
 
 schema_version: "1.0.0"
 status: INVARIANT

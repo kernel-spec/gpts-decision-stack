@@ -1,176 +1,176 @@
-# Failure Semantics
+# Sémantika selhání
 # Status: INVARIANT
-# Defines how failures are handled and recovered
+# Definuje, jak jsou selhání zpracována a obnovena
 
 failure_categories:
   authorization_failure:
     severity: CRITICAL
-    description: Decision maker lacks authority for attempted action
+    description: Rozhodující subjekt postrádá autoritu pro pokus o akci
     
     handling:
       immediate:
-        - Reject decision immediately
-        - Do not execute state transition
-        - Log unauthorized attempt with full context
+        - Okamžitě zamítnout rozhodnutí
+        - Neprovádět přechod stavu
+        - Zaznamenat neoprávněný pokus s plným kontextem
       
       notification:
-        - Notify governance authority
-        - Alert security monitoring
-        - Record in audit trail
+        - Informovat autoritu řízení
+        - Upozornit bezpečnostní monitorování
+        - Zaznamenat v auditní stopě
       
       recovery:
-        - No automatic recovery
-        - Requires governance review
-        - May require authority escalation
+        - Žádné automatické obnovení
+        - Vyžadována kontrola řízením
+        - Může vyžadovat eskalaci autority
     
     examples:
-      - AE-Intake attempting to grant final approval
-      - AE-Claims bypassing evidence requirements
-      - Any GPT attempting to alter decision history
+      - AE-Intake pokus o udělení konečného schválení
+      - AE-Claims obcházení požadavků na důkazy
+      - Jakýkoli GPT pokus o změnu historie rozhodnutí
   
   validation_failure:
     severity: HIGH
-    description: Artifact or decision fails schema validation
+    description: Artefakt nebo rozhodnutí selže validaci schématu
     
     handling:
       immediate:
-        - Reject artifact or decision
-        - Return validation errors
-        - Do not proceed with transition
+        - Zamítnout artefakt nebo rozhodnutí
+        - Vrátit validační chyby
+        - Nepokračovat s přechodem
       
       notification:
-        - Notify submitter with specific errors
-        - Log validation failure
+        - Informovat odesílatele se specifickými chybami
+        - Zaznamenat selhání validace
       
       recovery:
-        - Automatic retry allowed after correction
-        - No escalation required for simple validation errors
-        - Escalate if validation failures persist
+        - Automatický opakovaný pokus povolen po opravě
+        - Žádná eskalace není vyžadována pro jednoduché validační chyby
+        - Eskalovat, pokud selhání validace přetrvávají
     
     examples:
-      - Missing required artifact metadata
-      - Invalid state transition request
-      - Malformed decision record
+      - Chybějící povinná metadata artefaktu
+      - Neplatný požadavek na přechod stavu
+      - Chybně formátovaný záznam rozhodnutí
   
   evidence_insufficient:
     severity: MEDIUM
-    description: Claims lack sufficient supporting evidence
+    description: Tvrzení postrádají dostatečné podpůrné důkazy
     
     handling:
       immediate:
-        - Transition to CLAIMS_INSUFFICIENT state
-        - Document specific evidence gaps
-        - Preserve artifact for resubmission
+        - Přejít do stavu CLAIMS_INSUFFICIENT
+        - Dokumentovat specifické mezery v důkazech
+        - Zachovat artefakt pro opětovné odeslání
       
       notification:
-        - Notify submitter with gap analysis
-        - Provide guidance on evidence requirements
+        - Informovat odesílatele s analýzou mezer
+        - Poskytnout pokyny k požadavkům na důkazy
       
       recovery:
-        - Resubmission allowed with additional evidence
-        - No penalty for good-faith resubmission
-        - Track resubmission count
+        - Opětovné odeslání povoleno s dalšími důkazy
+        - Žádná sankce za opětovné odeslání v dobré víře
+        - Sledovat počet opětovných odeslání
     
     examples:
-      - Test results missing
-      - Documentation incomplete
-      - Certification not provided
+      - Chybějící výsledky testů
+      - Neúplná dokumentace
+      - Neposkytnutá certifikace
   
   governance_rejection:
     severity: MEDIUM
-    description: Review or approval authority rejects artifact
+    description: Autorita kontroly nebo schvalování zamítá artefakt
     
     handling:
       immediate:
-        - Transition to appropriate rejection state
-        - Finalize rejection record
-        - Make state terminal
+        - Přejít do příslušného stavu zamítnutí
+        - Finalizovat záznam zamítnutí
+        - Učinit stav terminálním
       
       notification:
-        - Notify all stakeholders
-        - Document rejection rationale
-        - Provide feedback for future submissions
+        - Informovat všechny zúčastněné strany
+        - Dokumentovat odůvodnění zamítnutí
+        - Poskytnout zpětnou vazbu pro budoucí odeslání
       
       recovery:
-        - No automatic recovery from terminal rejection
-        - New submission required for retry
-        - Learn from rejection feedback
+        - Žádné automatické obnovení z terminálního zamítnutí
+        - Vyžadováno nové odeslání pro opakování
+        - Poučit se ze zpětné vazby k zamítnutí
     
     examples:
-      - Review identifies critical issues
-      - Approval authority denies governance approval
-      - Policy compliance failure
+      - Kontrola identifikuje kritické problémy
+      - Autorita schvalování odmítá schválení řízení
+      - Selhání dodržování zásad
   
   operational_block:
     severity: MEDIUM
-    description: Release blocked by operational veto or controller
+    description: Vydání blokováno operačním vetem nebo kontrolorem
     
     handling:
       immediate:
-        - Transition to RELEASE_BLOCKED state
-        - Preserve release-ready status
-        - Do not execute release
+        - Přejít do stavu RELEASE_BLOCKED
+        - Zachovat status připravenosti k vydání
+        - Neprovádět vydání
       
       notification:
-        - Notify release coordinator
-        - Document block reason
-        - Provide expected resolution path
+        - Informovat koordinátora vydání
+        - Dokumentovat důvod blokace
+        - Poskytnout očekávanou cestu k řešení
       
       recovery:
-        - Automatic unblock when reason resolved
-        - Return to RELEASE_READY state
-        - Resume release process
+        - Automatické odblokování, když je důvod vyřešen
+        - Návrat do stavu RELEASE_READY
+        - Obnovit proces vydání
     
     examples:
-      - Production incident in progress
-      - Maintenance window conflict
-      - Operational capacity constraint
+      - Probíhá incident v produkci
+      - Konflikt s údržbovým oknem
+      - Omezení operační kapacity
   
   system_failure:
     severity: CRITICAL
-    description: System-level failure preventing normal operation
+    description: Selhání na úrovni systému zabraňující normální operaci
     
     handling:
       immediate:
-        - Halt processing
-        - Preserve current state
-        - Do not lose audit trail
+        - Zastavit zpracování
+        - Zachovat aktuální stav
+        - Neztratit auditní stopu
       
       notification:
-        - Alert system administrators
-        - Log failure details
-        - Trigger incident response
+        - Upozornit správce systému
+        - Zaznamenat detaily selhání
+        - Spustit reakci na incident
       
       recovery:
-        - Manual intervention required
-        - Resume from preserved state
-        - Verify audit trail integrity
+        - Vyžadován manuální zásah
+        - Obnovit ze zachovaného stavu
+        - Ověřit integritu auditní stopy
     
     examples:
-      - Database connection failure
-      - Decision log corruption
-      - Authority service unavailable
+      - Selhání připojení k databázi
+      - Korupce logu rozhodnutí
+      - Služba autority nedostupná
 
 recovery_principles:
   state_preservation:
-    - Never lose artifact data
-    - Preserve all decision history
-    - Maintain audit trail integrity
+    - Nikdy neztratit data artefaktu
+    - Zachovat veškerou historii rozhodnutí
+    - Udržovat integritu auditní stopy
   
   graceful_degradation:
-    - Fail safe, not fail forward
-    - Reject rather than proceed incorrectly
-    - Preserve governance constraints
+    - Selhat bezpečně, ne pokračovat
+    - Zamítnout spíše než pokračovat nesprávně
+    - Zachovat omezení řízení
   
   audit_continuity:
-    - All failures are logged
-    - Recovery actions are logged
-    - No gaps in audit trail
+    - Všechna selhání jsou zaznamenána
+    - Obnovovací akce jsou zaznamenány
+    - Žádné mezery v auditní stopě
   
   no_silent_failures:
-    - All failures generate notifications
-    - Stakeholders are informed
-    - Failures are escalated appropriately
+    - Všechna selhání generují oznámení
+    - Zúčastněné strany jsou informovány
+    - Selhání jsou vhodně eskalována
 
 retry_policies:
   validation_failure:
@@ -198,10 +198,10 @@ retry_policies:
     backoff: exponential
 
 invariant_rules:
-  - Failures never bypass governance
-  - Failures never skip audit logging
-  - Recovery never compromises authority
-  - Terminal states remain terminal
+  - Selhání nikdy neobcházejí řízení
+  - Selhání nikdy nepřeskakují zaznamenávání auditu
+  - Obnovení nikdy nekompromituje autoritu
+  - Terminální stavy zůstávají terminální
 
 semantics_version: "1.0.0"
 status: INVARIANT

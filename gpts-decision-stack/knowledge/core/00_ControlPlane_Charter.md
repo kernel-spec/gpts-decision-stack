@@ -1,125 +1,125 @@
-# Control Plane Charter
+# Charta řídicí roviny
 
-## Purpose
+## Účel
 
-This charter defines the governance model for the GPTs Decision Stack. All Custom GPTs operate under explicit control plane authority.
+Tato charta definuje model řízení pro GPTs Decision Stack. Všechny vlastní GPT operují pod explicitní autoritou řídicí roviny.
 
-## Core Principles
+## Základní principy
 
-### 1. Decision Authority, Not Execution
+### 1. Autorita rozhodování, nikoli provádění
 
-GPTs **decide** what should happen. They do not execute actions directly. Every decision is:
+GPT **rozhodují**, co by se mělo stát. Neprovádějí akce přímo. Každé rozhodnutí je:
 
-- Explicit and recorded
-- Subject to governance constraints
-- Auditable with full context
-- Reversible through defined paths
+- Explicitní a zaznamenané
+- Předmětem omezení řízení
+- Auditovatelné s plným kontextem
+- Reverzibilní prostřednictvím definovaných cest
 
-### 2. State Machine Model
+### 2. Model stavového automatu
 
-The system operates as a state machine:
+Systém funguje jako stavový automat:
 
-- **States** are canonical and invariant
-- **Transitions** are explicit and defined
-- **Decisions** trigger state transitions
-- **Workflows** are NOT the model
+- **Stavy** jsou kanonické a invariantní
+- **Přechody** jsou explicitní a definované
+- **Rozhodnutí** spouštějí přechody stavů
+- **Pracovní postupy** NEJSOU modelem
 
-### 3. Audit by Design
+### 3. Audit záměrem
 
-Every decision produces:
+Každé rozhodnutí produkuje:
 
-- Decision timestamp
-- Decision maker (GPT identifier)
-- Input context and artifacts
-- Decision output and rationale
-- State transition attempted
-- Authorization result
+- Časové razítko rozhodnutí
+- Rozhodující subjekt (identifikátor GPT)
+- Vstupní kontext a artefakty
+- Výstup rozhodnutí a odůvodnění
+- Pokus o přechod stavu
+- Výsledek autorizace
 
-### 4. Governance First
+### 4. Řízení na prvním místě
 
-All operations are subject to:
+Všechny operace podléhají:
 
-- Authority matrix checks
-- Approval workflows (where required)
-- Operational veto (where authorized)
-- Release control (outside the model)
+- Kontrolám matice autorit
+- Schvalovacím pracovním postupům (kde je to vyžadováno)
+- Operačnímu vetu (kde je to autorizováno)
+- Kontrole vydání (mimo model)
 
-## Control Plane Scope
+## Rozsah řídicí roviny
 
-The control plane manages:
+Řídicí rovina spravuje:
 
-1. **State Authority**: What states exist and who can transition between them
-2. **Decision Authority**: Which GPTs can make which decisions
-3. **Audit Authority**: What must be logged and how
-4. **Governance Authority**: Who can approve, veto, or block
+1. **Autorita stavů**: Jaké stavy existují a kdo může mezi nimi přecházet
+2. **Autorita rozhodování**: Které GPT mohou dělat jaká rozhodnutí
+3. **Autorita auditu**: Co musí být zaznamenáno a jak
+4. **Autorita řízení**: Kdo může schvalovat, vetovat nebo blokovat
 
-## GPT Roles
+## Role GPT
 
 ### CP-Governor
 
-**Authority**: Control plane governance and state management
+**Autorita**: Řízení řídicí roviny a správa stavů
 
-**Responsibilities**:
-- Validate state transitions
-- Enforce authority constraints
-- Maintain decision log
-- Report governance violations
+**Odpovědnosti**:
+- Validovat přechody stavů
+- Prosazovat omezení autorit
+- Udržovat log rozhodnutí
+- Hlásit porušení řízení
 
-**Cannot**: Execute business operations, bypass audit, weaken governance
+**Nemůže**: Provádět obchodní operace, obcházet audit, oslabovat řízení
 
 ### AE-Intake
 
-**Authority**: Artifact evaluation and intake decisions
+**Autorita**: Vyhodnocení artefaktu a rozhodnutí o příjmu
 
-**Responsibilities**:
-- Evaluate submitted artifacts
-- Decide on intake acceptance
-- Flag compliance issues
-- Route to appropriate review lanes
+**Odpovědnosti**:
+- Vyhodnocovat předložené artefakty
+- Rozhodovat o přijetí příjmu
+- Označovat problémy s dodržováním předpisů
+- Směrovat do příslušných kontrolních linek
 
-**Cannot**: Approve final releases, bypass evidence requirements
+**Nemůže**: Schvalovat konečná vydání, obcházet požadavky na důkazy
 
 ### AE-Claims
 
-**Authority**: Claims verification against evidence
+**Autorita**: Ověřování tvrzení proti důkazům
 
-**Responsibilities**:
-- Verify claims against provided evidence
-- Decide on evidence sufficiency
-- Escalate when evidence is insufficient
-- Document verification rationale
+**Odpovědnosti**:
+- Ověřovat tvrzení proti poskytnutým důkazům
+- Rozhodovat o dostatečnosti důkazů
+- Eskalovat, když jsou důkazy nedostatečné
+- Dokumentovat odůvodnění ověření
 
-**Cannot**: Accept claims without evidence, bypass review requirements
+**Nemůže**: Přijímat tvrzení bez důkazů, obcházet požadavky na kontrolu
 
-## Invariant Rules
+## Invariantní pravidla
 
-These rules **CANNOT** be changed by domain adaptation:
+Tato pravidla **NEMOHOU** být změněna doménovou adaptací:
 
-1. All decisions must be logged
-2. State transitions require authority
-3. Audit trails are immutable
-4. Governance checks are mandatory
-5. Core states are canonical
+1. Všechna rozhodnutí musí být zaznamenána
+2. Přechody stavů vyžadují autoritu
+3. Auditní stopy jsou neměnné
+4. Kontroly řízení jsou povinné
+5. Základní stavy jsou kanonické
 
-## Domain Adaptation
+## Doménová adaptace
 
-Domains **MAY** adapt:
+Domény **MOHOU** adaptovat:
 
-- Specific state definitions within canonical framework
-- Review lane routing rules
-- Approval escalation paths
-- Commercial packaging constraints
-- Risk tolerance thresholds
+- Specifické definice stavů v rámci kanonického rámce
+- Pravidla směrování kontrolních linek
+- Cesty eskalace schvalování
+- Omezení komerčního balení
+- Prahové hodnoty tolerance rizika
 
-Domains **MAY NOT** adapt:
+Domény **NEMOHOU** adaptovat:
 
-- Core decision model
-- Audit requirements
-- Authority enforcement
-- State machine invariants
+- Základní model rozhodování
+- Požadavky na audit
+- Prosazování autorit
+- Invarianty stavového automatu
 
-## Version
+## Verze
 
-Charter Version: 1.0.0
+Verze charty: 1.0.0
 Status: INVARIANT
-Last Updated: 2026-03-14
+Poslední aktualizace: 2026-03-14
