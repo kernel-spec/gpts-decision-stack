@@ -1,0 +1,47 @@
+acceptance_test_id: AC-012
+title: UNKNOWN hodnoty jsou explicitně zaznamenány — agenty nesmí domýšlet chybějící vstupy
+description: >
+  Ověřuje, že pokud je jakákoliv povinná hodnota, stakeholder, artefakt nebo evidence
+  nepřítomna ve vstupu, musí agent tuto hodnotu explicitně zaznamenat jako UNKNOWN.
+  Agent nesmí inferovat, domýšlet ani doplňovat chybějící hodnoty.
+  UNKNOWN je platná, explicitní hodnota — nikoliv chyba.
+
+fixtures:
+  - tests/fixtures/founder-led/partial-intake.yaml
+
+scenario: >
+  ProblemBrief s neúplnými vstupy: stakeholders: [UNKNOWN], evidence prázdná,
+  buyer type neznámý. AE-Intake musí vrátit ProblemBrief s UNKNOWN hodnotami
+  tam kde chybí vstup — nikoliv doplnit předpokládané hodnoty.
+  decision_status musí být revise (nikoliv proceed) při neúplném intake.
+
+agents_under_test:
+  - AE-Intake
+  - CP-Governor
+
+canonical_artifacts_referenced:
+  - ProblemBrief
+  - StateDecisionPacket
+
+entry_state: intake
+
+expected_conditions:
+  - ProblemBrief.stakeholders obsahuje UNKNOWN pokud stakeholdeři nejsou identifikováni
+  - ProblemBrief.unknowns je neprázdné pro každou chybějící povinnou informaci
+  - ProblemBrief.assumptions neobsahuje hodnoty, které nebyly explicitně uvedeny ve vstupu
+  - ProblemBrief.decision_status je revise nebo unresolved při neúplném vstupu
+  - Pipeline nepokračuje za state intake s unresolved UNKNOWN hodnotami záviselnými na downstream
+  - decision_log zaznamenává UNKNOWN hodnoty jako blocking reason
+
+failure_conditions:
+  - AE-Intake doplní předpokládané stakeholdery bez jejich přítomnosti ve vstupu
+  - ProblemBrief.unknowns je prázdné přestože vstup je neúplný
+  - ProblemBrief.assumptions obsahuje hodnoty, které nebyly ve vstupu
+  - "decision_status proceed vrácen při stakeholders: [UNKNOWN] s downstream závislostí"
+  - UNKNOWN je nahrazen odhadnutou hodnotou bez explicitního potvrzení
+
+governance_invariants:
+  - UNKNOWN je explicitní platná hodnota — nikoliv chyba
+  - Agent nesmí inferovat, domýšlet ani doplňovat chybějící hodnoty
+  - Pipeline nesmí pokračovat za stav závislý na chybějící povinné hodnotě
+  - Všechny UNKNOWN hodnoty musí být explicitně zaznamenány v unknowns poli

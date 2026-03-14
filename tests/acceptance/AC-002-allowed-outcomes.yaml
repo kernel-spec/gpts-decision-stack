@@ -1,0 +1,77 @@
+acceptance_test_id: AC-002
+title: Všechny agenty vrací výhradně povolené hodnoty decision_status
+description: >
+  Ověřuje, že každý agent v systému vrací pouze povolené hodnoty pro decision_status.
+  Žádná odpověď agenta nesmí obsahovat nepovolený status ani status, který
+  implicitně oslabuje governance pravidla.
+
+fixtures: []
+
+scenario: >
+  Každý adaptivní engine a každý agent řídicí roviny musí omezit decision_status
+  na přesně definovanou množinu povolených hodnot.
+  Tento test ověřuje správnost a úplnost stavového modelu napříč celým systémem.
+
+agents_under_test:
+  - AE-Intake
+  - AE-Framing
+  - AE-Primitive
+  - AE-Architecture
+  - AE-Claims
+  - AE-RiskGov
+  - AE-Commercial
+  - AE-ReviewRouter
+  - CP-Governor
+  - CP-ContractAuditor
+  - CP-TransitionJudge
+  - CP-ReleaseArbiter
+
+canonical_artifacts_referenced:
+  - ProblemBrief
+  - FramingAssessment
+  - OfferDecision
+  - ArchitectureSpec
+  - ClaimsDecision
+  - RiskDecision
+  - CommercialSpec
+  - ReviewTopologyPlan
+  - StateDecisionPacket
+  - ReleaseDecision
+
+allowed_decision_statuses:
+  artifact_agents:
+    - proceed
+    - revise
+    - invalidate
+    - unresolved
+    - blocked
+    - stop
+  governor_and_transition:
+    - proceed
+    - revise
+    - invalidate
+    - escalate
+    - stop
+    - blocked
+  release_arbiter:
+    - allowed
+    - blocked
+    - escalate
+
+expected_conditions:
+  - Každý agent vrací decision_status z povolené množiny pro svůj typ
+  - Hodnoty mimo povolenou množinu nejsou přítomny v žádném výstupu
+  - release_status agenta CP-ReleaseArbiter je výhradně allowed, blocked nebo escalate
+  - Hodnota decision_status je vždy přítomna v artefaktu (nesmí být null nebo chybět)
+  - proceed nesmí být vrácen pokud jsou přítomny aktivní blocking_issues
+
+failure_conditions:
+  - Jakýkoliv agent vrátí decision_status mimo povolenou množinu
+  - CP-ReleaseArbiter vrátí release_status jiný než allowed, blocked nebo escalate
+  - decision_status chybí v artefaktu
+  - proceed vrácen při neprázdných blocking_issues
+  - escalate převeden na proceed bez explicitního splnění podmínek
+
+governance_invariants:
+  - Stavový model je uzavřená množina — rozšíření vyžaduje explicitní revizi governance
+  - Falešný proceed je kritické selhání v celém systému

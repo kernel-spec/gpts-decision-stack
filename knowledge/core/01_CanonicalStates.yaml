@@ -1,0 +1,79 @@
+schema_version: "1.0.0"
+knowledge_id: "01_CanonicalStates"
+status: INVARIANT
+description: >
+  Kanonické stavy rozhodovacího pipeline systému gpts-decision-stack.
+  Pořadí stavů je závazné. Zpětný vstup je povolen, ale musí být explicitně zaznamenán.
+
+pipeline_states:
+  ordered:
+    - id: intake
+      description: >
+        Příjem a normalizace vstupního požadavku. AE-Intake vytváří ProblemBrief.
+      agent: AE-Intake
+      output_artifact: ProblemBrief
+      entry_condition: Nový požadavek nebo re-entry po revision.
+    - id: problem_framing
+      description: >
+        Validace buyer fit, deliverable fit a task fit.
+        AE-Framing vytváří FramingAssessment.
+      agent: AE-Framing
+      output_artifact: FramingAssessment
+      entry_condition: ProblemBrief s decision_status proceed.
+    - id: primitive_selection
+      description: >
+        Výběr správného offer primitivu pro daný kontext.
+        AE-Primitive vytváří OfferDecision.
+      agent: AE-Primitive
+      output_artifact: OfferDecision
+      entry_condition: FramingAssessment s framing_validity valid.
+    - id: architecture_validation
+      description: >
+        Posouzení feasibility architektury navrhovaného řešení.
+        AE-Architecture vytváří ArchitectureSpec.
+      agent: AE-Architecture
+      output_artifact: ArchitectureSpec
+      entry_condition: OfferDecision s decision_status proceed.
+    - id: claims_validation
+      description: >
+        Klasifikace claims a audit evidence. AE-Claims + CP-ContractAuditor
+        vytváří ClaimsDecision.
+      agents:
+        - AE-Claims
+        - CP-ContractAuditor
+      output_artifact: ClaimsDecision
+      entry_condition: ArchitectureSpec s decision_status proceed.
+    - id: risk_governance_validation
+      description: >
+        Klasifikace rizik a governance validace.
+        AE-RiskGov vytváří RiskDecision.
+      agent: AE-RiskGov
+      output_artifact: RiskDecision
+      entry_condition: ClaimsDecision s decision_status allowed nebo proceed.
+    - id: commercial_packaging
+      description: >
+        Komerční packaging a lane validace.
+        AE-Commercial vytváří CommercialSpec.
+      agent: AE-Commercial
+      output_artifact: CommercialSpec
+      entry_condition: RiskDecision s decision_status proceed nebo escalate.
+    - id: release_decision
+      description: >
+        Finální gate před uvolněním. CP-ReleaseArbiter vytváří ReleaseDecision.
+      agent: CP-ReleaseArbiter
+      output_artifact: ReleaseDecision
+      entry_condition: >
+        CommercialSpec proceed AND žádné aktivní veto AND
+        všechna mandatory schválení splněna.
+
+reentry_rules:
+  reentry_permitted: true
+  silent_reentry_permitted: false
+  reentry_logging: >
+    Každý zpětný vstup musí být explicitně zaznamenán v StateDecisionPacket
+    s odůvodněním a cílovým stavem.
+
+transition_invariants:
+  - Pipeline nesmí přeskočit stav bez explicitního záznamu.
+  - Tichý zpětný vstup je absolutně zakázán.
+  - Přechod do release_decision vyžaduje splnění všech entry conditions.

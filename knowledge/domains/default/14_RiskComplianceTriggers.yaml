@@ -1,0 +1,67 @@
+schema_version: "1.0.0"
+knowledge_id: "14_RiskComplianceTriggers"
+status: ADAPTIVE
+description: >
+  Klasifikace rizik pro systém gpts-decision-stack. Definuje úrovně rizik
+  a jejich dopad na pipeline průchod. Tento soubor je ADAPTIVE.
+
+risk_levels:
+  low:
+    description: >
+      Nízké riziko — standardní obchodní rizika bez governance implikací.
+    governance_impact: none
+    mandatory_review_lanes: []
+    escalation_required: false
+
+  medium:
+    description: >
+      Střední riziko — identifikovatelné riziko s definovatelnou mitigací.
+    governance_impact: partial
+    mandatory_review_lanes:
+      - risk_review
+    escalation_required: false
+
+  high:
+    description: >
+      Vysoké riziko — závažné riziko vyžadující explicitní governance pozornost.
+    governance_impact: significant
+    mandatory_review_lanes:
+      - risk_review
+      - legal_review
+    escalation_required: true
+    veto_eligible: true
+
+  critical:
+    description: >
+      Kritické riziko — nejzávažnější úroveň. Automaticky spouští veto eligibility
+      a povinnou eskalaci.
+    governance_impact: blocking
+    mandatory_review_lanes:
+      - risk_review
+      - legal_review
+      - security_review
+    escalation_required: true
+    veto_eligible: true
+    hard_block_eligible: true
+
+compliance_triggers:
+  enterprise_buyer:
+    description: Enterprise buyer aktivuje povinné procurement a legal lanes.
+    triggers_lanes:
+      - procurement_review
+      - legal_review
+  legal_required:
+    description: Explicitní legal_required flag aktivuje legal review.
+    triggers_lanes:
+      - legal_review
+  regulated_context:
+    description: Regulovaný kontext aktivuje compliance review a manuální schválení.
+    triggers_lanes:
+      - compliance_review
+    triggers_manual_approval: true
+
+risk_classification_rules:
+  - AE-RiskGov musí klasifikovat každé identifikované riziko na jednu z povolených úrovní.
+  - UNKNOWN risk_classification blokuje přechod z risk_governance_validation.
+  - Aktivní veto musí být zaznamenáno v veto_active poli RiskDecision.
+  - high a critical risk vždy spouštějí veto_eligible stav.

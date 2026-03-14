@@ -1,0 +1,63 @@
+schema_version: "1.0.0"
+knowledge_id: "05_FailureSemantics"
+status: INVARIANT
+description: >
+  Fail semantiky systému gpts-decision-stack. Definuje co tvoří selhání
+  a jak musí být zpracováno.
+
+fail_semantics:
+  false_proceed:
+    severity: critical
+    description: >
+      Falešný proceed nastane pokud agent vrátí decision_status proceed
+      ačkoliv vstupní artefakt nesplňuje vstupní kritéria cílového stavu.
+    rule: >
+      Pokud vstupní artefakt nesplňuje vstupní kritéria, agent musí vrátit
+      revise, invalidate, escalate nebo blocked — nikoliv proceed.
+    invariant: Falešný proceed je nejzávažnější selhání systému.
+
+  silent_conversion:
+    severity: critical
+    description: >
+      Konverze stop nebo escalate na proceed je zakázána.
+    rule: >
+      stop nebo escalate nesmí být nikdy převeden na proceed
+      žádnou logikou ani downstream agentem.
+
+  missing_blocking_issues:
+    severity: high
+    description: >
+      blocking_issues musí být prázdné pokud decision_status je proceed.
+      blocking_issues nesmí být prázdné pokud decision_status je stop nebo blocked.
+    rule: >
+      Nekonzistence mezi decision_status a blocking_issues je chyba.
+
+  unknown_propagation:
+    severity: high
+    description: >
+      UNKNOWN hodnoty nesmí být tiše ignorovány nebo nahrazeny předpoklady.
+    rule: >
+      Pokud povinný vstup je UNKNOWN, agent musí zaznamenat tuto skutečnost
+      a vrátit unresolved nebo blocked — nikoliv proceed.
+
+  veto_bypass:
+    severity: critical
+    description: >
+      Pokus o obejití aktivního veta je kritické selhání governance.
+    rule: >
+      CP-ReleaseArbiter nesmí vrátit release_status allowed
+      pokud veto_check.veto_active je true.
+
+qa_fail_semantics:
+  false_pass:
+    description: >
+      QA artefakt nesmí uvádět PASS pokud fyzický stav repozitáře
+      nesplňuje všechny podmínky.
+    rule: >
+      qa/final-gate-report.yaml musí vždy odrážet skutečný fyzický stav.
+      Falešné PASS v QA reportu je stejně závažné jako falešný proceed.
+
+  deploy_ready_false_claim:
+    description: >
+      Repozitář nesmí být označen jako DEPLOY-READY STACK pokud
+      backend binding nebo jiné kritické podmínky nejsou splněny.

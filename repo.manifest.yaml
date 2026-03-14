@@ -1,0 +1,207 @@
+schema_version: "1.0.0"
+manifest_type: canonical
+repository: gpts-decision-stack
+description: >
+  Kanonický manifest repozitáře gpts-decision-stack.
+  Definuje všechny součásti systému, jejich umístění, typ a stav.
+
+control_plane:
+  agents:
+    - id: CP-Governor
+      type: INVARIANT
+      prompt: prompts/core/CP-Governor.system.md
+      owned_artifact: StateDecisionPacket
+      schema: schemas/artifacts/StateDecisionPacket.schema.yaml
+    - id: CP-ContractAuditor
+      type: INVARIANT
+      prompt: prompts/core/CP-ContractAuditor.system.md
+      owned_artifact: ClaimsDecision
+      schema: schemas/artifacts/ClaimsDecision.schema.yaml
+    - id: CP-TransitionJudge
+      type: INVARIANT
+      prompt: prompts/core/CP-TransitionJudge.system.md
+      owned_artifact: TransitionDecision
+      schema: null
+    - id: CP-ReleaseArbiter
+      type: INVARIANT
+      prompt: prompts/core/CP-ReleaseArbiter.system.md
+      owned_artifact: ReleaseDecision
+      schema: schemas/artifacts/ReleaseDecision.schema.yaml
+
+adaptive_engines:
+  agents:
+    - id: AE-Intake
+      type: ADAPTIVE
+      pipeline_state: intake
+      prompt: prompts/adaptive/AE-Intake.system.md
+      owned_artifact: ProblemBrief
+      schema: schemas/artifacts/ProblemBrief.schema.yaml
+    - id: AE-Framing
+      type: ADAPTIVE
+      pipeline_state: problem_framing
+      prompt: prompts/adaptive/AE-Framing.system.md
+      owned_artifact: FramingAssessment
+      schema: schemas/artifacts/FramingAssessment.schema.yaml
+    - id: AE-Primitive
+      type: ADAPTIVE
+      pipeline_state: primitive_selection
+      prompt: prompts/adaptive/AE-Primitive.system.md
+      owned_artifact: OfferDecision
+      schema: schemas/artifacts/OfferDecision.schema.yaml
+    - id: AE-Architecture
+      type: ADAPTIVE
+      pipeline_state: architecture_validation
+      prompt: prompts/adaptive/AE-Architecture.system.md
+      owned_artifact: ArchitectureSpec
+      schema: schemas/artifacts/ArchitectureSpec.schema.yaml
+    - id: AE-Claims
+      type: ADAPTIVE
+      pipeline_state: claims_validation
+      prompt: prompts/adaptive/AE-Claims.system.md
+      owned_artifact: ClaimsDecision
+      schema: schemas/artifacts/ClaimsDecision.schema.yaml
+    - id: AE-RiskGov
+      type: ADAPTIVE
+      pipeline_state: risk_governance_validation
+      prompt: prompts/adaptive/AE-RiskGov.system.md
+      owned_artifact: RiskDecision
+      schema: schemas/artifacts/RiskDecision.schema.yaml
+    - id: AE-Commercial
+      type: ADAPTIVE
+      pipeline_state: commercial_packaging
+      prompt: prompts/adaptive/AE-Commercial.system.md
+      owned_artifact: CommercialSpec
+      schema: schemas/artifacts/CommercialSpec.schema.yaml
+    - id: AE-ReviewRouter
+      type: ADAPTIVE
+      pipeline_state: review_routing
+      prompt: prompts/adaptive/AE-ReviewRouter.system.md
+      owned_artifact: ReviewTopologyPlan
+      schema: schemas/artifacts/ReviewTopologyPlan.schema.yaml
+
+pipeline_states:
+  ordered:
+    - intake
+    - problem_framing
+    - primitive_selection
+    - architecture_validation
+    - claims_validation
+    - risk_governance_validation
+    - commercial_packaging
+    - release_decision
+  reentry_permitted: true
+  silent_reentry_permitted: false
+
+artifact_schemas:
+  - path: schemas/artifacts/ProblemBrief.schema.yaml
+    artifact_type: ProblemBrief
+  - path: schemas/artifacts/FramingAssessment.schema.yaml
+    artifact_type: FramingAssessment
+  - path: schemas/artifacts/OfferDecision.schema.yaml
+    artifact_type: OfferDecision
+  - path: schemas/artifacts/ArchitectureSpec.schema.yaml
+    artifact_type: ArchitectureSpec
+  - path: schemas/artifacts/RiskDecision.schema.yaml
+    artifact_type: RiskDecision
+  - path: schemas/artifacts/CommercialSpec.schema.yaml
+    artifact_type: CommercialSpec
+  - path: schemas/artifacts/ClaimsDecision.schema.yaml
+    artifact_type: ClaimsDecision
+  - path: schemas/artifacts/ReviewTopologyPlan.schema.yaml
+    artifact_type: ReviewTopologyPlan
+  - path: schemas/artifacts/StateDecisionPacket.schema.yaml
+    artifact_type: StateDecisionPacket
+  - path: schemas/artifacts/ReleaseDecision.schema.yaml
+    artifact_type: ReleaseDecision
+
+knowledge_files:
+  core:
+    - knowledge/core/00_ControlPlane_Charter.md
+    - knowledge/core/01_CanonicalStates.yaml
+    - knowledge/core/02_TransitionRules.yaml
+    - knowledge/core/03_ArtifactSchemas.yaml
+    - knowledge/core/04_AuthorityMatrix.yaml
+    - knowledge/core/05_FailureSemantics.yaml
+    - knowledge/core/06_DecisionLogSchema.yaml
+  domain:
+    - knowledge/domains/default/10_DomainOntology.md
+    - knowledge/domains/default/11_FramingRules.yaml
+    - knowledge/domains/default/12_PrimitiveCatalog.yaml
+    - knowledge/domains/default/13_DeliveryTopologyRules.yaml
+    - knowledge/domains/default/14_RiskComplianceTriggers.yaml
+    - knowledge/domains/default/15_CommercialPackagingRules.yaml
+    - knowledge/domains/default/16_ClaimsEvidencePolicy.yaml
+    - knowledge/domains/default/17_ReviewLaneRules.yaml
+    - knowledge/domains/default/18_ApprovalEscalationMatrix.yaml
+
+backend_binding:
+  action_contract: actions/openapi.yaml
+  auth_documentation: actions/auth.md
+  binding_config: operations/backend_binding.yaml
+  deployment_target: release/deployment_target.yaml
+  endpoint_owner_mapping: operations/endpoint_owner_mapping.yaml
+
+operations:
+  checklists:
+    - operations/checklists/local-checklist.md
+    - operations/checklists/dev-checklist.md
+    - operations/checklists/staging-checklist.md
+    - operations/checklists/prod-checklist.md
+  gates:
+    - operations/gates/promotion-gate.yaml
+  governance_maps:
+    - operations/operational_ownership_map.yaml
+    - operations/operational_approval_map.yaml
+    - operations/operational_veto_mapping.yaml
+  backend_binding:
+    - operations/backend_binding.yaml
+    - operations/endpoint_owner_mapping.yaml
+  docs:
+    - operations/Definition_of_Done.md
+    - operations/Management_Summary_Checklist.md
+
+qa:
+  gate_reports:
+    - qa/final-gate-report.yaml
+
+release:
+  authoritative:
+    - release/authoritative_release_notes.md
+    - release/deployment_target.yaml
+  derived:
+    - release/derived_packaging_notes.md
+
+tests:
+  fixtures:
+    - tests/fixtures/founder-led/framing-invalid.yaml
+    - tests/fixtures/founder-led/claims-fail.yaml
+    - tests/fixtures/founder-led/wrong-primitive.yaml
+    - tests/fixtures/founder-led/missing-claims-evidence.yaml
+    - tests/fixtures/founder-led/unsupported-claims.yaml
+    - tests/fixtures/founder-led/partial-intake.yaml
+    - tests/fixtures/enterprise/active-risk-veto.yaml
+    - tests/fixtures/enterprise/procurement-legal-required.yaml
+    - tests/fixtures/regulated/mandatory-approval-matrix.yaml
+    - tests/fixtures/enablement/non-sales-internal.yaml
+  acceptance:
+    - tests/acceptance/AC-001-nonlinear-model.yaml
+    - tests/acceptance/AC-002-allowed-outcomes.yaml
+    - tests/acceptance/AC-003-invalidation.yaml
+    - tests/acceptance/AC-004-veto.yaml
+    - tests/acceptance/AC-005-reentry.yaml
+    - tests/acceptance/AC-006-unresolved.yaml
+    - tests/acceptance/AC-007-packaging-gate.yaml
+    - tests/acceptance/AC-008-claims-gate.yaml
+    - tests/acceptance/AC-009-enterprise-topology.yaml
+    - tests/acceptance/AC-010-regulated-escalation.yaml
+    - tests/acceptance/AC-011-enablement-bypass.yaml
+    - tests/acceptance/AC-012-unknown-discipline.yaml
+
+language_policy:
+  human_readable_content: cs
+  prompts: en
+  scripts: en
+  yaml_keys: en
+  enum_values: en
+  technical_identifiers: en
+  artifact_type_constants: en

@@ -1,0 +1,46 @@
+acceptance_test_id: AC-004
+title: Aktivní risk veto absolutně blokuje release
+description: >
+  Ověřuje, že aktivní operační veto je absolutní blokací release.
+  CP-ReleaseArbiter nesmí vrátit release_status: allowed pokud je veto_active: true.
+  Veto nelze obejít žádným jiným artefaktem ani rozhodnutím.
+
+fixtures:
+  - tests/fixtures/enterprise/active-risk-veto.yaml
+
+scenario: >
+  Enterprise kontext. RiskDecision obsahuje aktivní veto (veto_active: true,
+  veto_source: risk_governance_review). Release kandidát je přítomen.
+  CP-ReleaseArbiter musí detekovat aktivní veto a vrátit release_status: blocked.
+  Decision log musí obsahovat zdroj veta.
+
+agents_under_test:
+  - CP-ReleaseArbiter
+  - CP-Governor
+
+canonical_artifacts_referenced:
+  - RiskDecision
+  - ReleaseDecision
+  - StateDecisionPacket
+
+entry_state: release_decision
+
+expected_conditions:
+  - ReleaseDecision.release_status je blocked
+  - ReleaseDecision.veto_check.veto_active je true
+  - ReleaseDecision.veto_check.veto_source je neprázdný a shoduje se se zdrojem veta
+  - ReleaseDecision.blocking_issues obsahuje explicitní zmínku o aktivním vetu
+  - decision_log_entry zaznamenává veto jako důvod blokace
+  - Pipeline zůstává zablokována dokud není veto explicitně uvolněno
+
+failure_conditions:
+  - ReleaseDecision.release_status je allowed při veto_active: true
+  - veto_check.veto_source je null nebo chybí
+  - blocking_issues jsou prázdné při aktivním vetu
+  - Jakýkoli jiný artefakt překonává nebo zmírňuje aktivní veto
+  - Veto je tiše ignorováno nebo softwarově obejito
+
+governance_invariants:
+  - Aktivní operační veto je absolutní blokací — nelze obejít žádným jiným artefaktem
+  - Veto lze zrušit pouze explicitním veto_release artefaktem od autority veta
+  - Falešný proceed na release je kritické selhání — toto je poslední gate

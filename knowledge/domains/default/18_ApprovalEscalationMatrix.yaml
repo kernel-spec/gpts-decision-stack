@@ -1,0 +1,117 @@
+schema_version: "1.0.0"
+knowledge_id: "18_ApprovalEscalationMatrix"
+status: ADAPTIVE
+description: >
+  Schvalovací politika pro systém gpts-decision-stack. Definuje požadavky
+  na manuální schválení, approval chains a eskalační pravidla.
+  Tento soubor je ADAPTIVE.
+
+approval_requirements:
+  regulated_mandatory_approval:
+    description: >
+      Povinné manuální schválení pro regulované kontexty před přechodem
+      do release_decision.
+    trigger: manual_approval_required true
+    authority: regulated_approval_board
+    blocking: true
+    rule: >
+      Pokud manual_approval_required je true a schválení chybí,
+      CP-TransitionJudge musí vrátit transition_status escalate.
+
+  enterprise_procurement_approval:
+    description: >
+      Procurement schválení pro enterprise kontexty.
+    trigger: requestor_type enterprise NEBO buyer_type enterprise
+    authority: procurement_authority
+    blocking: true
+
+  enterprise_legal_approval:
+    description: >
+      Legal schválení pro enterprise kontexty.
+    trigger: legal_required true
+    authority: legal_authority
+    blocking: true
+
+  risk_governance_approval:
+    description: >
+      Risk governance schválení pokud risk_classification je high nebo critical.
+    trigger: risk_classification in [high, critical]
+    authority: risk_governance_authority
+    blocking: true
+
+approval_chains:
+  standard:
+    description: Standardní approval chain pro founder-led a enablement kontexty.
+    steps:
+      - claims_audit_clearance
+      - risk_governance_clearance
+
+  enterprise:
+    description: Enterprise approval chain s procurement a legal.
+    steps:
+      - procurement_clearance
+      - legal_clearance
+      - risk_governance_clearance
+    parallel_steps_allowed:
+      - procurement_clearance
+      - legal_clearance
+
+  regulated:
+    description: Regulovaný approval chain s povinným manuálním schválením.
+    steps:
+      - compliance_review_clearance
+      - legal_clearance
+      - risk_governance_clearance
+      - regulated_board_approval
+    sequential: true
+
+approval_policy_rules:
+  - Schválení je vázáno na role nebo autority — nikoliv na konkrétní osoby.
+  - Chybějící povinné schválení blokuje přechod do release_decision.
+  - Schválení nesmí být uděleno bez aktivní autority v daném kroku.
+  - Eskalace vyžaduje explicitní zaznamenání v StateDecisionPacket.
+  - Approval chain nelze zkrátit bez explicitní governance revize.
+
+veto_escalation:
+  operational_veto:
+    description: >
+      Operační veto — vydáváno risk governance autoritou nebo řídicí rovinou.
+      Absolutní blokace release nebo přechodu stavu.
+    scope:
+      - release_decision
+      - production_release
+    trigger_conditions:
+      - veto_active true v VetoStatus
+      - risk_classification critical nebo high s hard_block
+      - security_review_not_closed
+      - legal_review_not_closed
+    enforcement: CP-ReleaseArbiter vrací release_status blocked
+    release_procedure: >
+      Vyžaduje explicitní veto_release artefakt od originating_veto_authority.
+
+  model_veto:
+    description: >
+      Modelové veto — vydáváno CP-Governor při detekci porušení
+      pipeline invariantů. Odlišné od operačního veta.
+    scope:
+      - všechny stavy pipeline
+    trigger_conditions:
+      - false_proceed detekován
+      - silent_reentry detekován
+      - forbidden_claims s non-blocking decision_status
+    enforcement: CP-Governor blokuje StateDecisionPacket s decision_status blocked
+
+  veto_release_policy:
+    required_fields:
+      - veto_release_authority
+      - veto_release_reason
+      - original_veto_reference
+    prohibited:
+      - Tiché uvolnění bez veto_release artefaktu
+      - Uvolnění jinou autoritou než vydavatelem veta
+      - Ignorování veta při přechodu do release_decision
+
+  veto_source_recording:
+    rule: >
+      Zdroj veta (veto_source) musí být explicitně zaznamenán v StateDecisionPacket
+      a v ReleaseDecision pokud je veto aktivní.

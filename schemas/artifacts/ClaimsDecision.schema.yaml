@@ -1,0 +1,79 @@
+schema_id: ClaimsDecision
+schema_version: "1.0.0"
+artifact_type: ClaimsDecision
+owner: AE-Claims
+auditor: CP-ContractAuditor
+pipeline_state: claims_validation
+description: >
+  Rozhodnutí o claimech vůči dostupné evidenci.
+  Forbidden claims blokují pipeline. Falešný proceed na claims je kritické selhání.
+  Výstup AE-Claims může být auditován CP-ContractAuditor.
+
+required_fields:
+  - artifact_type
+  - claim_candidates_reviewed
+  - permitted_claims
+  - restricted_claims
+  - forbidden_claims
+  - claim_to_evidence_map
+  - evidence_gaps
+  - claim_fit_status
+  - decision_status
+  - version
+
+fields:
+  artifact_type:
+    type: string
+    constant: ClaimsDecision
+  claim_candidates_reviewed:
+    type: list
+    items: string
+    description: Všechny hodnocené claimy.
+  permitted_claims:
+    type: list
+    items: string
+    description: Claimy přímo podpořené dostupnou evidencí.
+  restricted_claims:
+    type: list
+    items: string
+    description: Claimy vyžadující doplnění evidence nebo kvalifikaci.
+  forbidden_claims:
+    type: list
+    items: string
+    description: Claimy bez podpůrné evidence nebo v rozporu s evidencí.
+  claim_to_evidence_map:
+    type: map
+    key_type: string
+    value_type: list
+    description: Explicitní mapování každého claimu na jeho podpůrné důkazy.
+  evidence_gaps:
+    type: list
+    items: string
+    description: Evidence chybějící, ale požadovaná pro podporu claimů.
+  claim_fit_status:
+    type: string
+    enum:
+      - pass
+      - fail
+      - unresolved
+  decision_status:
+    type: string
+    enum:
+      - proceed
+      - revise
+      - stop
+      - unresolved
+  blocking_issues:
+    type: list
+    items: string
+  invalidation_rule:
+    type: string
+  version:
+    type: string
+
+invariants:
+  - Claim bez podpůrné evidence je forbidden claim — nikoli restricted.
+  - Pokud forbidden_claims je neprázdné, musí být claim_fit_status fail a decision_status stop nebo revise.
+  - Pokud evidence_gaps existují bez explicitního rozporu, může být claim_fit_status unresolved.
+  - decision_status proceed nesmí být vrácen když forbidden_claims je neprázdné.
+  - Forbidden claimy nesmí být odstraněny z výstupu za účelem čistšího výsledku.

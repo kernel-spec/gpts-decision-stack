@@ -1,0 +1,83 @@
+fixture_type: acceptance_fixture
+scenario_id: founder_led_wrong_primitive
+domain: founder-led
+linked_acceptance_tests:
+  - AC-003
+current_state: architecture_validation
+trigger_conditions:
+  offer_decision_status: proceed
+  selected_primitive_is_wrong: true
+  architecture_feasibility_status: infeasible
+input_artifacts:
+  ProblemBrief:
+    artifact_type: ProblemBrief
+    problem_statement: Zakladatel chce lehkou interní enablement potřebu řešit enterprise managed service modelem.
+    target_outcome: Dodat interní enablement materiály.
+    requestor_type: founder-led
+    stakeholders:
+      - founder
+      - internal_team
+    in_scope:
+      - enablement artifact
+    out_of_scope:
+      - managed service delivery
+    constraints:
+      - malý tým
+      - nulový externí buyer
+    assumptions:
+      - stejný primitive lze použít pro všechny use cases
+    unknowns: []
+    available_evidence:
+      - internal_request_note
+    initial_success_criteria:
+      - dodat interní enablement asset
+    decision_status: proceed
+    blocking_issues: []
+    invalidation_rule: Pokud selected primitive neodpovídá task fit, musí být invalidován.
+    version: 1.0.0
+  OfferDecision:
+    artifact_type: OfferDecision
+    candidate_primitives:
+      - enterprise_managed_service
+      - internal_enablement_pack
+    selected_primitive: enterprise_managed_service
+    selection_rationale:
+      - komerčně atraktivní směr
+    rejected_primitives:
+      - internal_enablement_pack
+    rejection_reasons:
+      - preferován větší kontrakt
+    buyer_fit_check: mismatch
+    deliverable_fit_check: mismatch
+    decision_status: proceed
+    blocking_issues:
+      - wrong primitive selected
+    invalidation_rule: Pokud architecture validation potvrdí mismatch, re-entry target je primitive_selection.
+    version: 1.0.0
+  ArchitectureSpec:
+    artifact_type: ArchitectureSpec
+    delivery_shape: managed_service
+    system_boundaries:
+      - external_buyer_operations
+    required_capabilities:
+      - dedicated_delivery_team
+      - legal_support
+    required_dependencies:
+      - procurement_workflow
+      - enterprise_security_review
+    operational_constraints:
+      - tyto závislosti nejsou dostupné
+    feasibility_status: infeasible
+    architecture_mismatch_risks:
+      - delivery shape neodpovídá internímu enablement use case
+    fallback_architecture_options:
+      - internal_enablement_pack
+    decision_status: invalidate
+    blocking_issues:
+      - architecture mismatch
+    invalidation_rule: Infeasible architecture musí invalidovat předchozí selected primitive.
+    version: 1.0.0
+expected_observations:
+  preferred_outcome: invalidate
+  explicit_reentry_target: primitive_selection
+  no_soft_edit_only: true

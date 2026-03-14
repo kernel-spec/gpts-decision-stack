@@ -1,0 +1,68 @@
+schema_version: "1.0.0"
+knowledge_id: "15_CommercialPackagingRules"
+status: ADAPTIVE
+description: >
+  Komerční packaging politika pro systém gpts-decision-stack. Definuje
+  pravidla pro commercial lanes, bypass podmínky a packaging gate.
+  Tento soubor je ADAPTIVE.
+
+commercial_lanes:
+  standard_commercial:
+    description: >
+      Standardní komerční lane pro komerční nabídky.
+    applicable_primitives:
+      - advisory_engagement
+      - product_license
+      - managed_service
+    bypass_eligible: false
+    required: true
+
+  enterprise_commercial:
+    description: >
+      Enterprise komerční lane s rozšířenými podmínkami.
+    applicable_primitives:
+      - product_license
+      - managed_service
+    bypass_eligible: false
+    required: true
+    additional_requirements:
+      - enterprise_procurement_clearance
+      - legal_review_clearance
+
+  internal_enablement_bypass:
+    description: >
+      Bypass komerčního lane pro interní enablement projekty.
+      Povoleno pouze pokud explicit_bypass_policy je aktivní.
+    applicable_primitives:
+      - internal_enablement
+    bypass_eligible: true
+    bypass_condition: commercial_lane_optional je true v policy
+    required: false
+
+commercial_packaging_rules:
+  bypass_policy:
+    rule: >
+      Komerční lane může být bypassed pouze pokud commercial_lane_optional
+      je explicitně true v relevant policy. Tiché vynechání není povoleno.
+    invariant: >
+      Bypass musí být explicitně zaznamenán v CommercialSpec
+      s odkazem na policy, která bypass povoluje.
+
+  missing_inputs:
+    rule: >
+      Pokud povinné vstupy pro komerční packaging chybí,
+      AE-Commercial musí vrátit revise nebo blocked — nikoliv proceed.
+
+  packaging_gate:
+    rule: >
+      Packaging gate je splněn pokud:
+      packaging_scope je correctly set AND
+      všechny povinné commercial reviews jsou cleared.
+    failure_condition: >
+      Pokud packaging_scope nesedí na requestor_type nebo primitiv,
+      AE-Commercial vrátí revise nebo invalidate.
+
+commercial_invariants:
+  - Komerční lane bypass vyžaduje explicitní policy permission.
+  - Tiché vynechání komerčního lane je zakázáno.
+  - Packaging gate failure blokuje přechod do risk_governance_validation nebo release.

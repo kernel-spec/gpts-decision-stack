@@ -1,0 +1,52 @@
+fixture_type: acceptance_fixture
+scenario_id: enterprise_active_risk_veto
+domain: enterprise
+linked_acceptance_tests:
+  - AC-004
+current_state: release_decision
+trigger_conditions:
+  active_veto: true
+  veto_source: risk_governance_review
+  release_candidate_present: true
+input_artifacts:
+  RiskDecision:
+    artifact_type: RiskDecision
+    risk_classification: high
+    identified_risks:
+      - neuzavřený security review
+      - neuzavřený legal review
+    compliance_triggers:
+      - enterprise_buyer
+      - legal_required
+    required_review_lanes:
+      - legal
+      - security
+    mandatory_approvals:
+      - risk_governance_authority
+    hard_block_conditions:
+      - active operational veto
+    mitigations_required:
+      - close security review
+      - close legal review
+    governance_status: fail
+    decision_status: stop
+    blocking_issues:
+      - active risk veto
+    invalidation_rule: Aktivní risk veto blokuje release až do explicitního uvolnění.
+    version: 1.0.0
+  VetoStatus:
+    veto_active: true
+    veto_source: risk_governance_review
+    veto_scope:
+      - release_decision
+      - production_release
+  ReleaseCandidate:
+    release_candidate_present: true
+    release_scope:
+      - enterprise_offer_package
+expected_observations:
+  release_status_expected:
+    - block
+    - escalate
+  no_release_when_veto_active: true
+  decision_log_must_record_veto_source: true

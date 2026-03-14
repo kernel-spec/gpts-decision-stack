@@ -1,0 +1,49 @@
+fixture_type: acceptance_fixture
+scenario_id: founder_led_missing_claims_evidence
+domain: founder-led
+linked_acceptance_tests:
+  - AC-006
+current_state: claims_validation
+trigger_conditions:
+  claims_evidence_missing: true
+  explicit_contradiction_present: false
+input_artifacts:
+  ClaimsDecisionCandidate:
+    claim_candidates:
+      - řešení je audit-ready
+      - delivery model je enterprise-safe
+    available_evidence:
+      - founder_notes_v1
+    missing_evidence:
+      - audit_report
+      - customer_reference
+      - security_review
+  ClaimsDecision:
+    artifact_type: ClaimsDecision
+    claim_candidates_reviewed:
+      - řešení je audit-ready
+      - delivery model je enterprise-safe
+    permitted_claims: []
+    restricted_claims:
+      - řešení je audit-ready
+      - delivery model je enterprise-safe
+    forbidden_claims: []
+    claim_to_evidence_map:
+      řešení je audit-ready: []
+      delivery model je enterprise-safe: []
+    evidence_gaps:
+      - audit_report
+      - customer_reference
+      - security_review
+    claim_fit_status: unresolved
+    decision_status: unresolved
+    blocking_issues:
+      - missing evidence
+    invalidation_rule: Bez důkazů nesmí claims lane vrátit proceed.
+    version: 1.0.0
+expected_observations:
+  preferred_outcome:
+    - unresolved
+    - revise
+  release_must_not_proceed: true
+  decision_log_must_record_missing_evidence: true

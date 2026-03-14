@@ -1,0 +1,90 @@
+schema_version: "1.0.0"
+artifact_type: backend_binding
+description: >
+  Konkrétní backend binding konfigurace pro systém gpts-decision-stack.
+  Definuje implementaci backend služby, auth vazbu, mapování vlastníků
+  endpointů a deployment cíl. Model není systémem záznamu — veškerý
+  persistentní stav, veto enforcement, schválení a release autorita žijí
+  výhradně v backend službě.
+
+backend_implementation:
+  service_name: gpts-decision-stack-worker
+  description: >
+    Cloudflare Worker implementující action contract definovaný
+    v actions/openapi.yaml. Slouží jako systém záznamu (system of record)
+    pro pipeline stav, artefakty, decision log a governance stav.
+    Zdrojový kód: backend/worker/src/
+  runtime: Cloudflare Workers
+  implementation_path: backend/worker/
+  api_contract: actions/openapi.yaml
+  deploy_workflow: .github/workflows/deploy-workers.yaml
+  state_store: Cloudflare D1 (binding DECISIONS_DB)
+  artifact_store: Cloudflare R2 (binding ARTIFACTS_BUCKET)
+  policy_store: Cloudflare KV (binding POLICY_STORE)
+  secret_store: Cloudflare Worker Secrets (API_KEY_SECRET per deployment)
+
+auth_binding:
+  method: api_key
+  header_name: X-API-Key
+  description: >
+    Každý GPT deployment slot se autentizuje k backend workeru pomocí
+    API klíče v hlavičce X-API-Key. Klíč je uložen jako Cloudflare Worker
+    Secret (API_KEY_SECRET). Model nemá přímý přístup k production datům —
+    veškerá komunikace probíhá prostřednictvím autentizovaného HTTPS endpointu.
+    Konstantní porovnání zabraňuje timing útokům (viz backend/worker/src/index.ts).
+  key_management: Cloudflare Worker Secrets
+  key_rotation_policy: 90 days
+  scope_per_slot: true
+  auth_failure_action: reject_with_401
+  auth_documentation: actions/auth.md
+  auth_implementation: backend/worker/src/index.ts
+
+endpoint_owner_mapping:
+  description: >
+    Každý endpoint action API je mapován na funkčního vlastníka.
+    Vlastník nese zodpovědnost za provoz, auditování a správnost endpointu.
+  ref: operations/endpoint_owner_mapping.yaml
+
+deployment_target:
+  description: >
+    Deployment cíl pro backend binding službu a GPT deployment sloty.
+  ref: release/deployment_target.yaml
+  platform: Cloudflare Workers
+
+governance_constraints:
+  model_is_not_system_of_record: true
+  description: >
+    Model (GPT) nikdy neukládá stav přímo. Veškerý persistentní stav,
+    veto enforcement, schválení a release autorita žijí výhradně
+    v backend službě. Tyto governance constraints nesmí být oslabeny.
+  auth_outside_model: true
+  persistent_state_outside_model: true
+  execution_actions_outside_model: true
+  veto_enforcement_outside_model: true
+  release_authority_outside_model: true
+
+logging_requirements:
+  audit_log:
+    required: true
+    backend: Cloudflare Workers console.log (structured JSON via Wrangler tail)
+    format: structured JSON
+    retention: Cloudflare Workers Logs retention (configured per account)
+    required_fields:
+      - session_id
+      - endpoint
+      - agent_id
+      - timestamp
+      - decision_status
+      - artifact_type
+    applies_to_endpoints:
+      - /session POST
+      - /session/{id}/artifact POST
+      - /session/{id}/reentry POST
+      - /veto/{id}/activate POST
+      - /veto/{id}/release POST
+      - /approval/{id}/submit POST
+  access_log:
+    required: true
+    backend: Cloudflare Workers Logs
+    format: structured JSON
+    applies_to_endpoints: all

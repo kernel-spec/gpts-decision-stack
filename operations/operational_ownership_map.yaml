@@ -1,0 +1,82 @@
+schema_version: "1.0.0"
+artifact_type: operational_ownership_map
+description: >
+  Mapa operačního vlastnictví artefaktů, release procesu a veto pravomoci
+  v systému gpts-decision-stack. Vlastnictví je vázáno na funkce, capability třídy
+  nebo operační role — nikoliv na konkrétní osoby.
+
+operational_artifact_owner:
+  description: >
+    Každý kanonický artefakt má přesně jednoho funkčního vlastníka.
+    Vlastník je zodpovědný za výstupní kvalitu, integritu governance
+    a správnost artefaktu v rámci pipeline.
+  artifact_owners:
+    ProblemBrief:
+      owner_role: intake_engine_function
+      agent: AE-Intake
+      accountability: Normalizace vstupního požadavku a explicitní zachycení UNKNOWN hodnot.
+    FramingAssessment:
+      owner_role: framing_engine_function
+      agent: AE-Framing
+      accountability: Validace buyer fit, deliverable fit a task fit. Detekce invalid framingu.
+    OfferDecision:
+      owner_role: primitive_selection_function
+      agent: AE-Primitive
+      accountability: Výběr offer primitivu a detekce primitive mismatch.
+    ArchitectureSpec:
+      owner_role: architecture_validation_function
+      agent: AE-Architecture
+      accountability: Posouzení feasibility architektury a identifikace architecture mismatch.
+    ClaimsDecision:
+      owner_role: claims_validation_function
+      agent: AE-Claims
+      audit_authority: CP-ContractAuditor
+      accountability: Klasifikace claims, identifikace forbidden/restricted claims, audit evidence.
+    RiskDecision:
+      owner_role: risk_governance_function
+      agent: AE-RiskGov
+      accountability: Klasifikace rizik, eskalace a správa manuálních schválení.
+    CommercialSpec:
+      owner_role: commercial_packaging_function
+      agent: AE-Commercial
+      accountability: Komerční packaging gate, správa lane bypass policy.
+    ReviewTopologyPlan:
+      owner_role: review_routing_function
+      agent: AE-ReviewRouter
+      accountability: Aktivace review lanes a topologie recenze pro konkrétní kontext.
+    StateDecisionPacket:
+      owner_role: control_plane_governor_function
+      agent: CP-Governor
+      accountability: Orchestrace pipeline, správa re-entry, záznamy decision logu.
+    ReleaseDecision:
+      owner_role: release_arbiter_function
+      agent: CP-ReleaseArbiter
+      accountability: Finální gate před uvolněním. Blokace při aktivním vetu.
+
+release_owner:
+  description: >
+    Release je řízen funkcí release arbiter a řídicí rovinou (control plane).
+    Release_owner nese odpovědnost za finální stav release_decision.
+  primary_owner: release_arbiter_function
+  supporting_authority: control_plane_governor_function
+  release_gate_authority: CP-ReleaseArbiter
+  conditions_for_release_proceed:
+    - Žádné aktivní operační veto
+    - Všechny mandatory claims lanes resolved
+    - Všechny mandatory approval chains splněny
+    - Risk governance decision_status proceed nebo escalate s potvrzeným schválením
+  conditions_for_release_block:
+    - Aktivní veto (veto_active true)
+    - Forbidden claims neprázdné
+    - Chybějící mandatory approval v regulovaném kontextu
+
+veto_owner:
+  description: >
+    Veto vlastnictví je vázáno na autoritu veta dle zdroje veta.
+    Operační veto a model veto jsou odlišné třídy veta.
+  operational_veto_owner: risk_governance_authority
+  model_veto_owner: governance_review_authority
+  veto_release_authority: originating_veto_authority
+  note: >
+    Veto lze zrušit pouze explicitním artefaktem veto_release od autority,
+    která veto vydala. Žádná jiná autorita nemůže veto obejít.

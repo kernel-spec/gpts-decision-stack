@@ -1,0 +1,73 @@
+schema_id: OfferDecision
+schema_version: "1.0.0"
+artifact_type: OfferDecision
+owner: AE-Primitive
+pipeline_state: primitive_selection
+description: >
+  Rozhodnutí o výběru offer primitivu pro validovaný framing.
+  Vstupem jsou ProblemBrief a FramingAssessment.
+  Nesprávný primitiv musí být explicitně invalidován.
+
+required_fields:
+  - artifact_type
+  - candidate_primitives
+  - selected_primitive
+  - selection_rationale
+  - rejected_primitives
+  - rejection_reasons
+  - buyer_fit_check
+  - deliverable_fit_check
+  - decision_status
+  - version
+
+fields:
+  artifact_type:
+    type: string
+    constant: OfferDecision
+  candidate_primitives:
+    type: list
+    items: string
+    description: Všechny hodnocené primitivy.
+  selected_primitive:
+    type: string
+    description: Vybraný primitiv.
+  selection_rationale:
+    type: list
+    items: string
+    description: Explicitní zdůvodnění výběru.
+  rejected_primitives:
+    type: list
+    items: string
+    description: Všechny odmítnuté primitivy.
+  rejection_reasons:
+    type: list
+    items: string
+    description: Důvody odmítnutí pro každý odmítnutý primitiv.
+  buyer_fit_check:
+    type: string
+    enum:
+      - fit
+      - mismatch
+  deliverable_fit_check:
+    type: string
+    enum:
+      - fit
+      - mismatch
+  decision_status:
+    type: string
+    enum:
+      - proceed
+      - revise
+      - invalidate
+  blocking_issues:
+    type: list
+    items: string
+  invalidation_rule:
+    type: string
+  version:
+    type: string
+
+invariants:
+  - Pokud buyer_fit_check nebo deliverable_fit_check je mismatch, musí být decision_status invalidate.
+  - Pipeline nesmí pokračovat do architecture_validation s chybným primitivem.
+  - Všechny odmítnuté primitivy musí být výslovně uvedeny s důvody odmítnutí.

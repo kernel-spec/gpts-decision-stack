@@ -1,0 +1,57 @@
+acceptance_test_id: AC-005
+title: Zpětný vstup je vždy explicitní a zaznamenán
+description: >
+  Ověřuje, že každý zpětný vstup (re-entry) do dřívějšího stavu pipeline
+  je explicitně zaznamenán v decision logu a nikdy není tichý.
+  Re-entry target musí být pojmenován. Tichý zpětný vstup způsobuje ztrátu auditní stopy.
+
+fixtures:
+  - tests/fixtures/founder-led/framing-invalid.yaml
+  - tests/fixtures/founder-led/wrong-primitive.yaml
+
+scenario: >
+  Scénář A: FramingAssessment vrátí decision_status: invalidate.
+  Re-entry target je intake nebo problem_framing — musí být explicitně uveden.
+  Scénář B: ArchitectureSpec vrátí feasibility_status: infeasible.
+  Re-entry target je primitive_selection — musí být explicitně uveden.
+  V obou případech nesmí agent ani řídicí rovina tiše resetovat stav pipeline.
+
+agents_under_test:
+  - AE-Framing
+  - AE-Architecture
+  - CP-Governor
+  - CP-TransitionJudge
+
+canonical_artifacts_referenced:
+  - FramingAssessment
+  - ArchitectureSpec
+  - StateDecisionPacket
+
+reentry_scenarios:
+  - source_state: problem_framing
+    trigger: framing_validity invalid
+    expected_reentry_target:
+      - intake
+      - problem_framing
+  - source_state: architecture_validation
+    trigger: feasibility_status infeasible
+    expected_reentry_target:
+      - primitive_selection
+
+expected_conditions:
+  - valid_reentry_targets je neprázdné při invalidate nebo infeasible
+  - StateDecisionPacket explicitně pojmenovává re-entry target stav
+  - decision_log_entry zaznamenává zpětný vstup s odůvodněním
+  - blocking_issues jsou neprázdné v artefaktu spouštějícím re-entry
+  - Pipeline nezpracuje stav po re-entry bez nového vstupního artefaktu
+
+failure_conditions:
+  - valid_reentry_targets je prázdné nebo null při invalidate
+  - Re-entry proběhne bez záznamu v decision logu
+  - Pipeline pokračuje lineárně za selhání bez záznamu re-entry
+  - Re-entry target je odvozen implicitně bez explicitního pojmenování
+
+governance_invariants:
+  - Tichý zpětný vstup není povolen
+  - Každý zpětný vstup musí být zaznamenán v decision logu
+  - Re-entry target musí být explicitně pojmenován v StateDecisionPacket

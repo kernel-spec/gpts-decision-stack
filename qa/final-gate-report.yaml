@@ -1,0 +1,292 @@
+schema_version: "1.0.0"
+artifact_type: qa_final_gate_report
+report_date: "2026-03-14"
+report_updated: "2026-03-14"
+repository: gpts-decision-stack
+description: >
+  Finální QA gate report pro repozitář gpts-decision-stack.
+  Tento report odráží aktuální fyzický stav repozitáře k datu sestaven.
+  Report nesmí být upraven za účelem vylepšení výsledku — musí vždy odrážet skutečnost.
+
+overall_status: FAIL
+repo_integrity_status: PASS
+deployment_readiness_status: FAIL
+bundle_classification: REPO-READY SKELETON
+deploy_ready: false
+
+summary: >
+  Repozitář obsahuje kompletní implementační strukturu systému:
+  řídicí rovina, adaptivní enginy, schémata artefaktů, acceptance testy,
+  governance mapy, knowledge soubory, operační checklisty, promotion gate
+  a plně implementovaný backend (Cloudflare Worker, IMPLEMENTATION-BACKED).
+  repo_integrity_status je PASS — všechny repo vrstvy jsou fyzicky přítomny.
+  overall_status je FAIL (fail-closed governance): Cloudflare infrastruktura
+  není provisionována (D1, R2, KV, Worker Secret jsou placeholders) a acceptance
+  testy jsou definice, nikoliv evaluované výsledky. Dokud tyto podmínky nejsou
+  splněny, celkový gate výsledek musí být FAIL. deploy_ready je false.
+
+layer_status:
+  control_plane_prompts:
+    status: PASS
+    files_present:
+      - prompts/core/CP-Governor.system.md
+      - prompts/core/CP-ContractAuditor.system.md
+      - prompts/core/CP-TransitionJudge.system.md
+      - prompts/core/CP-ReleaseArbiter.system.md
+    note: Všechny 4 prompty řídicí roviny fyzicky existují.
+
+  adaptive_engine_prompts:
+    status: PASS
+    files_present:
+      - prompts/adaptive/AE-Intake.system.md
+      - prompts/adaptive/AE-Framing.system.md
+      - prompts/adaptive/AE-Primitive.system.md
+      - prompts/adaptive/AE-Architecture.system.md
+      - prompts/adaptive/AE-Claims.system.md
+      - prompts/adaptive/AE-RiskGov.system.md
+      - prompts/adaptive/AE-Commercial.system.md
+      - prompts/adaptive/AE-ReviewRouter.system.md
+    note: Všechny 8 promptů adaptivních enginů fyzicky existují.
+
+  artifact_schemas:
+    status: PASS
+    count_expected: 10
+    count_present: 10
+    files_present:
+      - schemas/artifacts/ProblemBrief.schema.yaml
+      - schemas/artifacts/FramingAssessment.schema.yaml
+      - schemas/artifacts/OfferDecision.schema.yaml
+      - schemas/artifacts/ArchitectureSpec.schema.yaml
+      - schemas/artifacts/ClaimsDecision.schema.yaml
+      - schemas/artifacts/RiskDecision.schema.yaml
+      - schemas/artifacts/CommercialSpec.schema.yaml
+      - schemas/artifacts/ReviewTopologyPlan.schema.yaml
+      - schemas/artifacts/StateDecisionPacket.schema.yaml
+      - schemas/artifacts/ReleaseDecision.schema.yaml
+    note: Všechna schémata artefaktů fyzicky existují.
+
+  fixture_pack:
+    status: PASS
+    count_expected: 10
+    count_present: 10
+    files_present:
+      - tests/fixtures/founder-led/framing-invalid.yaml
+      - tests/fixtures/founder-led/claims-fail.yaml
+      - tests/fixtures/founder-led/wrong-primitive.yaml
+      - tests/fixtures/founder-led/missing-claims-evidence.yaml
+      - tests/fixtures/founder-led/unsupported-claims.yaml
+      - tests/fixtures/founder-led/partial-intake.yaml
+      - tests/fixtures/enterprise/active-risk-veto.yaml
+      - tests/fixtures/enterprise/procurement-legal-required.yaml
+      - tests/fixtures/regulated/mandatory-approval-matrix.yaml
+      - tests/fixtures/enablement/non-sales-internal.yaml
+    note: Všechny acceptance fixtures fyzicky existují.
+
+  acceptance_test_pack:
+    status: PASS
+    count_expected: 12
+    count_present: 12
+    files_present:
+      - tests/acceptance/AC-001-nonlinear-model.yaml
+      - tests/acceptance/AC-002-allowed-outcomes.yaml
+      - tests/acceptance/AC-003-invalidation.yaml
+      - tests/acceptance/AC-004-veto.yaml
+      - tests/acceptance/AC-005-reentry.yaml
+      - tests/acceptance/AC-006-unresolved.yaml
+      - tests/acceptance/AC-007-packaging-gate.yaml
+      - tests/acceptance/AC-008-claims-gate.yaml
+      - tests/acceptance/AC-009-enterprise-topology.yaml
+      - tests/acceptance/AC-010-regulated-escalation.yaml
+      - tests/acceptance/AC-011-enablement-bypass.yaml
+      - tests/acceptance/AC-012-unknown-discipline.yaml
+    note: Všechny acceptance testy fyzicky existují.
+
+  governance_maps:
+    status: PASS
+    files_present:
+      - operations/operational_ownership_map.yaml
+      - operations/operational_approval_map.yaml
+      - operations/operational_veto_mapping.yaml
+    note: Všechny tři governance mapy fyzicky existují po tomto kroku.
+
+  repo_control_files:
+    status: PASS
+    files_present:
+      - MASTER_SPEC.md
+      - repo.manifest.yaml
+    note: Kanonické repo-control soubory fyzicky existují.
+
+  knowledge_files:
+    status: PASS
+    files_present:
+      - knowledge/core/00_ControlPlane_Charter.md
+      - knowledge/core/01_CanonicalStates.yaml
+      - knowledge/core/02_TransitionRules.yaml
+      - knowledge/core/03_ArtifactSchemas.yaml
+      - knowledge/core/04_AuthorityMatrix.yaml
+      - knowledge/core/05_FailureSemantics.yaml
+      - knowledge/core/06_DecisionLogSchema.yaml
+      - knowledge/domains/default/10_DomainOntology.md
+      - knowledge/domains/default/11_FramingRules.yaml
+      - knowledge/domains/default/12_PrimitiveCatalog.yaml
+      - knowledge/domains/default/13_DeliveryTopologyRules.yaml
+      - knowledge/domains/default/14_RiskComplianceTriggers.yaml
+      - knowledge/domains/default/15_CommercialPackagingRules.yaml
+      - knowledge/domains/default/16_ClaimsEvidencePolicy.yaml
+      - knowledge/domains/default/17_ReviewLaneRules.yaml
+      - knowledge/domains/default/18_ApprovalEscalationMatrix.yaml
+    count_expected: 16
+    count_present: 16
+    blocker: false
+    note: >
+      Všechny knowledge soubory fyzicky existují na kanonických cestách.
+
+  operations_checklists:
+    status: PASS
+    files_present:
+      - operations/checklists/local-checklist.md
+      - operations/checklists/dev-checklist.md
+      - operations/checklists/staging-checklist.md
+      - operations/checklists/prod-checklist.md
+    count_expected: 4
+    count_present: 4
+    blocker: false
+    note: >
+      Všechny operační checklisty fyzicky existují po tomto kroku.
+
+  promotion_gate:
+    status: PASS
+    file_present: true
+    files_present:
+      - operations/gates/promotion-gate.yaml
+    blocker: false
+    note: >
+      Soubor promotion-gate.yaml fyzicky existuje po tomto kroku.
+
+  backend_binding:
+    status: PASS
+    audit_result: IMPLEMENTATION-BACKED
+    files_present:
+      - actions/openapi.yaml
+      - actions/auth.md
+      - operations/backend_binding.yaml
+      - operations/endpoint_owner_mapping.yaml
+      - release/deployment_target.yaml
+      - backend/worker/src/index.ts
+      - backend/worker/src/router.ts
+      - backend/worker/src/types/index.ts
+      - backend/worker/src/services/state.ts
+      - backend/worker/src/services/artifact.ts
+      - backend/worker/src/services/decisionlog.ts
+      - backend/worker/src/services/veto.ts
+      - backend/worker/src/services/approval.ts
+      - backend/worker/src/services/policy.ts
+      - backend/worker/src/handlers/health.ts
+      - backend/worker/src/handlers/session.ts
+      - backend/worker/src/handlers/artifact.ts
+      - backend/worker/src/handlers/decisionlog.ts
+      - backend/worker/src/handlers/veto.ts
+      - backend/worker/src/handlers/approval.ts
+      - backend/worker/wrangler.toml
+      - backend/worker/package.json
+      - backend/worker/tsconfig.json
+      - backend/worker/migrations/0001_init.sql
+      - .github/workflows/deploy-workers.yaml
+    blocker: false
+    implementation_evidence:
+      runtime: Cloudflare Workers TypeScript
+      endpoints_implemented: 11
+      bindings: D1 (DECISIONS_DB), R2 (ARTIFACTS_BUCKET), KV (POLICY_STORE), Secret (API_KEY_SECRET)
+      deploy_workflow: .github/workflows/deploy-workers.yaml
+      type_checked: true
+    provisioning_pending:
+      - D1 database_id (wrangler d1 create)
+      - KV namespace id (wrangler kv namespace create)
+      - Cloudflare account_id (GitHub Secret)
+      - API_KEY_SECRET (wrangler secret put)
+    note: >
+      Backend binding přešel z SPEC_ONLY na IMPLEMENTATION-BACKED.
+      Repozitář obsahuje spustitelný TypeScript kód pro všechna API,
+      wrangler konfiguraci s binding deklaracemi, D1 schema migraci
+      a GitHub Actions deployment workflow. Provisioning skutečné
+      infrastruktury (D1 database_id, KV namespace id, R2 bucket,
+      API_KEY_SECRET Worker Secret) je nezbytný před prvním live deploymentem.
+      Toto je důvodem, proč bundle_classification zůstává REPO-READY SKELETON
+      a deploy_ready je false.
+
+blocking_gaps: []
+
+provisioning_gaps:
+  - id: PROV-001
+    layer: backend_binding
+    severity: informational
+    description: >
+      Cloudflare infrastruktura musí být provisionována před prvním live
+      deploymentem. Toto není blocking gap pro repo readiness (REPO-READY SKELETON),
+      ale je vyžadováno před dosažením DEPLOY-READY STACK.
+    placeholder_values:
+      - "wrangler.toml: database_id = REPLACE_WITH_D1_DATABASE_ID"
+      - "wrangler.toml: database_id = REPLACE_WITH_DEV_D1_DATABASE_ID"
+      - "wrangler.toml: id = REPLACE_WITH_KV_NAMESPACE_ID"
+      - "wrangler.toml: id = REPLACE_WITH_DEV_KV_NAMESPACE_ID"
+    required_actions:
+      - "wrangler d1 create gpts-decision-stack-db (a vyplnit database_id do wrangler.toml)"
+      - "wrangler r2 bucket create gpts-decision-stack-artifacts"
+      - "wrangler kv namespace create POLICY_STORE (a vyplnit id do wrangler.toml)"
+      - "wrangler secret put API_KEY_SECRET"
+      - "Nastavit CLOUDFLARE_API_TOKEN a CLOUDFLARE_ACCOUNT_ID jako GitHub Secrets"
+      - "wrangler d1 execute gpts-decision-stack-db --file backend/worker/migrations/0001_init.sql"
+  - id: PROV-002
+    layer: acceptance_tests
+    severity: informational
+    description: >
+      Acceptance testy existují jako YAML definice. DEPLOY-READY STACK
+      vyžaduje jejich evaluaci (ne pouze definici) — viz operations/Definition_of_Done.md.
+
+resolved_gaps:
+  - id: RESOLVED-001
+    layer: prompt_pack
+    description: Všechny 12 systémových promptů fyzicky existují.
+  - id: RESOLVED-002
+    layer: artifact_schemas
+    description: Všechna schémata artefaktů fyzicky existují.
+  - id: RESOLVED-003
+    layer: fixture_pack
+    description: Všechny acceptance fixtures fyzicky existují.
+  - id: RESOLVED-004
+    layer: acceptance_test_pack
+    description: Všechny acceptance testy fyzicky existují.
+  - id: RESOLVED-005
+    layer: governance_maps
+    description: Governance mapy (ownership, approval, veto) fyzicky existují.
+  - id: RESOLVED-006
+    layer: repo_control_files
+    description: MASTER_SPEC.md a repo.manifest.yaml fyzicky existují.
+  - id: RESOLVED-007
+    layer: knowledge_files
+    description: >
+      Všech 16 knowledge souborů fyzicky existuje
+      (7 core INVARIANT + 9 domain ADAPTIVE).
+  - id: RESOLVED-008
+    layer: operations_checklists
+    description: Všechny 4 operační checklisty fyzicky existují.
+  - id: RESOLVED-009
+    layer: promotion_gate
+    description: operations/gates/promotion-gate.yaml fyzicky existuje.
+  - id: RESOLVED-010
+    layer: backend_binding
+    description: >
+      Backend binding přešel z SPEC_ONLY na IMPLEMENTATION-BACKED.
+      Cloudflare Worker implementace fyzicky existuje v backend/worker/.
+      Spustitelný TypeScript, wrangler.toml (D1/R2/KV bindings),
+      GitHub Actions deploy workflow a D1 schema migrace jsou přítomny.
+
+audit_note: >
+  Tento report nesmí být ručně upraven za účelem zlepšení hodnocení.
+  overall_status musí být FAIL dokud deployment readiness podmínky nejsou splněny
+  (fail-closed governance). repo_integrity_status PASS odráží fyzickou přítomnost
+  všech repo vrstev a je odděleným signálem od deployment gate.
+  bundle_classification DEPLOY-CANDIDATE bylo odstraněno jako nekanonická hodnota.
+  Kanonické hodnoty jsou REPO-READY SKELETON a DEPLOY-READY STACK
+  (viz operations/Definition_of_Done.md). Falešné PASS je stejně závažné selhání
+  jako falešný proceed v pipeline.

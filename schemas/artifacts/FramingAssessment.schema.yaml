@@ -1,0 +1,83 @@
+schema_id: FramingAssessment
+schema_version: "1.0.0"
+artifact_type: FramingAssessment
+owner: AE-Framing
+pipeline_state: problem_framing
+description: >
+  Hodnocení validity framingu, buyer fit a deliverable fit.
+  Vstupem je ProblemBrief. Výstupem je FramingAssessment.
+  Neplatný framing nesmí pokračovat do primitive_selection.
+
+required_fields:
+  - artifact_type
+  - framing_validity
+  - buyer_fit_status
+  - deliverable_fit_status
+  - task_fit_status
+  - decision_status
+  - version
+
+fields:
+  artifact_type:
+    type: string
+    constant: FramingAssessment
+  framing_validity:
+    type: string
+    enum:
+      - valid
+      - invalid
+  buyer_fit_status:
+    type: string
+    enum:
+      - fit
+      - mismatch
+      - UNKNOWN
+  deliverable_fit_status:
+    type: string
+    enum:
+      - fit
+      - mismatch
+      - unknown
+    description: >
+      Lowercase 'unknown' je záměrné — tato hodnota je konzistentní s existujícími
+      fixtures a AE-Framing promptem. Na rozdíl od buyer_fit_status a task_fit_status
+      toto pole nepoužívá velká písmena UNKNOWN.
+  task_fit_status:
+    type: string
+    enum:
+      - fit
+      - mismatch
+      - UNKNOWN
+  mismatch_hypotheses:
+    type: list
+    items: string
+    description: Identifikované důvody neshody.
+  earliest_falsification_point:
+    type: string
+    description: Nejdřívější bod, ve kterém lze framing vyvrátit.
+  required_clarifications:
+    type: list
+    items: string
+    description: Co musí být vyjasněno před pokračováním.
+  recommended_reframe:
+    type: list
+    items: string
+    description: Doporučení pro přerámování pokud je framing neplatný.
+  decision_status:
+    type: string
+    enum:
+      - proceed
+      - invalidate
+      - revise
+  blocking_issues:
+    type: list
+    items: string
+  invalidation_rule:
+    type: string
+  version:
+    type: string
+
+invariants:
+  - Pokud buyer_fit_status je mismatch, musí být framing_validity invalid a decision_status invalidate.
+  - Pokud buyer_fit_status je UNKNOWN, musí být framing_validity invalid a decision_status revise.
+  - Invalid framing nesmí vrátit decision_status: proceed.

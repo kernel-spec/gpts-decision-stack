@@ -1,0 +1,85 @@
+schema_id: ReleaseDecision
+schema_version: "1.0.0"
+artifact_type: ReleaseDecision
+owner: CP-ReleaseArbiter
+pipeline_state: release_decision
+description: >
+  Finální rozhodnutí o uvolnění release kandidáta.
+  Toto je poslední gate. Aktivní veto je absolutní blokací.
+  Falešný proceed na release je kritické selhání.
+
+required_fields:
+  - artifact_type
+  - release_status
+  - release_rationale
+  - veto_check
+  - gate_checks
+  - blocking_issues
+  - version
+
+fields:
+  artifact_type:
+    type: string
+    constant: ReleaseDecision
+  release_status:
+    type: string
+    enum:
+      - allowed
+      - blocked
+      - escalate
+  release_rationale:
+    type: string
+    description: Explicitní zdůvodnění rozhodnutí.
+  veto_check:
+    type: object
+    fields:
+      veto_active:
+        type: boolean
+      veto_source:
+        type: string
+        nullable: true
+  gate_checks:
+    type: list
+    description: Seznam gate podmínek a jejich stav pass/fail.
+    items:
+      type: object
+      fields:
+        gate:
+          type: string
+        status:
+          type: string
+          enum:
+            - pass
+            - fail
+        notes:
+          type: string
+          nullable: true
+  blocking_issues:
+    type: list
+    items: string
+  decision_log_entry:
+    type: object
+    fields:
+      step:
+        type: string
+        constant: release_decision
+      agent:
+        type: string
+        constant: CP-ReleaseArbiter
+      outcome:
+        type: string
+      rationale:
+        type: string
+      timestamp:
+        type: string
+        format: iso8601
+  version:
+    type: string
+
+invariants:
+  - Pokud je veto_active: true, musí být release_status blocked.
+  - Veto nelze obejít žádným artefaktem ani rozhodnutím.
+  - Pokud chybí jakýkoli povinný artefakt, musí být release_status blocked.
+  - V regulovaném kontextu s chybějícím manuálním schválením musí být release_status escalate.
+  - release_status allowed nesmí být vrácen, pokud jakákoli gate podmínka je fail.
+  - Blokovací problémy nesmí být vynechány za účelem čistšího výstupu.

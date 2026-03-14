@@ -1,0 +1,106 @@
+schema_version: "1.0.0"
+knowledge_id: "02_TransitionRules"
+status: INVARIANT
+description: >
+  Pravidla pro přechody mezi stavy pipeline systému gpts-decision-stack.
+  Tento soubor definuje podmínky pro povolené přechody, pravidla zpětného
+  vstupu a UNKNOWN discipline pro přechody.
+
+state_transition_rules:
+  forward_transition:
+    rule: >
+      Přechod do dalšího stavu je povolen pouze pokud decision_status
+      výstupního artefaktu předchozího stavu je proceed nebo explicitně
+      povolená hodnota pro daný přechod.
+    blocked_statuses:
+      - stop
+      - blocked
+      - unresolved
+      - revise
+      - invalidate
+    invariant: Pipeline nesmí přeskočit stav bez explicitního záznamu.
+
+  backward_transition:
+    rule: >
+      Zpětný vstup (re-entry) je povolen pokud jsou splněny podmínky:
+      re-entry musí být explicitně zaznamenán v StateDecisionPacket
+      s odůvodněním a cílovým stavem.
+    silent_reentry_prohibited: true
+    logging_required: true
+    invariant: Tichý zpětný vstup je absolutně zakázán.
+
+  skip_transition:
+    rule: Pipeline nesmí přeskočit žádný povinný stav.
+    exceptions: []
+    invariant: Přeskočení stavu bez záznamu je kritická chyba.
+
+entry_conditions:
+  intake:
+    requires: Nový požadavek nebo re-entry po revision.
+    input_artifact: null
+  problem_framing:
+    requires: ProblemBrief s decision_status proceed.
+    input_artifact: ProblemBrief
+  primitive_selection:
+    requires: FramingAssessment s framing_validity valid.
+    input_artifact: FramingAssessment
+  architecture_validation:
+    requires: OfferDecision s decision_status proceed.
+    input_artifact: OfferDecision
+  claims_validation:
+    requires: ArchitectureSpec s decision_status proceed.
+    input_artifact: ArchitectureSpec
+  risk_governance_validation:
+    requires: ClaimsDecision s decision_status allowed nebo proceed.
+    input_artifact: ClaimsDecision
+  commercial_packaging:
+    requires: RiskDecision s decision_status proceed nebo escalate.
+    input_artifact: RiskDecision
+  release_decision:
+    requires: >
+      CommercialSpec proceed AND žádné aktivní veto AND
+      všechna mandatory schválení splněna.
+    input_artifact: CommercialSpec
+
+unknown_in_transitions:
+  definition: >
+    UNKNOWN označuje, že povinná hodnota, artefakt, stakeholder nebo evidence
+    není v inputu přítomna a nelze ji odvodit z dostupného kontextu.
+    UNKNOWN není chyba zpracování — je to explicitní stav.
+
+  no_proceed_rule:
+    rule: >
+      Pipeline nesmí pokračovat za stav, který závisí na chybějících
+      povinných vstupech. Pokud je povinný vstup UNKNOWN:
+      decision_status musí být unresolved nebo blocked
+      a blocking_issues musí obsahovat popis chybějící hodnoty.
+
+  framing_unknown:
+    description: >
+      Pokud buyer_type nebo deliverable_fit_status jsou UNKNOWN
+      ve FramingAssessment, framing_validity nesmí být valid.
+      Přechod z problem_framing je blokován.
+
+  veto_unknown:
+    description: >
+      Pokud stav veta je UNKNOWN, pipeline musí zacházet s tímto
+      stavem jako s potentially_blocked. Přechod do release_decision
+      je blokován dokud veto_status není explicitně resolved.
+
+  claims_unknown:
+    description: >
+      Pokud evidence pro claim je UNKNOWN, claim nesmí být klasifikován
+      jako verified nebo allowed. Přechod z claims_validation je blokován.
+
+  no_falsification:
+    rule: >
+      UNKNOWN nesmí být převeden na konkrétní hodnotu bez explicitního
+      vstupu od requestora nebo autority s odpovídajícím oprávněním.
+
+transition_invariants:
+  - Pipeline nesmí přeskočit stav bez explicitního záznamu.
+  - Tichý zpětný vstup je absolutně zakázán.
+  - Přechod do release_decision vyžaduje splnění všech entry conditions.
+  - UNKNOWN vstup blokuje přechod závislý na dané hodnotě.
+  - UNKNOWN nesmí být tiše ignorováno nebo nahrazeno předpokladem.
+  - stop nebo blocked nesmí být konvertováno na proceed žádnou tranzicí.

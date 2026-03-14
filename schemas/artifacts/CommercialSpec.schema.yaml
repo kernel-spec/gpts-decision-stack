@@ -1,0 +1,73 @@
+schema_id: CommercialSpec
+schema_version: "1.0.0"
+artifact_type: CommercialSpec
+owner: AE-Commercial
+pipeline_state: commercial_packaging
+description: >
+  Komerční specifikace zarovnaná s validovaným offer primitivem, framingem a claimy.
+  Pouze povolené claimy z ClaimsDecision mohou být aplikovány v balíčku.
+  Přechod commercial lane lze explicitně obejít dle policy.
+
+required_fields:
+  - artifact_type
+  - packaging_scope
+  - offer_primitive_ref
+  - lane_bypass_active
+  - decision_status
+  - version
+
+fields:
+  artifact_type:
+    type: string
+    constant: CommercialSpec
+  packaging_scope:
+    type: string
+    description: Co je zahrnuto v tomto komerčním balíčku.
+  offer_primitive_ref:
+    type: string
+    description: Reference na vybraný primitiv z OfferDecision.
+  permitted_claims_applied:
+    type: list
+    items: string
+    description: Claimy z ClaimsDecision aplikované v balíčku.
+  pricing_structure:
+    type: string
+    description: Přístup k cenotvorbě nebo not_applicable pro nekomerční use cases.
+  delivery_model:
+    type: string
+    description: Způsob delivery konzistentní s ArchitectureSpec.
+  target_audience:
+    type: string
+    description: Cílové publikum komerčního balíčku nebo UNKNOWN.
+  exclusions:
+    type: list
+    items: string
+    description: Co je explicitně vyloučeno z balíčku.
+  dependencies:
+    type: list
+    items: string
+    description: Co musí být zajištěno před dodáním balíčku.
+  lane_bypass_active:
+    type: boolean
+    description: True pouze pokud policy explicitně povoluje bypass.
+  lane_bypass_authority:
+    type: string
+    nullable: true
+    description: Policy nebo autorita povolující bypass pokud je aktivní.
+  decision_status:
+    type: string
+    enum:
+      - proceed
+      - revise
+      - blocked
+  blocking_issues:
+    type: list
+    items: string
+  version:
+    type: string
+
+invariants:
+  - Komerční balíček nesmí obsahovat restricted nebo forbidden claimy.
+  - "lane_bypass_active: true je povoleno pouze pokud policy explicitně uvádí commercial_lane_optional: true."
+  - Bypass neruší claims lane ani risk governance lane.
+  - Pokud je target_audience UNKNOWN, musí být decision_status revise.

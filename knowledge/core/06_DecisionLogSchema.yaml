@@ -1,0 +1,61 @@
+schema_version: "1.0.0"
+knowledge_id: "06_DecisionLogSchema"
+status: INVARIANT
+description: >
+  Rozhodovací model systému gpts-decision-stack. Definuje povolené hodnoty
+  decision_status, pravidla pro UNKNOWN hodnoty a fail semantiky.
+
+decision_statuses:
+  allowed_values:
+    proceed:
+      description: >
+        Vstupní kritéria jsou splněna. Pipeline může pokračovat do dalšího stavu.
+      precondition: blocking_issues musí být prázdné.
+    revise:
+      description: >
+        Vstupní kritéria nejsou splněna. Požadována oprava artefaktu nebo vstupu.
+      precondition: Alespoň jeden identifikovaný problém, který lze opravit.
+    invalidate:
+      description: >
+        Artefakt nebo framing je neplatný. Nutný explicitní zpětný vstup.
+      precondition: >
+        Framing nebo artefakt nesplňuje základní podmínky pro daný stav.
+    escalate:
+      description: >
+        Rozhodnutí vyžaduje vyšší autoritu nebo manuální schválení.
+      precondition: >
+        Situace je mimo rozsah automatického rozhodování agenta.
+    stop:
+      description: >
+        Tvrdá blokace. Pipeline nesmí pokračovat. Žádná autorita nemůže
+        toto rozhodnutí přepsat bez explicitního veto_release.
+      precondition: Aktivní veto nebo kritické porušení governance pravidla.
+    unresolved:
+      description: >
+        Rozhodnutí nelze učinit bez dalšího vstupu. Chybí povinná evidence
+        nebo kontext, ale není to explicitní contradiction.
+      precondition: >
+        Povinná evidence nebo kontext jsou UNKNOWN nebo chybějí,
+        ale neexistuje explicitní contradiction s dostupnými daty.
+    blocked:
+      description: >
+        Pipeline je zablokována externím vetem nebo chybějícím artefaktem.
+      precondition: >
+        Externí blokátor (veto, chybějící schválení) zabraňuje pokračování.
+
+unknown_rule:
+  description: >
+    Pokud je jakákoli povinná hodnota, stakeholder, artefakt nebo evidence
+    v inputu nepřítomna, musí být explicitně zaznamenána jako UNKNOWN.
+  rules:
+    - UNKNOWN je explicitní, platná hodnota — není chybou.
+    - Agent nesmí zjišťovat, domýšlet ani doplňovat chybějící hodnoty.
+    - Pipeline nesmí pokračovat za stav závislý na chybějících povinných vstupech.
+    - UNKNOWN musí být zaznamenáno v blocking_issues nebo jako hodnota pole.
+
+decision_model_invariants:
+  - Falešný proceed je kritické selhání.
+  - stop nebo escalate nesmí být převeden na proceed.
+  - Každý agent musí vrátit právě jeden decision_status.
+  - blocking_issues musí být prázdné pokud decision_status je proceed.
+  - blocking_issues musí být neprázdné pokud decision_status je stop nebo blocked.

@@ -1,0 +1,46 @@
+fixture_type: acceptance_fixture
+scenario_id: regulated_mandatory_approval_matrix
+domain: regulated
+linked_acceptance_tests:
+  - AC-010
+current_state: risk_governance_validation
+trigger_conditions:
+  regulated_context: true
+  manual_approval_required: true
+  manual_approval_present: false
+input_artifacts:
+  RiskDecision:
+    artifact_type: RiskDecision
+    risk_classification: critical
+    identified_risks:
+      - regulated release without manual approval
+    compliance_triggers:
+      - regulated_context
+      - manual_approval_required
+    required_review_lanes:
+      - compliance
+      - governance
+    mandatory_approvals:
+      - regulated_approval_board
+    hard_block_conditions:
+      - approval_missing
+    mitigations_required:
+      - create manual approval request
+    governance_status: conditional
+    decision_status: escalate
+    blocking_issues:
+      - mandatory approval missing
+    invalidation_rule: Regulated release nesmí pokračovat bez approval chain completion.
+    version: 1.0.0
+  ApprovalMatrix:
+    regulated_approval_chain:
+      - regulated_approval_board
+      - release_authority
+    approval_step_to_authority_mapping:
+      regulated_release_gate: regulated_approval_board
+    approval_status:
+      regulated_release_gate: missing
+expected_observations:
+  ae_risk_gov_creates_manual_approval: true
+  cp_transition_judge_returns_escalate: true
+  cp_release_arbiter_cannot_proceed: true

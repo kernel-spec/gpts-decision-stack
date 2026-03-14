@@ -1,0 +1,43 @@
+fixture_type: acceptance_fixture
+scenario_id: founder_led_partial_intake
+domain: founder-led
+linked_acceptance_tests:
+  - AC-012
+current_state: intake
+trigger_conditions:
+  stakeholder_data_missing: true
+  evidence_missing: true
+input_artifacts:
+  ProblemBrief:
+    artifact_type: ProblemBrief
+    problem_statement: Potřebujeme rychle připravit stack, ale vstup je neúplný.
+    target_outcome: Připravit další rozhodovací krok bez spekulací.
+    requestor_type: founder-led
+    stakeholders:
+      - UNKNOWN
+    in_scope:
+      - initial normalization
+    out_of_scope:
+      - release decision
+    constraints:
+      - chybí stakeholder detail
+      - chybí evidence
+    assumptions: []
+    unknowns:
+      - přesný buyer
+      - stakeholder role
+      - evidence basis
+    available_evidence: []
+    initial_success_criteria:
+      - explicitně zachytit unknowns
+    decision_status: revise
+    blocking_issues:
+      - incomplete intake
+    invalidation_rule: Intake bez minimálních vstupů nesmí přejít do falešného proceed.
+    version: 1.0.0
+expected_observations:
+  problembrief_contains_unknowns: true
+  no_assumed_values_added: true
+  downstream_expected_outcome:
+    - revise
+    - unresolved

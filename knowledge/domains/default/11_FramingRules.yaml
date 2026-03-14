@@ -1,0 +1,90 @@
+schema_version: "1.0.0"
+knowledge_id: "11_FramingRules"
+status: ADAPTIVE
+description: >
+  Pravidla pro fázi problem framing v systému gpts-decision-stack.
+  Tento soubor definuje podmínky platného framingu, buyer fit pravidla,
+  deliverable fit pravidla a trigger podmínky pro invalidaci.
+  Tento soubor je ADAPTIVE a může být přizpůsoben per deployment.
+
+framing_validity_rules:
+  valid:
+    description: >
+      Framing je platný pokud jsou splněny všechny podmínky:
+      buyer_fit_status je match, deliverable_fit_status je fit,
+      task_fit_status je fit a nejsou přítomny žádné mismatch_hypotheses
+      bez identifikovaného řešení.
+    required_fields_state:
+      buyer_fit_status: match
+      deliverable_fit_status: fit
+      task_fit_status: fit
+    proceed_eligible: true
+
+  invalid:
+    description: >
+      Framing je neplatný pokud buyer_fit_status je mismatch,
+      nebo deliverable_fit_status je unknown nebo mismatch.
+    conditions:
+      - buyer_fit_status: mismatch
+      - deliverable_fit_status: unknown
+      - deliverable_fit_status: mismatch
+    action_required: invalidate nebo revise
+    proceed_eligible: false
+
+buyer_fit_rules:
+  match:
+    description: >
+      Buyer fit je potvrzen — buyer type odpovídá nabídce a kontextu.
+    proceed_eligible: true
+
+  mismatch:
+    description: >
+      Buyer fit neodpovídá — requestor_type nebo buyer_type
+      neodpovídá zamýšlené nabídce nebo primitiv.
+    action: invalidate nebo revise
+    proceed_eligible: false
+    examples:
+      - Zakladatel formuluje požadavek jako enterprise nabídku bez enterprise buyer evidence.
+      - Enterprise buyer je identifikován jako founder-led kontext.
+
+  unknown:
+    description: >
+      Buyer fit není znám — buyer_type je UNKNOWN nebo není potvrzen.
+    action: revise nebo unresolved
+    proceed_eligible: false
+
+deliverable_fit_rules:
+  fit:
+    description: >
+      Deliverable fit je potvrzen — navrhovaný výstup odpovídá
+      potřebám identifikovaného buyera.
+    proceed_eligible: true
+
+  mismatch:
+    description: >
+      Deliverable fit neodpovídá — navrhovaný výstup neodpovídá
+      potřebám buyera nebo identifikovanému kontextu.
+    action: invalidate
+    proceed_eligible: false
+
+  unknown:
+    description: >
+      Deliverable fit není znám. Přechod z problem_framing je blokován.
+    action: revise nebo unresolved
+    proceed_eligible: false
+
+reframe_conditions:
+  - >
+    Pokud buyer_type je UNKNOWN, agent musí vrátit required_clarifications
+    a decision_status revise nebo unresolved.
+  - >
+    Pokud framing_validity je invalid, musí být přítomny mismatch_hypotheses
+    a recommended_reframe kroky.
+  - >
+    Invalid framing nesmí pokračovat do primitive_selection bez re-entry.
+
+framing_invariants:
+  - framing_validity: invalid nesmí mít decision_status proceed.
+  - buyer_fit_status: mismatch vždy blokuje přechod z problem_framing.
+  - UNKNOWN buyer_type nesmí být tiše nahrazen předpokladem.
+  - Reframe musí být explicitně zaznamenán v StateDecisionPacket.

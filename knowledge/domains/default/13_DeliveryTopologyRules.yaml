@@ -1,0 +1,67 @@
+schema_version: "1.0.0"
+knowledge_id: "13_DeliveryTopologyRules"
+status: ADAPTIVE
+description: >
+  Release politika pro systém gpts-decision-stack. Definuje podmínky
+  pro release, blokátory a procedury pro final release gate.
+  Tento soubor je ADAPTIVE.
+
+release_conditions:
+  proceed_conditions:
+    description: Podmínky pro release_status allowed nebo proceed.
+    required:
+      - Žádné aktivní operační veto (veto_active false nebo absent)
+      - Všechny mandatory claims lanes resolved (forbidden_claims prázdné)
+      - Všechny mandatory approval chains splněny
+      - Risk governance decision_status proceed nebo escalate s potvrzením
+      - Komerční packaging gate splněn
+      - Žádné neprázdné blocking_issues v upstream artefaktech
+
+  block_conditions:
+    description: Podmínky pro release_status blocked.
+    any_of:
+      - veto_active true
+      - forbidden_claims neprázdné
+      - mandatory_approval_missing v regulated kontextu
+      - risk_decision_status stop
+      - blocking_issues neprázdné v jakémkoli povinném upstream artefaktu
+
+release_gate_rules:
+  final_gate:
+    owner: CP-ReleaseArbiter
+    rule: >
+      CP-ReleaseArbiter posuzuje všechny upstream artefakty a veto_check
+      před vydáním ReleaseDecision.
+    invariant: >
+      CP-ReleaseArbiter nesmí vrátit release_status allowed pokud
+      veto_check.veto_active je true.
+
+  veto_override:
+    rule: >
+      Aktivní veto nelze přepsat žádným jiným artefaktem.
+      CP-ReleaseArbiter musí vrátit blocked i při jinak splněných podmínkách.
+
+  approval_completeness:
+    rule: >
+      V regulovaném kontextu musí být všechna manuální schválení potvrzena
+      a zaznamenána před vydáním ReleaseDecision.
+
+deployment_readiness_policy:
+  deploy_ready_conditions:
+    - QA final gate report overall_status PASS
+    - Backend binding kompletní
+    - Všechny governance mapy schváleny
+    - Promotion gate podmínky splněny
+    - Staging gate PASS
+
+  not_deploy_ready_if_any:
+    - Backend binding chybí
+    - QA gate report overall_status FAIL nebo BLOCKED
+    - Aktivní veto
+    - Staging gate není PASS
+
+release_policy_invariants:
+  - ReleaseDecision je finální artefakt pipeline — nesmí být ignorován.
+  - Blocked release nesmí být konvertován na allowed bez explicitního veto_release.
+  - Deploy-ready stav nelze nárokovat bez splnění všech podmínek.
+  - Authoritative release notes jsou odděleny od derived packaging notes.

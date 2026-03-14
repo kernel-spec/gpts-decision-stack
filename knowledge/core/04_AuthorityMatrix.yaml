@@ -1,0 +1,68 @@
+schema_version: "1.0.0"
+knowledge_id: "04_AuthorityMatrix"
+status: INVARIANT
+description: >
+  Governance pravidla systému gpts-decision-stack. Definuje pravidla pro
+  veta, manuální schválení a deployment gates.
+
+veto_rules:
+  operational_veto:
+    description: >
+      Aktivní operační veto je absolutní blokací. Nelze jej obejít žádným
+      jiným artefaktem ani rozhodnutím.
+    rule: >
+      Pokud veto_active je true, musí CP-ReleaseArbiter vrátit
+      release_status blocked.
+    release_procedure: >
+      Veto lze zrušit pouze explicitním artefaktem veto_release
+      od autority, která veto vydala.
+    invariant: >
+      Žádná jiná autorita ani artefakt nemůže obejít aktivní veto.
+
+  model_veto:
+    description: >
+      Modelové veto je vydáváno CP-Governor při detekci porušení
+      pipeline invariantů. Liší se od operačního veta.
+    triggers:
+      - Falešný proceed vrácen při neprázdných blocking_issues.
+      - Pokus o tichý zpětný vstup.
+      - Forbidden claims s decision_status allowed nebo proceed.
+    enforcement: CP-Governor automaticky blokuje pipeline.
+
+approval_rules:
+  regulated_context:
+    description: >
+      V regulovaném kontextu musí být přítomno explicitní manuální
+      schválení před přechodem do release_decision.
+    rule: >
+      Pokud manual_approval_required je true a schválení chybí,
+      musí CP-TransitionJudge vrátit transition_status escalate.
+    invariant: Regulovaný kontext nelze obejít.
+
+  enterprise_context:
+    description: >
+      V enterprise kontextu musí být procurement a legal lanes
+      označeny jako povinné — nesmí být optional.
+    rule: >
+      Pokud requestor_type je enterprise nebo buyer_type je enterprise,
+      procurement_required a legal_required musí být true.
+
+deployment_gates:
+  description: >
+    Podrobná pravidla pro gates jsou definována v
+    /operations/gates/promotion-gate.yaml.
+  staging_blockers:
+    - Neúplné knowledge soubory
+    - Neúplné fixture soubory
+    - Chybějící QA artefakt
+    - Chybějící governance mapy
+  prod_blockers:
+    - Staging gate není PASS
+    - Backend binding chybí
+    - Governance mapy nejsou schváleny
+
+governance_invariants:
+  - Governance pravidla nesmí být oslabena bez explicitní revize.
+  - Deployment gates nesmí být obejity.
+  - Aktivní veto nesmí být ignorováno.
+  - Regulovaný kontext nelze degradovat na standard.

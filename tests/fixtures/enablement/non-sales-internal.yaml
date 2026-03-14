@@ -1,0 +1,41 @@
+fixture_type: acceptance_fixture
+scenario_id: enablement_non_sales_internal
+domain: enablement
+linked_acceptance_tests:
+  - AC-011
+current_state: commercial_packaging
+trigger_conditions:
+  use_case_type: internal_enablement
+  external_pricing_required: false
+input_artifacts:
+  ProblemBrief:
+    artifact_type: ProblemBrief
+    problem_statement: Interní tým potřebuje enablement materiál bez externího prodeje.
+    target_outcome: Dodat interní enablement artifact.
+    requestor_type: internal_enablement
+    stakeholders:
+      - enablement_team
+    in_scope:
+      - enablement material
+    out_of_scope:
+      - commercial offer
+    constraints:
+      - bez externího pricingu
+    assumptions: []
+    unknowns: []
+    available_evidence:
+      - internal_request_note
+    initial_success_criteria:
+      - explicitní bypass commercial lane podle policy
+    decision_status: proceed
+    blocking_issues: []
+    invalidation_rule: Pokud policy nepovoluje bypass, commercial lane musí zůstat aktivní.
+    version: 1.0.0
+  PolicyContext:
+    commercial_lane_optional: true
+    claims_lane_required: true
+    risk_lane_required: true
+expected_observations:
+  commercial_lane_optional_or_skipped: true
+  control_plane_states_remain_valid: true
+  claims_and_risk_rules_remain_explicit: true

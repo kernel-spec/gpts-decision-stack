@@ -1,0 +1,78 @@
+schema_id: RiskDecision
+schema_version: "1.0.0"
+artifact_type: RiskDecision
+owner: AE-RiskGov
+pipeline_state: risk_governance_validation
+description: >
+  Klasifikace rizika a validace governance compliance.
+  Aktivní veto je absolutní blokací. Stop nelze převést na proceed.
+  V regulovaném kontextu s chybějícím manuálním schválením musí být vráceno escalate.
+
+required_fields:
+  - artifact_type
+  - risk_classification
+  - identified_risks
+  - governance_status
+  - decision_status
+  - version
+
+fields:
+  artifact_type:
+    type: string
+    constant: RiskDecision
+  risk_classification:
+    type: string
+    enum:
+      - low
+      - medium
+      - high
+      - critical
+  identified_risks:
+    type: list
+    items: string
+    description: Seznam identifikovaných rizik.
+  compliance_triggers:
+    type: list
+    items: string
+    description: Podmínky aktivující specifické compliance lanes.
+  required_review_lanes:
+    type: list
+    items: string
+    description: Review lanes požadované dle klasifikace rizika.
+  mandatory_approvals:
+    type: list
+    items: string
+    description: Autority schválení požadované před pokračováním.
+  hard_block_conditions:
+    type: list
+    items: string
+    description: Podmínky, které bezpodmínečně blokují pokračování.
+  mitigations_required:
+    type: list
+    items: string
+    description: Zmírnění, která musí být dokončena před pokračováním.
+  governance_status:
+    type: string
+    enum:
+      - pass
+      - fail
+      - conditional
+  decision_status:
+    type: string
+    enum:
+      - proceed
+      - escalate
+      - stop
+  blocking_issues:
+    type: list
+    items: string
+  invalidation_rule:
+    type: string
+  version:
+    type: string
+
+invariants:
+  - Pokud je aktivní veto, musí být governance_status fail a decision_status stop.
+  - Veto nelze obejít žádným jiným artefaktem.
+  - V regulovaném kontextu s chybějícím manuálním schválením musí být decision_status escalate.
+  - decision_status stop nesmí být převeden na proceed.

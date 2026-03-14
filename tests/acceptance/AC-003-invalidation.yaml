@@ -1,0 +1,50 @@
+acceptance_test_id: AC-003
+title: Nesprávný primitiv vede k explicitní invalidaci a zpětnému vstupu
+description: >
+  Ověřuje, že výběr nesprávného offer primitivu — detekovaný při architecture_validation —
+  vede k explicitní invalidaci výstupu OfferDecision a explicitně zaznamenanému
+  zpětnému vstupu do primitive_selection.
+  Infeasible architektura nesmí být mlčky obejita.
+
+fixtures:
+  - tests/fixtures/founder-led/wrong-primitive.yaml
+
+scenario: >
+  OfferDecision vybral enterprise_managed_service pro interní enablement use case.
+  AE-Architecture vyhodnotil ArchitectureSpec jako infeasible (buyer_fit_check: mismatch,
+  delivery shape neodpovídá kontextu). Systém musí explicitně invalidovat vybraný
+  primitiv a označit primitive_selection jako re-entry target.
+
+agents_under_test:
+  - AE-Architecture
+  - CP-Governor
+  - CP-TransitionJudge
+
+canonical_artifacts_referenced:
+  - ProblemBrief
+  - OfferDecision
+  - ArchitectureSpec
+  - StateDecisionPacket
+
+entry_state: architecture_validation
+re_entry_target: primitive_selection
+
+expected_conditions:
+  - ArchitectureSpec.feasibility_status je infeasible
+  - ArchitectureSpec.decision_status je invalidate
+  - StateDecisionPacket obsahuje re-entry target primitive_selection
+  - blocking_issues v ArchitectureSpec jsou neprázdné
+  - ArchitectureSpec.fallback_architecture_options je neprázdné
+  - Pipeline nepokračuje do claims_validation s infeasible architekturou
+
+failure_conditions:
+  - ArchitectureSpec.decision_status je proceed při feasibility_status: infeasible
+  - Re-entry target chybí nebo je implicitní (tichý zpětný vstup)
+  - Pipeline pokračuje do claims_validation s infeasible architekturou
+  - Infeasible architektura je mlčky přijata bez záznamu
+  - blocking_issues jsou prázdné při infeasible architektuře
+
+governance_invariants:
+  - Infeasible architektura invaliduje selected_primitive
+  - Zpětný vstup musí být vždy explicitně zaznamenán
+  - Tichý zpětný vstup není povolen

@@ -1,0 +1,46 @@
+acceptance_test_id: AC-006
+title: Chybějící evidence bez explicitního rozporu vede k unresolved — nikoliv k stop
+description: >
+  Ověřuje, že pokud claims jsou předloženy bez podpůrné evidence, ale bez explicitního
+  protichůdného důkazu, musí ClaimsDecision vrátit claim_fit_status: unresolved
+  a decision_status: unresolved — nikoliv stop nebo proceed.
+  Decision log musí explicitně zaznamenat chybějící evidence.
+
+fixtures:
+  - tests/fixtures/founder-led/missing-claims-evidence.yaml
+
+scenario: >
+  Claims kandidáti jsou přítomni (řešení je audit-ready, delivery model je enterprise-safe).
+  Dostupná evidence je nedostatečná (chybí audit_report, customer_reference, security_review).
+  Žádný explicitní protidůkaz neexistuje. Systém nesmí claimy zakázat (forbidden),
+  ale musí je označit jako unresolved do doby doplnění evidence.
+
+agents_under_test:
+  - AE-Claims
+  - CP-ContractAuditor
+
+canonical_artifacts_referenced:
+  - ClaimsDecision
+
+entry_state: claims_validation
+
+expected_conditions:
+  - ClaimsDecision.claim_fit_status je unresolved
+  - ClaimsDecision.decision_status je unresolved nebo revise
+  - ClaimsDecision.evidence_gaps je neprázdné
+  - ClaimsDecision.forbidden_claims je prázdné (bez explicitního protidůkazu)
+  - decision_log zaznamenává chybějící evidence jako blocking reason
+  - Pipeline nepokračuje do commercial_packaging s unresolved claims
+
+failure_conditions:
+  - ClaimsDecision.decision_status je proceed při prázdné evidence
+  - Claimy bez evidence jsou označeny jako permitted_claims
+  - evidence_gaps je prázdné přestože evidence chybí
+  - Chybějící evidence bez protidůkazu vede k forbidden_claims (příliš silné)
+  - Decision log nezaznamenává chybějící evidence
+
+governance_invariants:
+  - Claim bez podpůrné evidence je restricted nebo unresolved — nikoliv permitted
+  - Claim s explicitním protidůkazem je forbidden
+  - Pipeline nesmí pokračovat bez resolved claims
+  - Bez důkazů nesmí claims lane vrátit proceed

@@ -1,0 +1,59 @@
+fixture_type: acceptance_fixture
+scenario_id: founder_led_claims_fail
+domain: founder-led
+linked_acceptance_tests:
+  - AC-001
+current_state: claims_validation
+trigger_conditions:
+  claims_status: revise
+  claim_fit_status: fail
+  explicit_reentry_required: true
+input_artifacts:
+  OfferDecision:
+    artifact_type: OfferDecision
+    candidate_primitives:
+      - diagnostic_offer
+    selected_primitive: diagnostic_offer
+    selection_rationale:
+      - minimální founder-led nabídka
+    rejected_primitives:
+      - enterprise_transformation_program
+    rejection_reasons:
+      - nepodložený rozsah
+    buyer_fit_check: fit
+    deliverable_fit_check: fit
+    decision_status: proceed
+    blocking_issues: []
+    invalidation_rule: Wrong primitive vyžaduje návrat do primitive_selection.
+    version: 1.0.0
+  ClaimsDecision:
+    artifact_type: ClaimsDecision
+    claim_candidates_reviewed:
+      - garantujeme enterprise-ready governance během jednoho týdne
+      - řešení je plně audit-ready bez dalších vstupů
+    permitted_claims:
+      - nabízíme úvodní diagnostiku governance readiness
+    restricted_claims:
+      - enterprise-ready governance během jednoho týdne
+    forbidden_claims:
+      - plně audit-ready bez dalších vstupů
+    claim_to_evidence_map:
+      nabízíme úvodní diagnostiku governance readiness:
+        - founder_notes_v1
+      garantujeme enterprise-ready governance během jednoho týdne: []
+      řešení je plně audit-ready bez dalších vstupů: []
+    evidence_gaps:
+      - chybí delivery evidence
+      - chybí audit evidence
+    claim_fit_status: fail
+    decision_status: revise
+    blocking_issues:
+      - unsupported commercial claims
+    invalidation_rule: Claim fail musí zablokovat release a vyžádat revise nebo invalidate.
+    version: 1.0.0
+expected_observations:
+  preferred_outcome: revise
+  valid_reentry_targets:
+    - claims_validation
+    - problem_framing
+  release_must_not_proceed: true

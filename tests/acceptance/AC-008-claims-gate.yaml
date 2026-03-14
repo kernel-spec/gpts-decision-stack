@@ -1,0 +1,49 @@
+acceptance_test_id: AC-008
+title: Claims gate blokuje pipeline při forbidden nebo nepodložených claims
+description: >
+  Ověřuje, že claims gate správně identifikuje a blokuje forbidden claimy
+  a nepodložené claimy. Forbidden claims musí blokovat release. Pipeline nesmí
+  pokračovat s neprázdným forbidden_claims. Falešný proceed na claims je kritické selhání.
+
+fixtures:
+  - tests/fixtures/founder-led/unsupported-claims.yaml
+  - tests/fixtures/founder-led/claims-fail.yaml
+
+scenario: >
+  ClaimsDecision obsahuje forbidden claimy (garantujeme regulatorní compliance)
+  bez jakékoliv podpůrné evidence. Restricted claimy jsou přítomny s nedostatečnou evidencí.
+  Systém musí označit forbidden claimy explicitně, nastavit claim_fit_status: fail
+  a zablokovat přechod do commercial_packaging nebo release_decision.
+
+agents_under_test:
+  - AE-Claims
+  - CP-ContractAuditor
+  - CP-Governor
+
+canonical_artifacts_referenced:
+  - ClaimsDecision
+  - StateDecisionPacket
+  - ReleaseDecision
+
+entry_state: claims_validation
+
+expected_conditions:
+  - ClaimsDecision.forbidden_claims je neprázdné pro claim bez evidence
+  - ClaimsDecision.claim_fit_status je fail při neprázdném forbidden_claims
+  - ClaimsDecision.decision_status je stop nebo revise při forbidden_claims
+  - evidence_gaps jsou explicitně vyjmenovány pro každý claim bez evidence
+  - Pipeline nepokračuje do commercial_packaging s forbidden_claims
+  - ReleaseDecision nesmí vrátit release_status: allowed pokud claims jsou fail
+
+failure_conditions:
+  - Forbidden claims jsou přesunuty do permitted_claims nebo restricted_claims
+  - claim_fit_status je pass nebo unresolved při neprázdném forbidden_claims
+  - Pipeline pokračuje do commercial_packaging s forbidden claims
+  - Forbidden claims jsou odstraněny z výstupu za účelem čistšího výsledku
+  - evidence_gaps jsou prázdné přestože claim nemá žádnou evidenci
+
+governance_invariants:
+  - Claim bez podpůrné evidence je forbidden claim — nikoliv restricted
+  - Forbidden claimy blokují pipeline do doby jejich odebrání nebo doplnění evidence
+  - Forbidden claimy nesmí být odstraněny z výstupu za účelem čistšího výsledku
+  - Falešný proceed na claims je kritické selhání

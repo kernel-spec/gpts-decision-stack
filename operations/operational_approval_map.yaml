@@ -1,0 +1,106 @@
+schema_version: "1.0.0"
+artifact_type: operational_approval_map
+description: >
+  Mapa operačního schválení pro systém gpts-decision-stack.
+  Definuje kroky schválení, schvalovací autority a schvalovací řetězce
+  pro regulované a enterprise kontexty. Schválení je vázáno na role nebo
+  autority — nikoliv na konkrétní osoby.
+
+approval_step_to_authority_mapping:
+  description: >
+    Každý krok schválení je namapován na příslušnou autoritu nebo roli.
+    Schválení nesmí být uděleno bez aktivní autority v daném kroku.
+  steps:
+    framing_review_gate:
+      authority: framing_review_authority
+      agent: AE-Framing
+      trigger: buyer_fit_status mismatch nebo deliverable_fit_status unknown
+      outcome_if_missing: decision_status invalidate
+    primitive_selection_gate:
+      authority: architecture_validation_authority
+      agent: AE-Architecture
+      trigger: selected_primitive_is_wrong nebo feasibility_status infeasible
+      outcome_if_missing: decision_status invalidate, re-entry primitive_selection
+    claims_audit_gate:
+      authority: CP-ContractAuditor
+      agent: AE-Claims
+      trigger: forbidden_claims neprázdné nebo evidence_gaps neprázdné
+      outcome_if_missing: decision_status stop nebo revise
+    risk_governance_gate:
+      authority: risk_governance_authority
+      agent: AE-RiskGov
+      trigger: risk_classification high nebo critical
+      outcome_if_missing: decision_status escalate nebo blocked
+    commercial_packaging_gate:
+      authority: commercial_packaging_function
+      agent: AE-Commercial
+      trigger: commercial_lane_optional false nebo chybějící povinné vstupy
+      outcome_if_missing: decision_status revise nebo blocked
+    release_final_gate:
+      authority: CP-ReleaseArbiter
+      agent: CP-ReleaseArbiter
+      trigger: Finální release kandidát
+      outcome_if_missing: release_status blocked
+
+regulated_approval_chain:
+  description: >
+    Schvalovací řetězec pro regulované kontexty (regulated_context true).
+    Všechny kroky jsou povinné a sekvenční.
+    Pipeline nesmí pokračovat do release_decision bez completion tohoto řetězce.
+  chain:
+    - step: 1
+      gate: regulated_release_gate
+      authority: regulated_approval_board
+      approval_type: manual
+      blocking: true
+    - step: 2
+      gate: release_authority_sign_off
+      authority: release_authority
+      approval_type: manual
+      blocking: true
+  hard_block_if_missing: true
+  trigger_condition: regulated_context true AND manual_approval_required true
+
+enterprise_approval_chain:
+  description: >
+    Schvalovací řetězec pro enterprise kontexty.
+    Procurement a legal lanes jsou povinné — nesmí být označeny jako optional.
+    Mohou probíhat paralelně pokud topology to umožňuje.
+  chain:
+    - step: 1
+      gate: procurement_review
+      authority: procurement_authority
+      approval_type: lane_clearance
+      parallel_eligible: true
+      blocking: true
+    - step: 2
+      gate: legal_review
+      authority: legal_authority
+      approval_type: lane_clearance
+      parallel_eligible: true
+      blocking: true
+    - step: 3
+      gate: risk_governance_review
+      authority: risk_governance_authority
+      approval_type: risk_sign_off
+      parallel_eligible: false
+      blocking: true
+  hard_block_if_missing: true
+  trigger_condition: requestor_type enterprise NEBO buyer_type enterprise
+
+standard_approval_chain:
+  description: >
+    Standardní schvalovací řetězec pro founder-led nebo enablement kontexty.
+    Zjednodušený řetězec — claims a risk governance zůstávají povinné.
+  chain:
+    - step: 1
+      gate: claims_validation_gate
+      authority: CP-ContractAuditor
+      approval_type: audit_clearance
+      blocking: true
+    - step: 2
+      gate: risk_review_gate
+      authority: risk_governance_authority
+      approval_type: risk_clearance
+      blocking: true
+  hard_block_if_missing: true

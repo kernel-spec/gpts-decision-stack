@@ -1,0 +1,70 @@
+fixture_type: acceptance_fixture
+scenario_id: enterprise_procurement_legal_required
+domain: enterprise
+linked_acceptance_tests:
+  - AC-009
+current_state: risk_governance_validation
+trigger_conditions:
+  buyer_type: enterprise
+  procurement_required: true
+  legal_required: true
+input_artifacts:
+  ProblemBrief:
+    artifact_type: ProblemBrief
+    problem_statement: Enterprise buyer požaduje standardní nákupní a právní kontrolu.
+    target_outcome: Získat validní review topology pro enterprise lane.
+    requestor_type: enterprise
+    stakeholders:
+      - buyer
+      - procurement
+      - legal
+    in_scope:
+      - topology routing
+      - enterprise review lanes
+    out_of_scope:
+      - production release
+    constraints:
+      - contractual review required
+    assumptions: []
+    unknowns: []
+    available_evidence:
+      - buyer_requirement_note
+    initial_success_criteria:
+      - explicitně aktivovat potřebné lanes
+    decision_status: proceed
+    blocking_issues: []
+    invalidation_rule: Pokud enterprise required lanes nejsou aktivovány, topology je nevalidní.
+    version: 1.0.0
+  ReviewTopologyPlan:
+    artifact_type: ReviewTopologyPlan
+    activated_lanes:
+      - procurement
+      - legal
+      - risk_governance
+    parallel_lanes:
+      - procurement
+      - legal
+    sequencing_overrides:
+      - claims_validation_after_legal_constraints
+    mandatory_reviews:
+      - procurement
+      - legal
+    optional_reviews:
+      - finance
+    escalation_lanes: []
+    lane_entry_conditions:
+      - enterprise buyer detected
+    lane_exit_conditions:
+      - procurement cleared
+      - legal cleared
+    topology_blockers:
+      - missing procurement decision
+      - missing legal decision
+    decision_status: proceed
+    blocking_issues: []
+    version: 1.0.0
+expected_observations:
+  procurement_lane_activated: true
+  legal_lane_activated: true
+  parallel_or_sequence_override_logged: true
+  authority_boundary_change_visible: true

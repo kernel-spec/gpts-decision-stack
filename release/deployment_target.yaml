@@ -1,0 +1,140 @@
+schema_version: "1.0.0"
+artifact_type: deployment_target
+description: >
+  Deployment cíl pro systém gpts-decision-stack. Definuje produkční a staging
+  deployment konfiguraci pro backend binding službu a GPT deployment sloty.
+
+backend_service:
+  description: >
+    Cloudflare Worker implementace action API.
+    Zdrojový kód: backend/worker/
+    Deployment workflow: .github/workflows/deploy-workers.yaml
+    Worker název se nastaví po provisionování Cloudflare účtu.
+  platform: Cloudflare Workers
+  implementation: backend/worker/src/index.ts
+  wrangler_config: backend/worker/wrangler.toml
+  deploy_workflow: .github/workflows/deploy-workers.yaml
+  runtime: Cloudflare Workers (serverless edge)
+
+  dev:
+    worker_name: gpts-decision-stack-worker-dev
+    d1_database: gpts-decision-stack-db-dev
+    r2_bucket: gpts-decision-stack-artifacts-dev
+    kv_namespace: POLICY_STORE (dev)
+    url: https://gpts-decision-stack-worker-dev.<account>.workers.dev
+    note: >
+      URL se nastaví po deploymentu. Nejedná se o placeholder skutečně
+      provisioned produkční infrastruktury — jde o konfigurační šablonu.
+
+  prod:
+    worker_name: gpts-decision-stack-worker
+    d1_database: gpts-decision-stack-db
+    r2_bucket: gpts-decision-stack-artifacts
+    kv_namespace: POLICY_STORE (prod)
+    url: https://gpts-decision-stack-worker.<account>.workers.dev
+    custom_domain: nakonfigurovat po provisionování (volitelné)
+    note: >
+      URL a custom domain se nastaví po prvním úspěšném deploymentu.
+      Žádná live produkční URL není v tomto souboru vynalezena.
+
+gpt_deployment:
+  description: >
+    Deployment GPT agentů na platformu OpenAI ChatGPT Custom GPTs.
+    Každý agent je nasazen jako samostatný GPT slot s vlastní action
+    konfigurací odkazující na actions/openapi.yaml.
+  platform: OpenAI ChatGPT Custom GPTs
+  action_schema: actions/openapi.yaml
+  auth_config: actions/auth.md
+
+  slots:
+    - slot_id: CP-Governor
+      type: INVARIANT
+      gpt_name: Decision Stack Governor
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: CP-ContractAuditor
+      type: INVARIANT
+      gpt_name: Decision Stack Contract Auditor
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: CP-TransitionJudge
+      type: INVARIANT
+      gpt_name: Decision Stack Transition Judge
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: CP-ReleaseArbiter
+      type: INVARIANT
+      gpt_name: Decision Stack Release Arbiter
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: AE-Intake
+      type: ADAPTIVE
+      gpt_name: Decision Stack Intake Engine
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: AE-Framing
+      type: ADAPTIVE
+      gpt_name: Decision Stack Framing Engine
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: AE-Primitive
+      type: ADAPTIVE
+      gpt_name: Decision Stack Primitive Engine
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: AE-Architecture
+      type: ADAPTIVE
+      gpt_name: Decision Stack Architecture Engine
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: AE-Claims
+      type: ADAPTIVE
+      gpt_name: Decision Stack Claims Engine
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: AE-RiskGov
+      type: ADAPTIVE
+      gpt_name: Decision Stack Risk Governance Engine
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: AE-Commercial
+      type: ADAPTIVE
+      gpt_name: Decision Stack Commercial Engine
+      action_enabled: true
+      auth_mode: api_key
+    - slot_id: AE-ReviewRouter
+      type: ADAPTIVE
+      gpt_name: Decision Stack Review Router
+      action_enabled: true
+      auth_mode: api_key
+
+infrastructure:
+  state_store:
+    type: Cloudflare D1
+    binding: DECISIONS_DB
+    schema: backend/worker/migrations/0001_init.sql
+    tables:
+      - sessions
+      - artifacts
+      - decision_log
+      - veto_records
+      - approvals
+
+  artifact_store:
+    type: Cloudflare R2
+    binding: ARTIFACTS_BUCKET
+    access: write-once (immutable after submission)
+    key_format: "{session_id}/{artifact_id}/{artifact_type}.json"
+
+  policy_store:
+    type: Cloudflare KV
+    binding: POLICY_STORE
+    access: read (policy/config lookups)
+
+  secret_store:
+    type: Cloudflare Worker Secrets
+    secret_name: API_KEY_SECRET
+    description: >
+      Jeden sdílený API klíč pro autentizaci action endpointů.
+      Nastaví se pomocí: wrangler secret put API_KEY_SECRET
+      Nikdy se necommituje do repozitáře.

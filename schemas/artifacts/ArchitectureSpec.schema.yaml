@@ -1,0 +1,71 @@
+schema_id: ArchitectureSpec
+schema_version: "1.0.0"
+artifact_type: ArchitectureSpec
+owner: AE-Architecture
+pipeline_state: architecture_validation
+description: >
+  Specifikace architektury a validace proveditelnosti pro vybraný primitiv.
+  Vstupem jsou ProblemBrief a OfferDecision.
+  Neproveditelná architektura musí invalidovat předchozí vybraný primitiv.
+
+required_fields:
+  - artifact_type
+  - delivery_shape
+  - feasibility_status
+  - decision_status
+  - version
+
+fields:
+  artifact_type:
+    type: string
+    constant: ArchitectureSpec
+  delivery_shape:
+    type: string
+    description: Delivery model implikovaný vybraným primitivem.
+  system_boundaries:
+    type: list
+    items: string
+    description: Operační a organizační hranice systému.
+  required_capabilities:
+    type: list
+    items: string
+    description: Schopnosti nutné pro proveditelnost delivery.
+  required_dependencies:
+    type: list
+    items: string
+    description: Externí závislosti nutné pro delivery.
+  operational_constraints:
+    type: list
+    items: string
+    description: Omezení z ProblemBrief ovlivňující proveditelnost.
+  feasibility_status:
+    type: string
+    enum:
+      - feasible
+      - infeasible
+  architecture_mismatch_risks:
+    type: list
+    items: string
+    description: Rizika vyplývající z nesouladu mezi primitivem a kontextem.
+  fallback_architecture_options:
+    type: list
+    items: string
+    description: Alternativní primitivy nebo tvary k zvážení při infeasible.
+  decision_status:
+    type: string
+    enum:
+      - proceed
+      - invalidate
+      - revise
+  blocking_issues:
+    type: list
+    items: string
+  invalidation_rule:
+    type: string
+  version:
+    type: string
+
+invariants:
+  - Pokud je feasibility_status infeasible, musí být decision_status invalidate.
+  - Infeasible architektura invaliduje selected_primitive. Cíl zpětného vstupu je primitive_selection.
+  - Pipeline nesmí pokračovat do claims_validation s infeasible architekturou.

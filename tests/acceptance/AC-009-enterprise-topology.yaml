@@ -1,0 +1,47 @@
+acceptance_test_id: AC-009
+title: Enterprise topologie aktivuje procurement a legal lanes jako povinné
+description: >
+  Ověřuje, že pro enterprise kontext (requestor_type: enterprise) ReviewTopologyPlan
+  explicitně aktivuje procurement a legal lanes jako mandatory_reviews.
+  Tyto lanes nesmí být označeny jako optional ani přeskočeny.
+
+fixtures:
+  - tests/fixtures/enterprise/procurement-legal-required.yaml
+
+scenario: >
+  Enterprise buyer detekován (requestor_type: enterprise, buyer: procurement + legal v stakeholders).
+  AE-ReviewRouter musí vygenerovat ReviewTopologyPlan s activated_lanes obsahujícími
+  procurement a legal. Obě lanes musí být v mandatory_reviews.
+  Topologie nesmí prohlásit povinnou lane za optional.
+
+agents_under_test:
+  - AE-ReviewRouter
+  - CP-Governor
+
+canonical_artifacts_referenced:
+  - ProblemBrief
+  - ReviewTopologyPlan
+  - StateDecisionPacket
+
+entry_state: risk_governance_validation
+
+expected_conditions:
+  - ReviewTopologyPlan.activated_lanes obsahuje procurement
+  - ReviewTopologyPlan.activated_lanes obsahuje legal
+  - ReviewTopologyPlan.mandatory_reviews obsahuje procurement
+  - ReviewTopologyPlan.mandatory_reviews obsahuje legal
+  - ReviewTopologyPlan.topology_blockers jsou neprázdné dokud nejsou obě lanes vyřešeny
+  - ReviewTopologyPlan.lane_entry_conditions zaznamenávají detekci enterprise buyera
+  - Přechod za topology je blokován dokud procurement a legal nejsou cleared
+
+failure_conditions:
+  - procurement nebo legal lane chybí v activated_lanes
+  - procurement nebo legal jsou v optional_reviews místo mandatory_reviews
+  - topology_blockers jsou prázdné při neklearedovaných povinných lanes
+  - ReviewTopologyPlan.decision_status je proceed s nerozřešenými mandatory lanes
+  - lane_entry_conditions neobsahují detekci enterprise buyera
+
+governance_invariants:
+  - Pro enterprise kontext musí být procurement a legal lanes aktivovány jako mandatory
+  - Topologie nesmí označit povinnou lane jako optional
+  - decision_status proceed nesmí být vrácen s neúplnou topologií
