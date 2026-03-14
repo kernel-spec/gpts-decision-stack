@@ -1,0 +1,50 @@
+acceptance_test_id: AC-010
+title: Regulovaný kontext s chybějícím manuálním schválením vyžaduje eskalaci
+description: >
+  Ověřuje, že v regulovaném kontextu (regulated_context: true) s chybějícím
+  manuálním schválením (manual_approval_required: true, manual_approval_present: false)
+  musí AE-RiskGov vrátit decision_status: escalate a CP-ReleaseArbiter nesmí
+  pokračovat do release bez explicitního schválení.
+
+fixtures:
+  - tests/fixtures/regulated/mandatory-approval-matrix.yaml
+
+scenario: >
+  Regulovaný kontext. RiskDecision.risk_classification: critical.
+  mandatory_approvals obsahují regulated_approval_board. Schválení není přítomno.
+  AE-RiskGov musí vrátit decision_status: escalate (nikoliv stop nebo proceed).
+  CP-TransitionJudge musí potvrdit eskalaci. CP-ReleaseArbiter nesmí vrátit
+  release_status: allowed bez explicitně potvrzeného schválení.
+
+agents_under_test:
+  - AE-RiskGov
+  - CP-TransitionJudge
+  - CP-ReleaseArbiter
+
+canonical_artifacts_referenced:
+  - RiskDecision
+  - StateDecisionPacket
+  - ReleaseDecision
+
+entry_state: risk_governance_validation
+
+expected_conditions:
+  - RiskDecision.decision_status je escalate při chybějícím manuálním schválení
+  - RiskDecision.mandatory_approvals obsahuje regulační autoritu
+  - RiskDecision.hard_block_conditions obsahuje approval_missing
+  - CP-TransitionJudge vrátí transition_status: escalate
+  - CP-ReleaseArbiter vrátí release_status: blocked nebo escalate (nikoliv allowed)
+  - Pipeline zůstává zablokována dokud approval_status není confirmed
+
+failure_conditions:
+  - RiskDecision.decision_status je proceed nebo stop při chybějícím manuálním schválení
+  - CP-ReleaseArbiter vrátí release_status: allowed bez explicitně potvrzeného schválení
+  - mandatory_approvals jsou prázdné v regulovaném kontextu
+  - Eskalace je konvertována na proceed bez splnění approval podmínek
+  - decision_log nezaznamenává chybějící schválení
+
+governance_invariants:
+  - V regulovaném kontextu s chybějícím manuálním schválením musí být decision_status escalate
+  - release_status musí být escalate nebo blocked do explicitního potvrzení schválení
+  - Eskalace nesmí být konvertována na proceed bez explicitního splnění podmínek
+  - AE-RiskGov vytváří požadavek na manuální schválení — CP-ReleaseArbiter ho vynucuje

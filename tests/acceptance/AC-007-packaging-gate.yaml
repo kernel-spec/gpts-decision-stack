@@ -1,0 +1,50 @@
+acceptance_test_id: AC-007
+title: Packaging gate blokuje komerční výstup při chybějících nebo neplatných vstupech
+description: >
+  Ověřuje, že komerční packaging gate správně vyhodnocuje vstupní artefakty
+  před vygenerováním CommercialSpec. Pokud povinné vstupní artefakty chybí nebo
+  jsou neplatné, musí AE-Commercial vrátit decision_status: revise nebo blocked
+  s explicitními blocking_issues — nikoliv vygenerovat CommercialSpec s nekomplexními vstupy.
+
+fixtures:
+  - tests/fixtures/enablement/non-sales-internal.yaml
+
+scenario: >
+  Scénář A (bypass): PolicyContext.commercial_lane_optional je true pro interní enablement.
+  CommercialSpec musí zaznamenat lane_bypass_active: true a decision_status: proceed
+  bez generování komerčního obsahu.
+  Scénář B (gate bez bypass): Povinný vstupní artefakt (ClaimsDecision nebo OfferDecision)
+  chybí nebo obsahuje forbidden claims. CommercialSpec nesmí být vygenerován.
+  decision_status musí být revise nebo blocked.
+
+agents_under_test:
+  - AE-Commercial
+  - CP-Governor
+
+canonical_artifacts_referenced:
+  - ProblemBrief
+  - OfferDecision
+  - ClaimsDecision
+  - CommercialSpec
+
+entry_state: commercial_packaging
+
+expected_conditions:
+  - Pokud lane_bypass_active je true, CommercialSpec zaznamenává lane_bypass_authority
+  - Pokud lane_bypass_active je true, decision_status je proceed bez plného komerčního obsahu
+  - Pokud povinný vstup chybí, decision_status je revise nebo blocked
+  - blocking_issues jsou neprázdné při chybějícím nebo neplatném vstupu
+  - Komerční balíček neobsahuje restricted nebo forbidden claimy
+  - target_audience UNKNOWN vede k decision_status: revise
+
+failure_conditions:
+  - CommercialSpec vygenerován s forbidden claims
+  - CommercialSpec vygenerován bez OfferDecision nebo ClaimsDecision jako vstup
+  - lane_bypass_active: true bez explicitní lane_bypass_authority
+  - decision_status proceed vrácen při chybějícím povinném vstupu
+  - Bypass ruší nebo oslabuje claims lane nebo risk governance lane
+
+governance_invariants:
+  - Bypass commercial lane neruší claims lane ani risk governance lane
+  - "lane_bypass_active: true je povoleno pouze pokud policy explicitně uvádí commercial_lane_optional: true"
+  - Komerční balíček nesmí obsahovat restricted nebo forbidden claimy

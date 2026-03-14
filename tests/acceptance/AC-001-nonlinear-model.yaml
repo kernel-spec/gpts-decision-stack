@@ -1,0 +1,50 @@
+acceptance_test_id: AC-001
+title: Pipeline neprosazuje lineární průchod při selhání framingu nebo claimů
+description: >
+  Ověřuje, že rozhodovací systém správně zpracovává nelineární průchod pipeline.
+  Při selhání framingu nebo claimů musí systém vrátit invalidate nebo revise
+  a explicitně zaznamenat cíl zpětného vstupu — nikoliv pokračovat lineárně do dalšího stavu.
+
+fixtures:
+  - tests/fixtures/founder-led/framing-invalid.yaml
+  - tests/fixtures/founder-led/claims-fail.yaml
+
+scenario: >
+  Scénář A: FramingAssessment vrátí framing_validity: invalid a buyer_fit_status: mismatch.
+  Scénář B: ClaimsDecision vrátí claim_fit_status: fail s forbidden nebo restricted claims.
+  V obou případech musí pipeline odmítnout pokračování a explicitně zaznamenat re-entry.
+
+agents_under_test:
+  - AE-Framing
+  - AE-Claims
+  - CP-Governor
+
+canonical_artifacts_referenced:
+  - ProblemBrief
+  - FramingAssessment
+  - ClaimsDecision
+  - StateDecisionPacket
+
+entry_states:
+  - problem_framing
+  - claims_validation
+
+expected_conditions:
+  - FramingAssessment.framing_validity je invalid → decision_status musí být invalidate
+  - ClaimsDecision.claim_fit_status je fail → decision_status musí být revise nebo stop
+  - StateDecisionPacket musí obsahovat explicitní valid_reentry_targets
+  - Žádný agent nesmí vrátit decision_status proceed v přítomnosti aktivních blocking_issues
+  - Pipeline nesmí automaticky postoupit do primitive_selection při invalid framingu
+  - Pipeline nesmí postoupit do commercial_packaging při claim_fit_status fail
+
+failure_conditions:
+  - decision_status proceed vrácen při framing_validity: invalid
+  - decision_status proceed vrácen při claim_fit_status: fail
+  - re-entry target chybí nebo je implicitní
+  - blocking_issues jsou prázdné při invalidním framingu nebo selhání claimů
+  - pipeline pokračuje lineárně za selhání bez explicitního záznamu
+
+governance_invariants:
+  - Falešný proceed je kritické selhání
+  - Invalid framing nesmí pokračovat do primitive_selection bez re-entry
+  - Claim fail musí zablokovat release a vyžádat revise nebo invalidate

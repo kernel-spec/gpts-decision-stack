@@ -1,0 +1,47 @@
+acceptance_test_id: AC-011
+title: Enablement use case může přeskočit commercial lane pouze s explicitním povolením policy
+description: >
+  Ověřuje, že přechod commercial lane (lane bypass) je povolen výhradně
+  tehdy, když PolicyContext.commercial_lane_optional: true je explicitně přítomno.
+  Bypass neruší claims lane ani risk governance lane.
+  Bez explicitního povolení nesmí být commercial lane přeskočena.
+
+fixtures:
+  - tests/fixtures/enablement/non-sales-internal.yaml
+
+scenario: >
+  Interní enablement use case (requestor_type: internal_enablement).
+  PolicyContext obsahuje commercial_lane_optional: true, claims_lane_required: true,
+  risk_lane_required: true. AE-Commercial musí zaznamenat lane_bypass_active: true
+  s explicitní lane_bypass_authority. Claims lane a risk governance lane zůstávají povinné.
+
+agents_under_test:
+  - AE-Commercial
+  - CP-Governor
+
+canonical_artifacts_referenced:
+  - ProblemBrief
+  - CommercialSpec
+  - StateDecisionPacket
+
+entry_state: commercial_packaging
+
+expected_conditions:
+  - CommercialSpec.lane_bypass_active je true
+  - CommercialSpec.lane_bypass_authority je neprázdné a odkazuje na policy
+  - CommercialSpec.decision_status je proceed (bypass povolen policy)
+  - Claims lane a risk governance lane nejsou ovlivněny bypassem
+  - Pokud commercial_lane_optional chybí nebo je false, bypass není aktivován
+  - decision_log zaznamenává bypass s odkazem na policy
+
+failure_conditions:
+  - "lane_bypass_active: true bez přítomnosti commercial_lane_optional: true v policy"
+  - lane_bypass_authority je null nebo chybí při aktivním bypassu
+  - Bypass ruší nebo vylučuje claims lane
+  - Bypass ruší nebo vylučuje risk governance lane
+  - CommercialSpec vygenerován s plným komerčním obsahem i při aktivním bypassu
+
+governance_invariants:
+  - Bypass commercial lane neruší claims lane ani risk governance lane
+  - Bypass vyžaduje explicitní policy povolení — nikoliv implicitní odvození
+  - lane_bypass_authority musí být explicitně zaznamenána
