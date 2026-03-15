@@ -1,0 +1,303 @@
+openapi: 3.0.3
+info:
+  title: gpts-decision-stack OpenAI Actions Import
+  version: "1.0.0"
+  description: >
+    Minimal import-ready OpenAI Actions schema for the gpts-decision-stack
+    Cloudflare Worker backend.
+
+servers:
+  - url: https://gpts-decision-stack.victorain92.workers.dev
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+            service:
+              type: string
+            timestamp:
+              type: string
+          required:
+            - status
+            - service
+            - timestamp
+      required:
+        - ok
+        - data
+
+    CreateSessionRequest:
+      type: object
+      properties:
+        requestor_type:
+          type: string
+        external_ref:
+          type: string
+      required:
+        - requestor_type
+
+    SessionResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: object
+          properties:
+            session_id:
+              type: string
+            pipeline_state:
+              type: string
+            requestor_type:
+              type: string
+            veto_active:
+              type: boolean
+            created_at:
+              type: string
+            updated_at:
+              type: string
+          additionalProperties: true
+      required:
+        - ok
+        - data
+
+    ArtifactSubmissionRequest:
+      type: object
+      properties:
+        artifact_type:
+          type: string
+        artifact_payload:
+          type: object
+          additionalProperties: true
+        submitted_by:
+          type: string
+        reentry:
+          type: boolean
+        reentry_reason:
+          type: string
+      required:
+        - artifact_type
+        - artifact_payload
+        - submitted_by
+
+    ArtifactSubmissionResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: object
+          properties:
+            session_id:
+              type: string
+            pipeline_state:
+              type: string
+            artifact_type:
+              type: string
+            accepted:
+              type: boolean
+            validation_errors:
+              type: array
+              items:
+                type: string
+          additionalProperties: true
+      required:
+        - ok
+        - data
+
+    ReentryRequest:
+      type: object
+      properties:
+        target_state:
+          type: string
+        reentry_reason:
+          type: string
+        authorized_by:
+          type: string
+      required:
+        - target_state
+        - reentry_reason
+
+    ErrorResponse:
+      type: object
+      properties:
+        error_code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      required:
+        - error_code
+        - message
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Health check
+      security: []
+      responses:
+        "200":
+          description: Health response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /session:
+    post:
+      operationId: createSession
+      summary: Create a pipeline session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSessionRequest"
+      responses:
+        "200":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+
+  /session/{session_id}:
+    get:
+      operationId: getSessionState
+      summary: Get session state
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Session state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "404":
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+
+  /session/{session_id}/artifact:
+    post:
+      operationId: submitArtifact
+      summary: Submit a canonical artifact
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArtifactSubmissionRequest"
+      responses:
+        "200":
+          description: Artifact accepted or rejected by validation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArtifactSubmissionResponse"
+        "400":
+          description: Invalid artifact request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Artifact invalid for current state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /session/{session_id}/reentry:
+    post:
+      operationId: triggerReentry
+      summary: Trigger explicit re-entry
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReentryRequest"
+      responses:
+        "200":
+          description: Re-entry recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "400":
+          description: Invalid re-entry request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
