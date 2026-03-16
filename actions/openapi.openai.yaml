@@ -86,7 +86,7 @@ components:
       properties:
         artifact_type:
           type: string
-        artifact_payload:
+        payload:
           $ref: "#/components/schemas/ArtifactPayload"
         submitted_by:
           type: string
@@ -96,7 +96,7 @@ components:
           type: string
       required:
         - artifact_type
-        - artifact_payload
+        - payload
         - submitted_by
 
     ArtifactSubmissionData:
