@@ -116,5 +116,27 @@ export async function handleSubmitArtifact(
     }
   }
 
+  if (
+    session.pipeline_state === "risk_governance_validation" &&
+    body.artifact_type === "StateDecisionPacket"
+  ) {
+    const pkt = body.payload as { state_id?: string; outcome?: string } | null;
+    if (pkt?.state_id === "risk_governance_validation" && pkt?.outcome === "proceed") {
+      await stateService.updateSessionState(
+        env.DECISIONS_DB,
+        session_id,
+        "commercial_packaging",
+        "proceed"
+      );
+      await decisionlogService.appendDecisionLog(env.DECISIONS_DB, session_id, {
+        agent_id: body.agent_id ?? "unknown",
+        action: "pipeline.transition",
+        pipeline_state: "commercial_packaging",
+        decision_status: "proceed",
+        notes: "Transitioned risk_governance_validation → commercial_packaging after accepted StateDecisionPacket (outcome=proceed)",
+      });
+    }
+  }
+
   return Response.json({ ok: true, data: artifact }, { status: 201 });
 }
