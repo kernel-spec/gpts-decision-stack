@@ -50,5 +50,27 @@ export async function handleSubmitArtifact(
     });
   }
 
+  if (
+    session.pipeline_state === "problem_framing" &&
+    body.artifact_type === "StateDecisionPacket"
+  ) {
+    const pkt = body.payload as { state_id?: string; outcome?: string } | null;
+    if (pkt?.state_id === "problem_framing" && pkt?.outcome === "proceed") {
+      await stateService.updateSessionState(
+        env.DECISIONS_DB,
+        session_id,
+        "primitive_selection",
+        "proceed"
+      );
+      await decisionlogService.appendDecisionLog(env.DECISIONS_DB, session_id, {
+        agent_id: body.agent_id ?? "unknown",
+        action: "pipeline.transition",
+        pipeline_state: "primitive_selection",
+        decision_status: "proceed",
+        notes: "Transitioned problem_framing → primitive_selection after accepted StateDecisionPacket (outcome=proceed)",
+      });
+    }
+  }
+
   return Response.json({ ok: true, data: artifact }, { status: 201 });
 }
