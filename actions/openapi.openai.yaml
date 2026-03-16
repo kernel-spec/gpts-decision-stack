@@ -3,14 +3,11 @@ info:
   title: gpts-decision-stack OpenAI Actions Import
   version: "1.0.0"
   description: >
-    Minimal import-ready OpenAI Actions schema for the gpts-decision-stack
+    Builder-safe OpenAI Actions schema for the gpts-decision-stack
     Cloudflare Worker backend.
 
 servers:
   - url: https://gpts-decision-stack.victorain92.workers.dev
-
-security:
-  - ApiKeyAuth: []
 
 components:
   securitySchemes:
@@ -52,30 +49,37 @@ components:
       required:
         - requestor_type
 
+    SessionData:
+      type: object
+      properties:
+        session_id:
+          type: string
+        pipeline_state:
+          type: string
+        requestor_type:
+          type: string
+        veto_active:
+          type: boolean
+        created_at:
+          type: string
+        updated_at:
+          type: string
+
     SessionResponse:
       type: object
       properties:
         ok:
           type: boolean
         data:
-          type: object
-          properties:
-            session_id:
-              type: string
-            pipeline_state:
-              type: string
-            requestor_type:
-              type: string
-            veto_active:
-              type: boolean
-            created_at:
-              type: string
-            updated_at:
-              type: string
-          additionalProperties: true
+          $ref: "#/components/schemas/SessionData"
       required:
         - ok
         - data
+
+    ArtifactPayload:
+      type: object
+      properties: {}
+      additionalProperties: true
 
     ArtifactSubmissionRequest:
       type: object
@@ -83,8 +87,7 @@ components:
         artifact_type:
           type: string
         artifact_payload:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/ArtifactPayload"
         submitted_by:
           type: string
         reentry:
@@ -96,27 +99,29 @@ components:
         - artifact_payload
         - submitted_by
 
+    ArtifactSubmissionData:
+      type: object
+      properties:
+        session_id:
+          type: string
+        pipeline_state:
+          type: string
+        artifact_type:
+          type: string
+        accepted:
+          type: boolean
+        validation_errors:
+          type: array
+          items:
+            type: string
+
     ArtifactSubmissionResponse:
       type: object
       properties:
         ok:
           type: boolean
         data:
-          type: object
-          properties:
-            session_id:
-              type: string
-            pipeline_state:
-              type: string
-            artifact_type:
-              type: string
-            accepted:
-              type: boolean
-            validation_errors:
-              type: array
-              items:
-                type: string
-          additionalProperties: true
+          $ref: "#/components/schemas/ArtifactSubmissionData"
       required:
         - ok
         - data
@@ -137,23 +142,24 @@ components:
     ErrorResponse:
       type: object
       properties:
-        error_code:
+        ok:
+          type: boolean
+        error:
           type: string
-        message:
+        code:
           type: string
-        details:
-          type: object
-          additionalProperties: true
       required:
-        - error_code
-        - message
+        - ok
+        - error
+        - code
 
 paths:
   /health:
     get:
       operationId: getHealth
       summary: Health check
-      security: []
+      security:
+        - ApiKeyAuth: []
       responses:
         "200":
           description: Health response
@@ -161,11 +167,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /session:
     post:
       operationId: createSession
       summary: Create a pipeline session
+      security:
+        - ApiKeyAuth: []
       requestBody:
         required: true
         content:
@@ -193,11 +207,17 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /session/{session_id}:
     get:
       operationId: getSessionState
       summary: Get session state
+      security:
+        - ApiKeyAuth: []
       parameters:
         - name: session_id
           in: path
@@ -211,19 +231,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SessionResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Session not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          description: Unauthorized
 
   /session/{session_id}/artifact:
     post:
       operationId: submitArtifact
       summary: Submit a canonical artifact
+      security:
+        - ApiKeyAuth: []
       parameters:
         - name: session_id
           in: path
@@ -251,6 +277,10 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Session not found
           content:
@@ -268,6 +298,8 @@ paths:
     post:
       operationId: triggerReentry
       summary: Trigger explicit re-entry
+      security:
+        - ApiKeyAuth: []
       parameters:
         - name: session_id
           in: path
@@ -295,6 +327,10 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Session not found
           content:
