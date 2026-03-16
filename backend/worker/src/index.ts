@@ -8,7 +8,7 @@ function validateApiKey(request: Request, env: Env): boolean {
   if (!key) return false;
   // Constant-time comparison to prevent timing attacks
   const expected = env.API_KEY_SECRET;
-  if (key.length !== expected.length) return false;
+  if (!expected || key.length !== expected.length) return false;
   let diff = 0;
   for (let i = 0; i < key.length; i++) {
     diff |= key.charCodeAt(i) ^ expected.charCodeAt(i);

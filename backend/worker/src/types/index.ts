@@ -27,18 +27,32 @@ export type DecisionStatus =
   | "unresolved"
   | "blocked";
 
+export type RequestorType =
+  | "founder-led"
+  | "enterprise"
+  | "regulated"
+  | "enablement";
+
+export const VALID_REQUESTOR_TYPES: readonly RequestorType[] = [
+  "founder-led",
+  "enterprise",
+  "regulated",
+  "enablement",
+];
+
 export interface Session {
   session_id: string;
-  agent_id: string;
+  requestor_type: RequestorType;
   pipeline_state: PipelineState;
   decision_status: DecisionStatus;
+  veto_active: boolean;
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateSessionRequest {
-  agent_id: string;
-  pipeline_state: PipelineState;
+  requestor_type: RequestorType;
+  external_ref?: string | null;
 }
 
 export interface ReentryRequest {

@@ -8,6 +8,28 @@ function newId(): string {
   return crypto.randomUUID();
 }
 
+type SessionRow = {
+  session_id: string;
+  requestor_type: string;
+  pipeline_state: string;
+  decision_status: string;
+  created_at: string;
+  updated_at: string;
+  veto_active: number;
+};
+
+function rowToSession(row: SessionRow): Session {
+  return {
+    session_id: row.session_id,
+    requestor_type: row.requestor_type as Session["requestor_type"],
+    pipeline_state: row.pipeline_state as Session["pipeline_state"],
+    decision_status: row.decision_status as Session["decision_status"],
+    veto_active: row.veto_active === 1,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
 export async function createSession(
   db: Env["DECISIONS_DB"],
   req: CreateSessionRequest
@@ -17,17 +39,18 @@ export async function createSession(
 
   await db
     .prepare(
-      `INSERT INTO sessions (session_id, agent_id, pipeline_state, decision_status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO sessions (session_id, agent_id, requestor_type, external_ref, pipeline_state, decision_status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .bind(session_id, req.agent_id, req.pipeline_state, "unresolved", now, now)
+    .bind(session_id, "system", req.requestor_type, req.external_ref ?? null, "intake", "unresolved", now, now)
     .run();
 
   return {
     session_id,
-    agent_id: req.agent_id,
-    pipeline_state: req.pipeline_state,
+    requestor_type: req.requestor_type,
+    pipeline_state: "intake",
     decision_status: "unresolved",
+    veto_active: false,
     created_at: now,
     updated_at: now,
   };
@@ -38,10 +61,17 @@ export async function getSession(
   session_id: string
 ): Promise<Session | null> {
   const row = await db
-    .prepare(`SELECT * FROM sessions WHERE session_id = ?`)
+    .prepare(
+      `SELECT s.session_id, s.requestor_type, s.pipeline_state, s.decision_status,
+              s.created_at, s.updated_at,
+              COALESCE(vr.is_active, 0) AS veto_active
+       FROM sessions s
+       LEFT JOIN veto_records vr ON s.session_id = vr.session_id
+       WHERE s.session_id = ?`
+    )
     .bind(session_id)
-    .first<Session>();
-  return row ?? null;
+    .first<SessionRow>();
+  return row ? rowToSession(row) : null;
 }
 
 export async function updateSessionState(
