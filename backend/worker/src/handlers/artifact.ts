@@ -160,5 +160,27 @@ export async function handleSubmitArtifact(
     }
   }
 
+  if (
+    session.pipeline_state === "claims_validation" &&
+    body.artifact_type === "StateDecisionPacket"
+  ) {
+    const pkt = body.payload as { state_id?: string; outcome?: string } | null;
+    if (pkt?.state_id === "claims_validation" && pkt?.outcome === "proceed") {
+      await stateService.updateSessionState(
+        env.DECISIONS_DB,
+        session_id,
+        "release_decision",
+        "proceed"
+      );
+      await decisionlogService.appendDecisionLog(env.DECISIONS_DB, session_id, {
+        agent_id: body.agent_id ?? "unknown",
+        action: "pipeline.transition",
+        pipeline_state: "release_decision",
+        decision_status: "proceed",
+        notes: "Transitioned claims_validation → release_decision after accepted StateDecisionPacket (outcome=proceed)",
+      });
+    }
+  }
+
   return Response.json({ ok: true, data: artifact }, { status: 201 });
 }
