@@ -34,5 +34,21 @@ export async function handleSubmitArtifact(
     notes: `Artifact ${body.artifact_type} submitted (id=${artifact.id})`,
   });
 
+  if (session.pipeline_state === "intake" && body.artifact_type === "ProblemBrief") {
+    await stateService.updateSessionState(
+      env.DECISIONS_DB,
+      session_id,
+      "problem_framing",
+      session.decision_status
+    );
+    await decisionlogService.appendDecisionLog(env.DECISIONS_DB, session_id, {
+      agent_id: body.agent_id ?? "unknown",
+      action: "pipeline.transition",
+      pipeline_state: "problem_framing",
+      decision_status: session.decision_status,
+      notes: "Transitioned intake → problem_framing after accepted ProblemBrief",
+    });
+  }
+
   return Response.json({ ok: true, data: artifact }, { status: 201 });
 }
