@@ -138,5 +138,27 @@ export async function handleSubmitArtifact(
     }
   }
 
+  if (
+    session.pipeline_state === "commercial_packaging" &&
+    body.artifact_type === "StateDecisionPacket"
+  ) {
+    const pkt = body.payload as { state_id?: string; outcome?: string } | null;
+    if (pkt?.state_id === "commercial_packaging" && pkt?.outcome === "proceed") {
+      await stateService.updateSessionState(
+        env.DECISIONS_DB,
+        session_id,
+        "claims_validation",
+        "proceed"
+      );
+      await decisionlogService.appendDecisionLog(env.DECISIONS_DB, session_id, {
+        agent_id: body.agent_id ?? "unknown",
+        action: "pipeline.transition",
+        pipeline_state: "claims_validation",
+        decision_status: "proceed",
+        notes: "Transitioned commercial_packaging → claims_validation after accepted StateDecisionPacket (outcome=proceed)",
+      });
+    }
+  }
+
   return Response.json({ ok: true, data: artifact }, { status: 201 });
 }
