@@ -1,4 +1,5 @@
 import type { Env, CreateSessionRequest, ReentryRequest } from "../types/index.js";
+import { VALID_REQUESTOR_TYPES } from "../types/index.js";
 import * as stateService from "../services/state.js";
 import * as decisionlogService from "../services/decisionlog.js";
 import { errorResponse, requireJson } from "../router.js";
@@ -8,17 +9,30 @@ export async function handleCreateSession(
   env: Env
 ): Promise<Response> {
   const body = await requireJson<CreateSessionRequest>(request);
-  if (!body.agent_id || !body.pipeline_state) {
-    return errorResponse("agent_id and pipeline_state are required", "INVALID_REQUEST", 400);
+  const requestorType = body.requestor_type;
+  if (!requestorType || !VALID_REQUESTOR_TYPES.includes(requestorType)) {
+    return errorResponse(
+      "requestor_type is required and must be one of: founder-led, enterprise, regulated, enablement",
+      "INVALID_REQUEST",
+      400
+    );
   }
 
-  const session = await stateService.createSession(env.DECISIONS_DB, body);
+  // Defensive normalisation: treat missing/non-string external_ref as null
+  const externalRef =
+    typeof body.external_ref === "string" ? body.external_ref : null;
+
+  const session = await stateService.createSession(env.DECISIONS_DB, {
+    requestor_type: requestorType,
+    external_ref: externalRef,
+  });
+
   await decisionlogService.appendDecisionLog(env.DECISIONS_DB, session.session_id, {
-    agent_id: body.agent_id,
+    agent_id: "system",
     action: "session.created",
-    pipeline_state: body.pipeline_state,
+    pipeline_state: session.pipeline_state,
     decision_status: "unresolved",
-    notes: "Session created",
+    notes: `Session created for requestor_type: ${requestorType}`,
   });
 
   return Response.json({ ok: true, data: session }, { status: 201 });
