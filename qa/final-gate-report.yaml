@@ -1,7 +1,7 @@
 schema_version: "1.0.0"
 artifact_type: qa_final_gate_report
 report_date: "2026-03-14"
-report_updated: "2026-03-14"
+report_updated: "2026-03-17"
 repository: gpts-decision-stack
 description: >
   Finální QA gate report pro repozitář gpts-decision-stack.
@@ -215,7 +215,7 @@ layer_status:
     provisioning_pending:
       - Cloudflare account_id (GitHub Secret: CLOUDFLARE_ACCOUNT_ID)
       - API_KEY_SECRET (wrangler secret put — nikdy necommitovat)
-      - Verifikace produkčních D1/KV prostředků (IDs jsou v wrangler.toml, infra provisioning nutný)
+      - Verifikace produkčních D1/KV prostředků (IDs jsou v backend/worker/wrangler.toml, infra provisioning nutný)
     note: >
       Backend binding přešel z SPEC_ONLY na IMPLEMENTATION-BACKED.
       Repozitář obsahuje spustitelný TypeScript kód pro všechna API,
@@ -242,7 +242,7 @@ provisioning_gaps:
     required_actions:
       - "Nastavit CLOUDFLARE_API_TOKEN a CLOUDFLARE_ACCOUNT_ID jako GitHub Secrets pro prod deployment"
       - "wrangler secret put API_KEY_SECRET (pro prod prostředí)"
-      - "Verifikovat produkční D1/R2/KV prostředky jsou provisionovány (IDs jsou v wrangler.toml)"
+      - "Verifikovat produkční D1/R2/KV prostředky jsou provisionovány (IDs jsou v backend/worker/wrangler.toml)"
       - "wrangler d1 execute gpts-decision-stack-db --file backend/worker/migrations/0001_init.sql (prod)"
   - id: PROV-002
     layer: acceptance_tests
@@ -286,7 +286,7 @@ resolved_gaps:
     description: >
       Backend binding přešel z SPEC_ONLY na IMPLEMENTATION-BACKED.
       Cloudflare Worker implementace fyzicky existuje v backend/worker/.
-      Spustitelný TypeScript, wrangler.toml (D1/R2/KV bindings),
+      Spustitelný TypeScript, backend/worker/wrangler.toml (D1/R2/KV bindings),
       GitHub Actions deploy workflow a D1 schema migrace jsou přítomny.
 
 audit_note: >

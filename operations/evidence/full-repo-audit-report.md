@@ -199,7 +199,7 @@ Nalezené problémy (opraveny v tomto auditu):
 ### Co je částečně hotové
 
 - **Acceptance testy** — definovány jako YAML, ale nebyly evaluovány oproti live backendu (PROV-002)
-- **Produkční infrastruktura** — dev je live, prod resource IDs jsou v wrangler.toml, ale prod provisioning nebyl dokončen (PROV-001)
+- **Produkční infrastruktura** — dev je live, prod resource IDs jsou v `backend/worker/wrangler.toml`, ale prod provisioning nebyl dokončen (PROV-001)
 
 ### Co zbývá do DEPLOY-READY STACK
 
