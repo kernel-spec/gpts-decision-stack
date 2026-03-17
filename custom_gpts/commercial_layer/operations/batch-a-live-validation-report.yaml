@@ -1,0 +1,114 @@
+schema_version: "1.0.0"
+artifact_type: batch_live_validation_report
+stack_id: commercial_layer_top10
+version: v1
+status: PASS
+batch_id: batch_a
+test_date: "2026-03-17"
+environment: custom_gpt_builder
+
+purpose: >
+  Záznam výsledků živého testování Batch A commercial GPT rolí v prostředí
+  ChatGPT Builder. Eviduje výsledky smoke checks, zjištěné problémy a jejich
+  opravy. Slouží jako deployment release evidence pro přechod na Batch B.
+
+roles_tested:
+  - SYSTEM_OS_MASTER
+  - STRUCTURAL_ENGINE
+  - PRICING_PACKAGER
+  - POSITIONING_POLICE
+
+deployment_status_per_role:
+  SYSTEM_OS_MASTER: PASS
+  STRUCTURAL_ENGINE: PASS
+  PRICING_PACKAGER: PASS
+  POSITIONING_POLICE: PASS
+
+scenario_results:
+  - scenario_id: smoke_check_a
+    label: SYSTEM_OS_MASTER smoke test
+    role: SYSTEM_OS_MASTER
+    result: PASS
+    notes: >
+      Router-only discipline zachována. Vrátil přesně jeden NEXT_GPT.
+      Výstup: routing sentence + fenced code block. Žádné přímé řešení.
+
+  - scenario_id: smoke_check_b
+    label: STRUCTURAL_ENGINE smoke test
+    role: STRUCTURAL_ENGINE
+    result: PASS
+    notes: >
+      Po aplikaci schema-discipline fixu produkuje všech 10 povinných výstupních
+      bloků včetně 14-Day Execution Plan a Risks. Output Contract a Scope Lock
+      přítomny a měřitelné. Kill Criteria definována.
+
+  - scenario_id: smoke_check_c
+    label: PRICING_PACKAGER smoke test
+    role: PRICING_PACKAGER
+    result: PASS
+    notes: >
+      Po fixu používá správné názvy bloků (3-Tier Packages místo Package Structure,
+      Anchors & Risk Reversal místo Anchoring). Risks + Mitigations sekce přítomna.
+      Žádné invented benchmarks.
+
+  - scenario_id: smoke_check_d
+    label: POSITIONING_POLICE smoke test
+    role: POSITIONING_POLICE
+    result: PASS
+    notes: >
+      Po fixu používá správné názvy bloků (Single Source of Truth, Vocabulary &
+      Claims Policy). Block 1 obsahuje všechny povinné kanonické fieldy. Minimal
+      fix list vrácen bez přepisování textů.
+
+summary_counts:
+  total_scenarios: 4
+  passed: 4
+  failed: 0
+  blocked: 0
+
+key_findings:
+  - finding_id: KF-001
+    severity: medium
+    category: schema_discipline
+    description: >
+      Počáteční schema-discipline drift detekován ve 3 compact Builder promptech
+      Batch A. Model používal nesprávné nebo přejmenované výstupní bloky a vynechal
+      povinné sekce.
+    affected_files:
+      - custom_gpts/commercial_layer/builder_compact/STRUCTURAL_ENGINE.builder.md
+      - custom_gpts/commercial_layer/builder_compact/PRICING_PACKAGER.builder.md
+      - custom_gpts/commercial_layer/builder_compact/POSITIONING_POLICE.builder.md
+    resolution: >
+      Aplikován schema-discipline fix: zpřísněny OUTPUT sekce, přidána pravidla
+      pro přesné názvy bloků, zakázáno přejmenování, doplněny SELF-CHECK položky.
+    resolution_status: RESOLVED
+    retest_result: PASS
+
+  - finding_id: KF-002
+    severity: low
+    category: role_behavior
+    description: >
+      Chování rolí (routing discipline, scope enforcement, proof safety) je silné
+      bez nutnosti opravy. Žádný scope bleed, multi-question drift ani invented
+      proof detekován.
+    resolution: none_required
+    resolution_status: CLOSED
+
+blocker_count: 0
+blocker_list: []
+
+release_decision: PASS
+
+next_step: PROCEED_TO_BATCH_B_PREP
+
+sign_off:
+  batch: A
+  role_count: 4
+  deployer: "[TBD]"
+  deployment_date: "2026-03-17"
+  smoke_check_SYSTEM_OS_MASTER: PASS
+  smoke_check_STRUCTURAL_ENGINE: PASS
+  smoke_check_PRICING_PACKAGER: PASS
+  smoke_check_POSITIONING_POLICE: PASS
+  batch_a_deployment_status: COMPLETE
+  ready_for_batch_b: true
