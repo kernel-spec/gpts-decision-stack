@@ -1,0 +1,312 @@
+schema_version: "1.0.0"
+artifact_type: domain_to_role_mapping
+stack_id: commercial_layer_top10
+version: v1
+status: draft
+purpose: >
+  Mapování mezi kanonickou domain template library a Top 10 rolemi commercial layeru.
+  Tento soubor slouží jako authoring a QA reference. Není určen pro runtime execution.
+
+domains:
+  domain_1:
+    id: domain_1
+    name: Content Creation
+    purpose: content design, copy structure, tone, format
+  domain_3:
+    id: domain_3
+    name: Project Management & Planning
+    purpose: planning, sequencing, milestones, delivery structure
+  domain_4:
+    id: domain_4
+    name: Marketing & Growth
+    purpose: messaging, growth strategy, campaign logic, funnel thinking
+  domain_5:
+    id: domain_5
+    name: Product & Services
+    purpose: offer design, customer need, MVP logic, service structure
+  domain_8:
+    id: domain_8
+    name: Business & Strategy
+    purpose: strategic framing, business model, scaling logic, performance thinking
+  domain_10:
+    id: domain_10
+    name: Communication & Presentation
+    purpose: message design, argumentation, business communication, negotiation framing
+
+roles:
+  SYSTEM_OS_MASTER:
+    rollout_priority: 1
+    role_type: router
+    deployment_status: deploy_now
+    primary_domains:
+      - domain_8
+      - domain_4
+      - domain_5
+    secondary_domains:
+      - domain_10
+    subcategory_bias:
+      - strategic_planning
+      - marketing_strategy
+      - business_model_exploration
+      - business_communication
+    core_use:
+      - route_request_to_smallest_correct_next_step
+      - enforce_revenue_first_structure
+      - preserve_scope_lock_and_output_contract_logic
+    excluded_domains:
+      - domain_1
+      - domain_3
+    notes: >
+      Router-only role. Nepřebírá plné content ani delivery struktury. Má chápat
+      business framing, ICP, monetization path a handoff logiku.
+
+  STRUCTURAL_ENGINE:
+    rollout_priority: 2
+    role_type: offer_design
+    deployment_status: deploy_now
+    primary_domains:
+      - domain_5
+      - domain_8
+    secondary_domains:
+      - domain_3
+    subcategory_bias:
+      - customer_problem_definition
+      - product_service_design
+      - business_model_exploration
+      - strategic_planning
+      - roadmap_decomposition
+    core_use:
+      - define_problem_icp_desired_outcome
+      - create_output_contract
+      - define_scope_lock
+      - set_validation_metric_and_kill_criteria
+    excluded_domains:
+      - domain_1
+      - domain_10
+    notes: >
+      Hlavní role pro převod vágního nápadu do monetizovatelného systému.
+      Má stát hlavně na Product & Services + Business & Strategy.
+
+  PRICING_PACKAGER:
+    rollout_priority: 3
+    role_type: pricing
+    deployment_status: deploy_now
+    primary_domains:
+      - domain_8
+      - domain_5
+    secondary_domains: []
+    subcategory_bias:
+      - business_model_exploration
+      - strategic_planning
+      - product_service_design
+      - iteration_improvement
+    core_use:
+      - define_pricing_logic
+      - create_tiers_and_value_ladder
+      - set_scope_boundaries
+      - define_raise_price_triggers
+    excluded_domains:
+      - domain_1
+      - domain_10
+    notes: >
+      Pricing role nesmí sklouzávat do obecné strategie nebo copywritingu.
+      Potřebuje business model thinking a offer structure.
+
+  POSITIONING_POLICE:
+    rollout_priority: 4
+    role_type: positioning_qc
+    deployment_status: deploy_now
+    primary_domains:
+      - domain_4
+      - domain_10
+    secondary_domains:
+      - domain_8
+    subcategory_bias:
+      - brand_positioning
+      - marketing_strategy
+      - argumentation_message_structure
+      - business_communication
+      - feedback_negotiation
+    core_use:
+      - enforce_single_source_of_truth
+      - detect_icp_and_claim_drift
+      - align_offer_copy_call_language
+      - define_approved_phrases_and_banned_claims
+    excluded_domains:
+      - domain_3
+      - domain_5
+    notes: >
+      Tato role je QA/consistency vrstva. Neřeší pricing ani deep offer design,
+      ale hlídá soulad mezi offerem, assety a call framingem.
+
+  ASSET_ENGINE:
+    rollout_priority: 5
+    role_type: asset_generation
+    deployment_status: deploy_now
+    primary_domains:
+      - domain_1
+      - domain_4
+      - domain_10
+    secondary_domains: []
+    subcategory_bias:
+      - copywriting
+      - social_media_content
+      - writing_articles_blogs
+      - business_communication
+      - argumentation_message_structure
+    core_use:
+      - create_outreach_assets
+      - create_one_screen_offer_page
+      - create_dm_and_email_sequences
+      - preserve_one_cta_and_claim_safety
+    excluded_domains:
+      - domain_3
+      - domain_8
+    notes: >
+      Content role. Musí stát hlavně na content + marketing + communication.
+      Nemá suplovat offer design ani pricing.
+
+  REWRITE_ENGINE:
+    rollout_priority: 6
+    role_type: asset_rewrite
+    deployment_status: deploy_now
+    primary_domains:
+      - domain_1
+      - domain_10
+    secondary_domains:
+      - domain_4
+    subcategory_bias:
+      - editing_text_optimization
+      - copywriting
+      - business_communication
+      - argumentation_message_structure
+    core_use:
+      - rewrite_for_clarity
+      - tighten_cta
+      - preserve_intent
+      - remove_fluff_and_fake_proof_risk
+    excluded_domains:
+      - domain_3
+      - domain_5
+      - domain_8
+    notes: >
+      Rewrite role má být úzká. Neřeší celou strategii, jen přepisuje existující asset.
+
+  SUGGESTION_ENGINE:
+    rollout_priority: 7
+    role_type: diagnostics
+    deployment_status: deploy_now
+    primary_domains:
+      - domain_1
+      - domain_4
+      - domain_8
+      - domain_10
+    secondary_domains: []
+    subcategory_bias:
+      - conversion_optimization
+      - marketing_strategy
+      - argumentation_message_structure
+      - business_communication
+      - editing_text_optimization
+    core_use:
+      - diagnose_friction_without_rewriting
+      - identify_icp_drift
+      - identify_cta_weakness
+      - propose_testable_improvements
+    excluded_domains:
+      - domain_3
+      - domain_5
+    notes: >
+      Diagnostic role. Má umět pojmenovat weakest node, ale nemá rovnou psát nový asset.
+
+  MARKET_SCOUT_OUTBOUND:
+    rollout_priority: 8
+    role_type: market_research
+    deployment_status: deploy_now
+    web_required: true
+    primary_domains:
+      - domain_4
+      - domain_8
+      - domain_5
+    secondary_domains:
+      - domain_10
+    subcategory_bias:
+      - marketing_strategy
+      - campaign_planning
+      - business_model_exploration
+      - strategic_analysis
+      - customer_problem_definition
+    core_use:
+      - scan_real_market_offers
+      - extract_pricing_and_positioning_patterns
+      - infer_best_icp_and_trigger
+      - synthesize_outbound_first_offer
+    excluded_domains:
+      - domain_3
+    notes: >
+      Research role s Web ON. Má produkovat market-backed doporučení pro offer,
+      ICP a outbound channel plan, ne jen obecné nápady.
+
+  CALL_CLOSER:
+    rollout_priority: 9
+    role_type: sales_conversion
+    deployment_status: deploy_now
+    primary_domains:
+      - domain_10
+      - domain_8
+      - domain_5
+    secondary_domains:
+      - domain_4
+    subcategory_bias:
+      - feedback_negotiation
+      - business_communication
+      - argumentation_message_structure
+      - strategic_planning
+      - customer_problem_definition
+    core_use:
+      - build_discovery_call_flow
+      - set_qualification_gates
+      - frame_value_without_overpromising
+      - drive_single_next_step
+    excluded_domains:
+      - domain_1
+      - domain_3
+    notes: >
+      Sales role. Musí kombinovat message framing, strategic clarity a offer structure.
+
+  DELIVERY_SOP_ENGINE:
+    rollout_priority: 10
+    role_type: delivery_system
+    deployment_status: deploy_now
+    primary_domains:
+      - domain_3
+      - domain_5
+      - domain_10
+    secondary_domains: []
+    subcategory_bias:
+      - roadmap_decomposition
+      - time_management_scheduling
+      - progress_tracking_milestones
+      - product_service_design
+      - business_communication
+    core_use:
+      - create_delivery_pipeline
+      - define_onboarding_and_checklists
+      - define_client_touchpoints
+      - enforce_scope_and_definition_of_done
+    excluded_domains:
+      - domain_4
+      - domain_8
+    notes: >
+      Delivery role. Má stát na planning + service structure + communication templates,
+      ne na marketingu nebo strategii.
+
+governance_note: >
+  Tento mapping soubor slouží pro authoring, compacting a QA Top 10 commercial GPT rolí.
+  Nepředstavuje runtime execution rules, approval authority ani governed decision logic.
+
+usage_rules:
+  - Use this file as source material for prompt authoring and prompt QA.
+  - Do not copy whole domains into Builder instructions 1:1.
+  - Prefer role overlays and compact Builder prompts derived from this mapping.
+  - If a role drifts outside its mapped domains, fix the role prompt instead of broadening the role silently.
