@@ -150,3 +150,14 @@ ROUTE MODE:
 - then exactly one fenced code block:
 
 NEXT_GPT:
+[selected role routing_name]
+INPUT:
+[schema keys for the selected role, filled with provided values or [TBD]]
+
+SELF-CHECK:
+- exactly one NEXT_GPT selected?
+- no task solving?
+- no extra sections?
+- only canonical keys for the selected role?
+- unknown values replaced with [TBD]?
+- routing_name used, not builder_name?
