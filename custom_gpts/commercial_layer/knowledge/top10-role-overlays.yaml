@@ -178,7 +178,7 @@ roles:
     preferred_subcategories:
       - brand_positioning
       - marketing_strategy
-      - argumentation
+      - argumentation_message_structure
       - business_communication
       - feedback_negotiation
     role_overrides:
@@ -225,7 +225,7 @@ roles:
       - social_media_content
       - writing_articles_blogs
       - business_communication
-      - argumentation
+      - argumentation_message_structure
     role_overrides:
       one_cta_only: true
       channel_specific_output: true
@@ -268,7 +268,7 @@ roles:
       - editing_optimization
       - copywriting
       - business_communication
-      - argumentation
+      - argumentation_message_structure
     role_overrides:
       preserve_intent: true
       rewrite_only_provided_asset: true
@@ -308,7 +308,7 @@ roles:
     preferred_subcategories:
       - conversion_optimization
       - marketing_strategy
-      - argumentation
+      - argumentation_message_structure
       - business_communication
       - editing_optimization
     role_overrides:
@@ -352,8 +352,8 @@ roles:
       - marketing_strategy
       - campaign_planning
       - business_model_exploration
-      - strategic_analysis
       - customer_problem_definition
+      - brand_positioning
     role_overrides:
       web_required: true
       cite_sources: true
@@ -401,7 +401,7 @@ roles:
     preferred_subcategories:
       - feedback_negotiation
       - business_communication
-      - argumentation
+      - argumentation_message_structure
       - strategic_planning
       - customer_problem_definition
     role_overrides:
@@ -488,3 +488,5 @@ usage_rules:
   - Keep Builder prompts shorter than source prompts by compressing explanations, not hard rules.
   - If a role starts absorbing neighboring roles, tighten the overlay before editing the Builder prompt.
   - Treat excluded_patterns as fail-closed boundaries for role drift.
+  - naming_rule: use_only_canonical_subcategory_slugs_from_domain_template_library
+  - inactive_domain_rule: do_not_pull_domain_2_domain_6_domain_7_domain_9_into_top10_without_explicit_mapping_change

@@ -176,7 +176,7 @@ roles:
     secondary_domains:
       - domain_4
     subcategory_bias:
-      - editing_text_optimization
+      - editing_optimization
       - copywriting
       - business_communication
       - argumentation_message_structure
@@ -207,7 +207,7 @@ roles:
       - marketing_strategy
       - argumentation_message_structure
       - business_communication
-      - editing_text_optimization
+      - editing_optimization
     core_use:
       - diagnose_friction_without_rewriting
       - identify_icp_drift
@@ -234,8 +234,8 @@ roles:
       - marketing_strategy
       - campaign_planning
       - business_model_exploration
-      - strategic_analysis
       - customer_problem_definition
+      - brand_positioning
     core_use:
       - scan_real_market_offers
       - extract_pricing_and_positioning_patterns
@@ -285,8 +285,8 @@ roles:
     secondary_domains: []
     subcategory_bias:
       - roadmap_decomposition
-      - time_management_scheduling
-      - progress_tracking_milestones
+      - time_planning
+      - progress_tracking
       - product_service_design
       - business_communication
     core_use:
@@ -310,3 +310,5 @@ usage_rules:
   - Do not copy whole domains into Builder instructions 1:1.
   - Prefer role overlays and compact Builder prompts derived from this mapping.
   - If a role drifts outside its mapped domains, fix the role prompt instead of broadening the role silently.
+  - naming_rule: use_only_canonical_subcategory_slugs_from_domain_template_library
+  - inactive_domain_rule: do_not_pull_domain_2_domain_6_domain_7_domain_9_into_top10_without_explicit_mapping_change
