@@ -1,0 +1,45 @@
+artifact_type: runtime_end_to_end_summary
+environment: dev
+date: "2026-03-16"
+worker_url: https://gpts-decision-stack-dev.victorain92.workers.dev
+
+governance_status:
+  overall_status: FAIL
+  repo_integrity_status: PASS
+  deployment_readiness_status: FAIL
+  bundle_classification: REPO-READY SKELETON
+  deploy_ready: false
+  blocking_reason:
+    - fixture_completeness_fail
+
+runtime_evidence:
+  source: ACTIONS
+  level: STRONG_PARTIAL
+  health: PASS
+  create_session: PASS
+  get_session_state: PASS
+  submit_artifact: PASS
+
+pipeline_progression:
+  intake_to_problem_framing: PASS
+  problem_framing_to_primitive_selection: PASS
+  primitive_selection_to_architecture_validation: PASS
+  architecture_validation_to_risk_governance_validation: PASS
+  risk_governance_validation_to_commercial_packaging: PASS
+  commercial_packaging_to_claims_validation: PASS
+  claims_validation_to_release_decision: PASS
+
+final_runtime_state:
+  session_id: aba9b1e1-2c48-42df-b602-778cca18c6cf
+  pipeline_state: release_decision
+  decision_status: proceed
+  veto_active: false
+
+interpretation:
+  runtime_worker_operational: true
+  action_wiring_operational: true
+  decision_packet_governed_transitions_operational: true
+  deploy_ready_stack: false
+  note: >
+    Runtime evidence in dev is strong, but governed deployment readiness remains FAIL
+    because fixture/gate requirements are still not satisfied.
