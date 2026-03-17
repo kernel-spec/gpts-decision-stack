@@ -2,7 +2,7 @@
 
 ## Verze
 
-`gpts-decision-stack` — vývojový skeleton (neproduktivní verze)
+`gpts-decision-stack` — REPO-READY SKELETON (backend IMPLEMENTATION-BACKED, dev prostředí live)
 
 ---
 
@@ -10,8 +10,10 @@
 
 **Klasifikace:** REPO-READY SKELETON
 
-Tato verze není určena k produkčnímu nasazení. Neobsahuje backend binding
-a neprošla plným deployment gate procesem.
+Tato verze neprošla plným deployment gate procesem a není klasifikována jako
+DEPLOY-READY STACK. Backend je IMPLEMENTATION-BACKED (Cloudflare Worker,
+dev prostředí live), ale governed deployment readiness zůstává FAIL
+(fail-closed governance) — viz `qa/final-gate-report.yaml`.
 
 ---
 
@@ -24,16 +26,20 @@ a neprošla plným deployment gate procesem.
 - Acceptance testy (AC-001 až AC-012)
 - Governance mapy (ownership, approval, veto)
 - Kanonické repo-control soubory (MASTER_SPEC.md, repo.manifest.yaml)
-- QA gate report (status FAIL — viz blokátory)
+- Všechny knowledge soubory (7 core INVARIANT + 9 domain ADAPTIVE)
+- Operační checklisty (local/dev/staging/prod)
+- Backend binding: Cloudflare Worker TypeScript implementace (IMPLEMENTATION-BACKED)
+- API binding manifest (actions/openapi.yaml, actions/openapi.openai.yaml)
+- Deployment manifest (release/deployment_target.yaml)
+- Dev runtime evidence (operations/evidence/audit-evidence-bundle-dev.yaml)
+- QA gate report (overall_status FAIL — viz blokátory)
 
 ---
 
-## Blokátory pro produkci
+## Blokátory pro dosažení DEPLOY-READY STACK
 
-- Knowledge soubory fyzicky chybí (16 souborů)
-- Operační checklisty fyzicky chybí (4 soubory)
-- Promotion gate fyzicky chybí
-- Backend binding (GPT konfigurace, API binding, deployment manifest) chybí
+- **PROV-002**: Acceptance testy (AC-001–AC-012) existují jako YAML definice, ale nebyly evaluovány oproti live backendu
+- **PROV-001**: Dev prostředí je live; produkční Cloudflare infrastruktura a GitHub Secrets musí být nastaveny
 
 ---
 

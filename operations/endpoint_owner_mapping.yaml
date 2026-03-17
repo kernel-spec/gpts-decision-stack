@@ -12,7 +12,7 @@ endpoints:
     operation_id: getHealth
     owner_role: platform_operations
     agent: null
-    runtime_dependency: Cloud Run health check
+    runtime_dependency: Cloudflare Workers health check
     auth_mode: none
     logging_required: false
     audit_required: false
@@ -23,26 +23,26 @@ endpoints:
     operation_id: createSession
     owner_role: control_plane_governor_function
     agent: CP-Governor
-    runtime_dependency: Cloud Firestore
+    runtime_dependency: Cloudflare D1 (DECISIONS_DB)
     auth_mode: api_key
     logging_required: true
     audit_required: true
     failure_mode: >
       return_400 on invalid requestor_type;
-      return_500 and log_error on Firestore write failure
+      return_500 and log_error on D1 write failure
 
   - path: /session/{session_id}
     method: GET
     operation_id: getSessionState
     owner_role: control_plane_governor_function
     agent: CP-Governor
-    runtime_dependency: Cloud Firestore
+    runtime_dependency: Cloudflare D1 (DECISIONS_DB)
     auth_mode: api_key
     logging_required: true
     audit_required: false
     failure_mode: >
       return_404 on unknown session_id;
-      return_500 and log_error on Firestore read failure
+      return_500 and log_error on D1 read failure
 
   - path: /session/{session_id}/artifact
     method: POST
@@ -61,8 +61,8 @@ endpoints:
       StateDecisionPacket: CP-Governor
       ReleaseDecision: CP-ReleaseArbiter
     runtime_dependency:
-      - Cloud Firestore
-      - Cloud Storage
+      - Cloudflare D1 (DECISIONS_DB)
+      - Cloudflare R2 (ARTIFACTS_BUCKET)
     auth_mode: api_key
     logging_required: true
     audit_required: true
@@ -70,21 +70,21 @@ endpoints:
     failure_mode: >
       return_400 on schema validation failure;
       return_409 on artifact_type mismatch with current pipeline state;
-      return_500 and log_error on Firestore or Storage write failure
+      return_500 and log_error on D1 or R2 write failure
 
   - path: /session/{session_id}/reentry
     method: POST
     operation_id: triggerReentry
     owner_role: control_plane_governor_function
     agent: CP-Governor
-    runtime_dependency: Cloud Firestore
+    runtime_dependency: Cloudflare D1 (DECISIONS_DB)
     auth_mode: api_key
     logging_required: true
     audit_required: true
     failure_mode: >
       return_400 on missing or empty reentry_reason (silent re-entry rejected);
       return_400 on invalid target_state;
-      return_500 and log_error on Firestore write failure
+      return_500 and log_error on D1 write failure
     governance_constraint: reentry_reason_required_minimum_10_chars
 
   - path: /session/{session_id}/decision-log
@@ -92,26 +92,26 @@ endpoints:
     operation_id: getDecisionLog
     owner_role: control_plane_governor_function
     agent: CP-Governor
-    runtime_dependency: Cloud Firestore
+    runtime_dependency: Cloudflare D1 (DECISIONS_DB)
     auth_mode: api_key
     logging_required: true
     audit_required: false
     failure_mode: >
       return_404 on unknown session_id;
-      return_500 and log_error on Firestore read failure
+      return_500 and log_error on D1 read failure
 
   - path: /veto/{session_id}/status
     method: GET
     operation_id: getVetoStatus
     owner_role: risk_governance_authority
     agent: CP-ReleaseArbiter
-    runtime_dependency: Cloud Firestore
+    runtime_dependency: Cloudflare D1 (DECISIONS_DB)
     auth_mode: api_key
     logging_required: true
     audit_required: true
     failure_mode: >
       return_404 on unknown session_id;
-      return_500 and log_error on Firestore read failure;
+      return_500 and log_error on D1 read failure;
       unknown_veto_status treated as potentially_blocked by pipeline
     governance_constraint: unknown_veto_status_treated_as_potentially_blocked
 
@@ -123,14 +123,14 @@ endpoints:
     authorized_callers:
       - risk_governance_authority
       - governance_review_authority
-    runtime_dependency: Cloud Firestore
+    runtime_dependency: Cloudflare D1 (DECISIONS_DB)
     auth_mode: api_key
     logging_required: true
     audit_required: true
     failure_mode: >
       return_403 on insufficient veto authority;
       return_400 on missing required fields;
-      return_500 and log_error on Firestore write failure
+      return_500 and log_error on D1 write failure
     governance_constraint: only_authorized_authority_may_activate_veto
 
   - path: /veto/{session_id}/release
@@ -138,14 +138,14 @@ endpoints:
     operation_id: releaseVeto
     owner_role: originating_veto_authority
     agent: CP-ReleaseArbiter
-    runtime_dependency: Cloud Firestore
+    runtime_dependency: Cloudflare D1 (DECISIONS_DB)
     auth_mode: api_key
     logging_required: true
     audit_required: true
     failure_mode: >
       return_403 on veto_release_authority mismatch with originating authority;
       return_400 on missing required fields;
-      return_500 and log_error on Firestore write failure
+      return_500 and log_error on D1 write failure
     governance_constraint: only_originating_authority_may_release_veto
 
   - path: /approval/{session_id}
@@ -153,13 +153,13 @@ endpoints:
     operation_id: getApprovals
     owner_role: control_plane_governor_function
     agent: CP-TransitionJudge
-    runtime_dependency: Cloud Firestore
+    runtime_dependency: Cloudflare D1 (DECISIONS_DB)
     auth_mode: api_key
     logging_required: true
     audit_required: false
     failure_mode: >
       return_404 on unknown session_id;
-      return_500 and log_error on Firestore read failure
+      return_500 and log_error on D1 read failure
 
   - path: /approval/{session_id}/submit
     method: POST
@@ -171,14 +171,14 @@ endpoints:
       enterprise_procurement_approval: procurement_authority
       enterprise_legal_approval: legal_authority
       risk_governance_approval: risk_governance_authority
-    runtime_dependency: Cloud Firestore
+    runtime_dependency: Cloudflare D1 (DECISIONS_DB)
     auth_mode: api_key
     logging_required: true
     audit_required: true
     failure_mode: >
       return_403 on authority mismatch for approval_type;
       return_400 on invalid approval_status value;
-      return_500 and log_error on Firestore write failure
+      return_500 and log_error on D1 write failure
     governance_constraint: authority_must_match_required_authority_for_approval_type
 
 agent_endpoint_access:

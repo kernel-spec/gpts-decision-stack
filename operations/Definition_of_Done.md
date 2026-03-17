@@ -39,7 +39,7 @@ Repozitář je OPERATIONS-READY pokud navíc fyzicky existují:
 - [ ] `release/authoritative_release_notes.md`
 - [ ] `release/derived_packaging_notes.md`
 
-**Aktuální stav:** NESPLNĚNO — knowledge soubory a operační checklisty chybí.
+**Aktuální stav:** SPLNĚNO — všechny knowledge soubory (16), operační checklisty (4), promotion gate a ostatní soubory fyzicky existují.
 
 ---
 
@@ -54,7 +54,7 @@ Repozitář je DEPLOY-READY STACK pokud navíc existují a jsou ověřeny:
 - [ ] QA gate report s `overall_status: PASS`
 - [ ] Acceptance testy prošly evaluací (ne pouze definicí)
 
-**Aktuální stav:** NESPLNĚNO — backend binding chybí.
+**Aktuální stav:** NESPLNĚNO — backend binding je IMPLEMENTATION-BACKED, ale acceptance testy nebyly evaluovány oproti live backendu (PROV-002) a QA gate report stále eviduje `overall_status: FAIL` (fail-closed governance).
 
 ---
 
