@@ -102,15 +102,31 @@ current_gate_position:
   deployment_ready_stack: false
   staging: BLOCKED
   prod: BLOCKED
-  blocking_gaps: []
-  provisioning_pending:
-    - D1 database_id (REPLACE_WITH_D1_DATABASE_ID v wrangler.toml)
-    - KV namespace id (REPLACE_WITH_KV_NAMESPACE_ID v wrangler.toml)
-    - Cloudflare account_id (GitHub Secret)
-    - API_KEY_SECRET (Worker Secret)
-    - Acceptance testy — evaluace (AC-001 až AC-012 jsou definice, ne výsledky)
+
+  gate_dimensions:
+    repo_integrity: PASS
+    dev_runtime_evidence: PASS
+    governed_deploy_readiness: FAIL
+    staging_promotion_readiness: FAIL
+    prod_promotion_readiness: FAIL
+
+  evidence_refs:
+    runtime_dev:
+      - operations/evidence/audit-evidence-bundle-dev.yaml
+    authoritative_gate:
+      - qa/final-gate-report.yaml
+
+  remaining_blockers:
+    - authoritative_final_gate_still_fail
+    - executed_governed_gate_evidence_incomplete
+    - staging_promotion_readiness_not_evidenced
+    - production_promotion_readiness_not_evidenced
+
   reason: >
-    Všechny repo vrstvy jsou fyzicky přítomny (repo_integrity_status PASS).
-    overall_status je FAIL (fail-closed governance) — Cloudflare runtime prostředky
-    nejsou provisionovány a acceptance testy nebyly evaluovány. DEPLOY-READY STACK
-    nelze označit dokud tyto podmínky nejsou splněny.
+    Repo vrstvy jsou fyzicky přítomny (repo_integrity_status PASS) a dev runtime
+    evidence je explicitně doložena (dev_runtime_evidence PASS) prostřednictvím
+    operations/evidence/audit-evidence-bundle-dev.yaml. Governed deployment
+    readiness však zůstává FAIL a staging/prod zůstávají BLOCKED, protože
+    authoritative final gate artifacts stále evidují FAIL a executed governed gate
+    evidence pro DEPLOY-READY STACK není kompletní. Runtime úspěch v dev nesmí
+    přepsat fail-closed promotion governance.
