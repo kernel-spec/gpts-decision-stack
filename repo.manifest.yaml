@@ -161,6 +161,7 @@ operations:
     - operations/Management_Summary_Checklist.md
   evidence:
     - operations/evidence/audit-evidence-bundle-dev.yaml
+    - operations/evidence/full-repo-audit-report.md
 
 qa:
   gate_reports:

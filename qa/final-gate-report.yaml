@@ -213,19 +213,18 @@ layer_status:
       deploy_workflow: .github/workflows/deploy-workers.yaml
       type_checked: true
     provisioning_pending:
-      - D1 database_id (wrangler d1 create)
-      - KV namespace id (wrangler kv namespace create)
-      - Cloudflare account_id (GitHub Secret)
-      - API_KEY_SECRET (wrangler secret put)
+      - Cloudflare account_id (GitHub Secret: CLOUDFLARE_ACCOUNT_ID)
+      - API_KEY_SECRET (wrangler secret put — nikdy necommitovat)
+      - Verifikace produkčních D1/KV prostředků (IDs jsou v wrangler.toml, infra provisioning nutný)
     note: >
       Backend binding přešel z SPEC_ONLY na IMPLEMENTATION-BACKED.
       Repozitář obsahuje spustitelný TypeScript kód pro všechna API,
-      wrangler konfiguraci s binding deklaracemi, D1 schema migraci
-      a GitHub Actions deployment workflow. Provisioning skutečné
-      infrastruktury (D1 database_id, KV namespace id, R2 bucket,
-      API_KEY_SECRET Worker Secret) je nezbytný před prvním live deploymentem.
-      Toto je důvodem, proč bundle_classification zůstává REPO-READY SKELETON
-      a deploy_ready je false.
+      wrangler konfiguraci s binding deklaracemi a reálnými resource IDs,
+      D1 schema migraci a GitHub Actions deployment workflow. Dev prostředí
+      je provisionováno a live (viz operations/evidence/audit-evidence-bundle-dev.yaml).
+      Provisioning produkčního prostředí a nastavení GitHub Secrets je nezbytné
+      před prvním produkčním deploymentem. Toto je důvodem, proč bundle_classification
+      zůstává REPO-READY SKELETON a deploy_ready je false.
 
 blocking_gaps: []
 
@@ -234,21 +233,17 @@ provisioning_gaps:
     layer: backend_binding
     severity: informational
     description: >
-      Cloudflare infrastruktura musí být provisionována před prvním live
-      deploymentem. Toto není blocking gap pro repo readiness (REPO-READY SKELETON),
-      ale je vyžadováno před dosažením DEPLOY-READY STACK.
-    placeholder_values:
-      - "wrangler.toml: database_id = REPLACE_WITH_D1_DATABASE_ID"
-      - "wrangler.toml: database_id = REPLACE_WITH_DEV_D1_DATABASE_ID"
-      - "wrangler.toml: id = REPLACE_WITH_KV_NAMESPACE_ID"
-      - "wrangler.toml: id = REPLACE_WITH_DEV_KV_NAMESPACE_ID"
+      Cloudflare infrastruktura musí být provisionována pro produkci před prvním
+      produkčním live deploymentem. Dev prostředí je live a provisionováno
+      (viz operations/evidence/audit-evidence-bundle-dev.yaml). Resource IDs
+      (D1 database_id, KV namespace id) jsou již vyplněny v backend/worker/wrangler.toml.
+      Toto není blocking gap pro repo readiness (REPO-READY SKELETON),
+      ale produkční provisioning je vyžadován před dosažením DEPLOY-READY STACK.
     required_actions:
-      - "wrangler d1 create gpts-decision-stack-db (a vyplnit database_id do wrangler.toml)"
-      - "wrangler r2 bucket create gpts-decision-stack-artifacts"
-      - "wrangler kv namespace create POLICY_STORE (a vyplnit id do wrangler.toml)"
-      - "wrangler secret put API_KEY_SECRET"
-      - "Nastavit CLOUDFLARE_API_TOKEN a CLOUDFLARE_ACCOUNT_ID jako GitHub Secrets"
-      - "wrangler d1 execute gpts-decision-stack-db --file backend/worker/migrations/0001_init.sql"
+      - "Nastavit CLOUDFLARE_API_TOKEN a CLOUDFLARE_ACCOUNT_ID jako GitHub Secrets pro prod deployment"
+      - "wrangler secret put API_KEY_SECRET (pro prod prostředí)"
+      - "Verifikovat produkční D1/R2/KV prostředky jsou provisionovány (IDs jsou v wrangler.toml)"
+      - "wrangler d1 execute gpts-decision-stack-db --file backend/worker/migrations/0001_init.sql (prod)"
   - id: PROV-002
     layer: acceptance_tests
     severity: informational

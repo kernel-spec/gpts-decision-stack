@@ -9,8 +9,7 @@ governance_status:
   deployment_readiness_status: FAIL
   bundle_classification: REPO-READY SKELETON
   deploy_ready: false
-  blocking_reason:
-    - fixture_completeness_fail
+  blocking_reason: []
 
 runtime_evidence:
   source: ACTIONS
@@ -41,5 +40,7 @@ interpretation:
   decision_packet_governed_transitions_operational: true
   deploy_ready_stack: false
   note: >
-    Runtime evidence in dev is strong, but governed deployment readiness remains FAIL
-    because fixture/gate requirements are still not satisfied.
+    Runtime evidence in dev is strong. No blocking gaps remain in the repo layer.
+    Governed deployment readiness remains FAIL because acceptance tests have not
+    yet been evaluated against the live backend (PROV-002) and production
+    Cloudflare infrastructure is not yet provisioned (PROV-001).

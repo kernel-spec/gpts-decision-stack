@@ -40,18 +40,18 @@ zdrojem pravdy je `qa/final-gate-report.yaml`.
 
 | Vrstva | Status | Poznámka |
 |--------|--------|----------|
-| Knowledge soubory — core (7) | ❌ CHYBÍ | Blokuje staging/prod |
-| Knowledge soubory — domain (9) | ❌ CHYBÍ | Blokuje staging/prod |
-| Operační checklisty (4) | ❌ CHYBÍ | Blokuje staging/prod |
-| Promotion gate | ❌ CHYBÍ | Blokuje posouzení readiness |
+| Knowledge soubory — core (7) | ✅ SPLNĚNO | Fyzicky existují (knowledge/core/00–06) |
+| Knowledge soubory — domain (9) | ✅ SPLNĚNO | Fyzicky existují (knowledge/domains/default/10–18) |
+| Operační checklisty (4) | ✅ SPLNĚNO | Fyzicky existují (local/dev/staging/prod) |
+| Promotion gate | ✅ SPLNĚNO | operations/gates/promotion-gate.yaml existuje |
 
 ### Deployment binding
 
 | Vrstva | Status | Poznámka |
 |--------|--------|----------|
-| Backend binding (GPT config) | ❌ CHYBÍ | Kritický bloker produkce |
-| API binding manifest | ❌ CHYBÍ | Kritický bloker produkce |
-| Deployment manifest | ❌ CHYBÍ | Kritický bloker produkce |
+| Backend binding (Cloudflare Worker) | ✅ SPLNĚNO | IMPLEMENTATION-BACKED — backend/worker/src/ |
+| API binding manifest | ✅ SPLNĚNO | actions/openapi.yaml existuje |
+| Deployment manifest | ✅ SPLNĚNO | release/deployment_target.yaml existuje |
 
 ---
 
@@ -66,10 +66,8 @@ Zbývající kroky pro dosažení DEPLOY-READY STACK jsou definovány v `Definit
 
 ## Kritické blokátory před nasazením
 
-1. **Knowledge soubory** — 16 souborů fyzicky chybí
-2. **Operační checklisty** — 4 soubory fyzicky chybí
-3. **Promotion gate** — 1 soubor fyzicky chybí
-4. **Backend binding** — GPT konfigurace, API a deployment manifest chybí
+1. **Acceptance testy (PROV-002)** — 12 testů existuje jako YAML definice, ale nebyly evaluovány oproti live backendu
+2. **Produkční provisioning (PROV-001)** — Dev prostředí je live; produkční Cloudflare infrastruktura a GitHub Secrets musí být nastaveny před prvním produkčním deploymentem
 
 ---
 
