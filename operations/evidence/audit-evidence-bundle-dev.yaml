@@ -1,0 +1,131 @@
+artifact_type: audit_evidence_bundle
+environment: dev
+date: "2026-03-16"
+worker_url: https://gpts-decision-stack-dev.victorain92.workers.dev
+
+replaces:
+  - operations/evidence/runtime-smoke-dev.md
+  - operations/evidence/openai-actions-import-record.md
+  - operations/evidence/live-response-vs-openapi-openai.md
+  - operations/evidence/pipeline-progression-dev.md
+  - operations/evidence/runtime-end-to-end-summary.yaml
+
+governance_status:
+  overall_status: FAIL
+  repo_integrity_status: PASS
+  deployment_readiness_status: FAIL
+  bundle_classification: REPO-READY SKELETON
+  deploy_ready: false
+  blocking_reasons:
+    - fixture_completeness_fail
+  governance_note: >
+    Runtime evidence in dev is strong, but governed deployment readiness remains FAIL
+    because fixture/gate requirements are still not satisfied.
+
+actions_import:
+  status: PASS
+  target_gpt: Decision Stack Operator
+  schema_file: actions/openapi.openai.yaml
+  auth_mode:
+    type: api_key
+    header: X-API-Key
+  notes:
+    - Builder-safe OpenAPI import schema used
+    - OpenAPI version normalized to 3.1.0
+    - submitArtifact request aligned to payload field
+    - authenticated calls confirmed in dev
+
+runtime_smoke:
+  status: PASS
+  evidence_basis: explicit_live_runtime_calls
+  health:
+    status: PASS
+    service: gpts-decision-stack-worker
+    endpoint: /health
+  session_creation:
+    status: PASS
+    requestor_type: founder-led
+    initial_pipeline_state: intake
+    initial_decision_status: unresolved
+
+live_response_vs_openapi_openai:
+  status: PASS
+  tested_operations:
+    - getHealth
+    - createSession
+    - submitArtifact
+    - getSessionState
+  compatibility_note: >
+    Live dev runtime responses matched the Builder-safe OpenAI import contract
+    sufficiently for successful Operator GPT execution.
+
+pipeline_progression:
+  session_id: aba9b1e1-2c48-42df-b602-778cca18c6cf
+  runtime_evidence_source: ACTIONS
+  runtime_evidence_level: STRONG_PARTIAL
+
+  transitions:
+    - from: intake
+      via_artifact: ProblemBrief
+      via_decision: none
+      to: problem_framing
+      status: PASS
+
+    - from: problem_framing
+      via_artifact: FramingAssessment
+      via_decision: StateDecisionPacket(proceed)
+      to: primitive_selection
+      status: PASS
+
+    - from: primitive_selection
+      via_artifact: OfferDecision
+      via_decision: StateDecisionPacket(proceed)
+      to: architecture_validation
+      status: PASS
+
+    - from: architecture_validation
+      via_artifact: ArchitectureSpec
+      via_decision: StateDecisionPacket(proceed)
+      to: risk_governance_validation
+      status: PASS
+
+    - from: risk_governance_validation
+      via_artifact: RiskDecision
+      via_decision: StateDecisionPacket(proceed)
+      to: commercial_packaging
+      status: PASS
+
+    - from: commercial_packaging
+      via_artifact: CommercialSpec
+      via_decision: StateDecisionPacket(proceed)
+      to: claims_validation
+      status: PASS
+
+    - from: claims_validation
+      via_artifact: ClaimsDecision
+      via_decision: StateDecisionPacket(proceed)
+      to: release_decision
+      status: PASS
+
+final_runtime_state:
+  session_id: aba9b1e1-2c48-42df-b602-778cca18c6cf
+  pipeline_state: release_decision
+  decision_status: proceed
+  veto_active: false
+
+audit_interpretation:
+  runtime_worker_operational: true
+  action_wiring_operational: true
+  artifact_persistence_operational: true
+  decision_packet_governed_transitions_operational: true
+  end_to_end_pipeline_to_release_gate_in_dev: true
+  deploy_ready_stack: false
+  explanation: >
+    Dev runtime evidence proves working execution through the release gate,
+    but governed deployment readiness remains FAIL because fixture completeness
+    and gate requirements are still unresolved in the uploaded governance layer.
+
+limitations:
+  - dev evidence is not production evidence
+  - runtime success does not override fail-closed governance
+  - this bundle does not change governed final status from FAIL
