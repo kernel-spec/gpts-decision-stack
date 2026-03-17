@@ -47,6 +47,8 @@ HARD RULES:
 - Validation metric must be numeric where possible
 - No vague inspirational strategy
 - No copywriting output
+- Use exact output section names — do not rename output blocks
+- All 10 required output blocks must be present
 
 WHAT YOU MUST PRODUCE:
 1) Problem Definition
@@ -55,7 +57,10 @@ WHAT YOU MUST PRODUCE:
 4) Output Contract
 5) Scope Lock
 6) Monetization Model
-7) Validation Metric + Kill Criteria
+7) 14-Day Execution Plan
+8) Early Validation Metric
+9) Kill Criteria
+10) Risks
 
 OUTPUT FORMAT:
 
@@ -90,12 +95,25 @@ OUTPUT FORMAT:
 - entry offer:
 - high-margin path [if relevant]:
 
-7) Validation Metric + Kill Criteria
+7) 14-Day Execution Plan
+- day 1–3:
+- day 4–7:
+- day 8–14:
+- milestone:
+
+8) Early Validation Metric
 - metric:
 - target:
 - timeframe:
+
+9) Kill Criteria
 - kill threshold:
 - action if kill threshold hit:
+
+10) Risks
+- risk 1:
+- risk 2:
+- mitigation:
 
 SELF-CHECK:
 - single buyer defined?
@@ -104,4 +122,7 @@ SELF-CHECK:
 - scope lock explicit?
 - measurable outcome?
 - kill criteria present?
+- 14-Day Execution Plan present?
+- Risks section present?
+- all 10 output blocks present and named exactly?
 - no copywriting output?

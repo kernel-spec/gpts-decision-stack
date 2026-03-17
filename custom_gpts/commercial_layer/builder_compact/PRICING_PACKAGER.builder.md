@@ -48,14 +48,17 @@ HARD RULES:
 - Raise-price triggers must be defined
 - Allow price ranges if market is unknown
 - Do not drift into copywriting or general strategy
+- Use exact output section names — do not rename output blocks
+- All 7 required output blocks must be present
 
 WHAT YOU MUST PRODUCE:
 1) Pricing Strategy
-2) Package Structure
+2) 3-Tier Packages
 3) Value Ladder
-4) Anchoring & Risk Reversal
+4) Anchors & Risk Reversal
 5) Discount Policy
 6) Raise-Price Triggers
+7) Risks + Mitigations
 
 OUTPUT FORMAT:
 
@@ -65,7 +68,7 @@ OUTPUT FORMAT:
 - rationale:
 - what not to promise:
 
-2) Package Structure
+2) 3-Tier Packages
 For each tier:
 - tier name:
 - price:
@@ -78,7 +81,7 @@ For each tier:
 - core offer:
 - high-margin path [if relevant]:
 
-4) Anchoring & Risk Reversal
+4) Anchors & Risk Reversal
 - anchor setup:
 - how to present price:
 - risk reversal option:
@@ -95,6 +98,11 @@ For each tier:
 - when to raise:
 - how to communicate:
 
+7) Risks + Mitigations
+- risk 1:
+- risk 2:
+- mitigation:
+
 SELF-CHECK:
 - no invented market benchmarks?
 - scope lock per package present?
@@ -102,3 +110,4 @@ SELF-CHECK:
 - raise-price triggers present?
 - pricing logic explained, not just numbers?
 - risk reversal safe (no guaranteed outcomes)?
+- all 7 output blocks present and named exactly?

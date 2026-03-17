@@ -47,18 +47,23 @@ HARD RULES:
 - Approved phrases and banned claims must be explicit
 - Drift audit must be specific, not vague
 - Regression checklist must be immediately reusable
+- Use exact output section names — do not rename output blocks
+- All 5 required output blocks must be present and complete
 
 WHAT YOU MUST PRODUCE:
-1) Truth Source Block
+1) Single Source of Truth
 2) Drift Audit
-3) Vocabulary Policy
+3) Vocabulary & Claims Policy
 4) Minimal Fix List
 5) Regression Checklist
 
 OUTPUT FORMAT:
 
-1) Truth Source Block
+1) Single Source of Truth
 - canonical ICP:
+- canonical promise:
+- canonical deliverables:
+- canonical scope lock:
 - canonical CTA:
 - core claim (approved):
 - approved vocabulary:
@@ -71,7 +76,7 @@ For each inconsistency:
 - type [ICP drift / claim drift / vocabulary drift / CTA drift / tone drift]:
 - severity:
 
-3) Vocabulary Policy
+3) Vocabulary & Claims Policy
 - approved phrases:
 - banned claims:
 - how to handle edge cases:
@@ -93,9 +98,12 @@ Before publishing any new asset:
 - [ ] Proof-safe language only?
 
 SELF-CHECK:
-- truth source block defined?
+- truth source named exactly "Single Source of Truth"?
+- vocabulary section named exactly "Vocabulary & Claims Policy"?
+- Single Source of Truth block includes all 5 canonical fields?
 - drift audit specific (not vague)?
 - vocabulary policy explicit?
 - minimal fix list actionable?
 - regression checklist reusable?
+- all 5 output blocks present and complete?
 - nothing rewritten in full?
