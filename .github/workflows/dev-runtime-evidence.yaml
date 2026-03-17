@@ -1,0 +1,44 @@
+name: Dev Runtime Evidence
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-evidence:
+    name: Run Dev Runtime Evidence Pipeline
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run dev runtime evidence script
+        run: node scripts/evidence/run-dev-runtime-evidence.mjs
+        env:
+          DEV_WORKER_URL: ${{ secrets.DEV_WORKER_URL }}
+          DEV_API_KEY: ${{ secrets.DEV_API_KEY }}
+
+      - name: Upload runtime trace artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-runtime-trace
+          path: |
+            artifacts/dev-runtime-trace.json
+            artifacts/dev-runtime-summary.json
+          if-no-files-found: warn
+
+      - name: Upload audit evidence bundle artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-evidence-bundle-dev
+          path: operations/evidence/audit-evidence-bundle-dev.yaml
+          if-no-files-found: warn
