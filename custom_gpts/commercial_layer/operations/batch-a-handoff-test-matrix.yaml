@@ -1,0 +1,399 @@
+schema_version: "1.0.0"
+artifact_type: batch_handoff_test_matrix
+stack_id: commercial_layer_top10
+version: v1
+status: draft
+batch_id: batch_a
+purpose: >
+  Handoff test matrix pro Batch A deployment verification.
+  Definuje konkrétní vstupní scénáře, očekávané chování a pass/fail kritéria
+  pro SYSTEM_OS_MASTER, STRUCTURAL_ENGINE, PRICING_PACKAGER a POSITIONING_POLICE.
+  Není runtime execution engine. Slouží pouze pro manuální nebo semi-automatizované
+  ověření správné funkce rolí po nasazení do Builder.
+
+roles_in_scope:
+  - routing_name: SYSTEM_OS_MASTER
+    builder_name: SYSTEM_OS_MASTER — Revenue Orchestrator
+    role_type: router
+    web: false
+  - routing_name: STRUCTURAL_ENGINE
+    builder_name: STRUCTURAL_ENGINE — Offer & System Builder
+    role_type: offer_design
+    web: false
+  - routing_name: PRICING_PACKAGER
+    builder_name: PRICING_PACKAGER — Pricing & Packaging
+    role_type: pricing
+    web: false
+  - routing_name: POSITIONING_POLICE
+    builder_name: POSITIONING_POLICE — Positioning Consistency
+    role_type: positioning_qc
+    web: false
+
+test_scenarios:
+
+  - scenario_id: TS-A-001
+    label: vague_commercial_idea
+    description: >
+      Uživatel popíše vágní podnikatelský nápad bez jasného ICP nebo offeru.
+      SYSTEM_OS_MASTER musí rozpoznat nestrukturovaný vstup a routovat na STRUCTURAL_ENGINE.
+    entry_role: SYSTEM_OS_MASTER
+    user_input: >
+      "Chci něco podnikat online, třeba prodávat kurzy nebo poradenství. Nevím přesně co."
+    expected_entry_role: SYSTEM_OS_MASTER
+    expected_next_role: STRUCTURAL_ENGINE
+    expected_behavior: >
+      SYSTEM_OS_MASTER vrátí přesně jeden NEXT_GPT = STRUCTURAL_ENGINE.
+      Výstup bude routing sentence v češtině + fenced code block se schématem STRUCTURAL_ENGINE.
+      GPT nebude sám navrhovat strategii ani konkrétní offerový design.
+    pass_criteria:
+      - NEXT_GPT je STRUCTURAL_ENGINE
+      - výstup obsahuje fenced code block s klíčem NEXT_GPT
+      - GPT neřeší úkol sám
+      - použito routing_name, ne builder_name
+    fail_signals:
+      - GPT navrhuje konkrétní offer nebo strategii
+      - NEXT_GPT je prázdné nebo chybí
+      - vráceno více než jedno NEXT_GPT
+
+  - scenario_id: TS-A-002
+    label: missing_icp
+    description: >
+      Uživatel má definovaný offer, ale chybí ICP. SYSTEM_OS_MASTER musí buď
+      položit jednu otázku nebo routovat na STRUCTURAL_ENGINE pro clarifikaci.
+    entry_role: SYSTEM_OS_MASTER
+    user_input: >
+      "Chci nabízet 6týdenní LinkedIn coaching program za 1500 EUR."
+    expected_entry_role: SYSTEM_OS_MASTER
+    expected_next_role: STRUCTURAL_ENGINE
+    expected_behavior: >
+      SYSTEM_OS_MASTER rozpozná chybějící ICP a buď položí jednu otázku
+      ("Kdo je ICP (job title + industry)?") nebo routuje na STRUCTURAL_ENGINE.
+      Výstup nikdy neobsahuje více než jednu otázku.
+    pass_criteria:
+      - nejvýše jedna otázka v celém výstupu
+      - nebo přímé routování na STRUCTURAL_ENGINE
+      - fenced code block přítomen
+    fail_signals:
+      - GPT klade více otázek najednou
+      - GPT začíná navrhovat ICP sám bez dat
+      - výstup nemá fenced code block
+
+  - scenario_id: TS-A-003
+    label: structural_engine_direct_routing
+    description: >
+      Uživatel explicitně popisuje potřebu strukturovat offer ze syrové myšlenky.
+      SYSTEM_OS_MASTER musí routovat přímo na STRUCTURAL_ENGINE bez zbytečných otázek.
+    entry_role: SYSTEM_OS_MASTER
+    user_input: >
+      "Mám nápad na konzultační nabídku pro e-commerce manažery.
+      Potřebuji z toho udělat konkrétní offer s ICP a output contractem."
+    expected_entry_role: SYSTEM_OS_MASTER
+    expected_next_role: STRUCTURAL_ENGINE
+    expected_behavior: >
+      SYSTEM_OS_MASTER rozpozná klíčová slova (offer, ICP, output contract) a routuje
+      přímo na STRUCTURAL_ENGINE. Výstup obsahuje vyplněné schéma STRUCTURAL_ENGINE
+      s hodnotami z vstupu a [TBD] pro chybějící hodnoty.
+    pass_criteria:
+      - NEXT_GPT je STRUCTURAL_ENGINE
+      - schéma částečně vyplněno ze vstupu
+      - chybějící hodnoty mají [TBD]
+      - žádná extra sekce mimo routing sentence + code block
+    fail_signals:
+      - GPT přidává rady navíc
+      - routování na jinou roli
+      - fenced block chybí nebo je neformátovaný
+
+  - scenario_id: TS-A-004
+    label: structural_engine_offer_design
+    description: >
+      STRUCTURAL_ENGINE dostane jasný vágní nápad a musí produkovat kompletní
+      offer strukturu s kill criteria.
+    entry_role: STRUCTURAL_ENGINE
+    user_input: >
+      "problem: Chci pomáhat SaaS startupům zlepšit onboarding, aby méně uživatelů
+      odcházelo v prvním týdnu. ICP: [TBD]"
+    expected_entry_role: STRUCTURAL_ENGINE
+    expected_next_role: null
+    expected_behavior: >
+      STRUCTURAL_ENGINE položí otázku na ICP (jedna otázka) nebo rovnou produkuje
+      strukturu se všemi povinnými sekcemi: Problem Definition, ICP Definition,
+      Desired Transformation, Output Contract, Scope Lock, Monetization Model,
+      Validation Metric + Kill Criteria.
+    pass_criteria:
+      - output obsahuje všech 7 sekcí nebo otázku na ICP
+      - Output Contract je přítomen a měřitelný
+      - Scope Lock je explicitní
+      - Kill Criteria jsou definována
+      - žádný copywriting output
+    fail_signals:
+      - výstup je obecná strategie bez struktury
+      - chybí Output Contract nebo Kill Criteria
+      - scope lock je vágní nebo chybí
+
+  - scenario_id: TS-A-005
+    label: pricing_packager_direct_routing
+    description: >
+      Uživatel explicitně žádá o pricing struktu pro definovaný offer.
+      SYSTEM_OS_MASTER musí routovat na PRICING_PACKAGER.
+    entry_role: SYSTEM_OS_MASTER
+    user_input: >
+      "Mám offer: 6 týdnů LinkedIn coaching pro Head of Sales, 2 session/týden,
+      výstup: 3 sjednané schůzky. Potřebuji pricing tiers a packages."
+    expected_entry_role: SYSTEM_OS_MASTER
+    expected_next_role: PRICING_PACKAGER
+    expected_behavior: >
+      SYSTEM_OS_MASTER rozpozná klíčová slova (pricing, tiers, packages) a routuje
+      na PRICING_PACKAGER. Schéma PRICING_PACKAGER bude vyplněno s daty ze vstupu.
+    pass_criteria:
+      - NEXT_GPT je PRICING_PACKAGER
+      - schéma obsahuje offer_core vyplněný ze vstupu
+      - ICP je přítomen nebo [TBD]
+    fail_signals:
+      - routování na STRUCTURAL_ENGINE nebo jinou roli
+      - GPT navrhuje ceny sám bez data
+
+  - scenario_id: TS-A-006
+    label: pricing_packager_no_invented_benchmarks
+    description: >
+      PRICING_PACKAGER musí produkovat pricing strukturu bez vymyšlených tržních
+      benchmarků. Proof safety je kritická.
+    entry_role: PRICING_PACKAGER
+    user_input: >
+      "offer_core: 6 týdnů LinkedIn coaching, 2 session/týden, 3 schůzky za 6 týdnů.
+      ICP: Head of Sales, B2B SaaS, 50-200 zaměstnanců. delivery_capacity: solo, 8h/week.
+      proof_level: low"
+    expected_entry_role: PRICING_PACKAGER
+    expected_next_role: null
+    expected_behavior: >
+      PRICING_PACKAGER produkuje Pricing Strategy, Package Structure, Value Ladder,
+      Anchoring & Risk Reversal, Discount Policy a Raise-Price Triggers.
+      Pricing logic musí být vysvětlena, ne jen čísla. Price ranges jsou povoleny
+      pokud je trh neznámý. Nesmí být použita žádná vymyšlená tržní čísla.
+    pass_criteria:
+      - Entry Offer je přítomen
+      - Raise-Price Triggers jsou definovány
+      - Scope lock per tier je explicitní
+      - výstup neobsahuje "průměrná cena na trhu je X" bez zdroje
+      - Risk Reversal negarantuje výsledky bez proof
+    fail_signals:
+      - vymyšlené benchmark ceny ("standardně se platí X EUR")
+      - chybí Entry Offer
+      - chybí Scope Lock u každého tieru
+      - Raise-Price Triggers chybí
+
+  - scenario_id: TS-A-007
+    label: positioning_police_direct_routing
+    description: >
+      Uživatel popis positioning drift nebo žádá QA konzistence nabídky.
+      SYSTEM_OS_MASTER musí routovat na POSITIONING_POLICE.
+    entry_role: SYSTEM_OS_MASTER
+    user_input: >
+      "Mám offer page, DM sekvenci a call script. Chci ověřit, že všude říkám totéž
+      a ICP je konzistentní."
+    expected_entry_role: SYSTEM_OS_MASTER
+    expected_next_role: POSITIONING_POLICE
+    expected_behavior: >
+      SYSTEM_OS_MASTER rozpozná klíčová slova (konzistence, ICP drift, QA)
+      a routuje na POSITIONING_POLICE. Schéma bude obsahovat artifacts a intended_ICP.
+    pass_criteria:
+      - NEXT_GPT je POSITIONING_POLICE
+      - schéma obsahuje artifacts a intended_ICP
+      - žádné přímé hodnocení konzistence ze strany SYSTEM_OS_MASTER
+    fail_signals:
+      - routování na STRUCTURAL_ENGINE nebo ASSET_ENGINE
+      - GPT sám komentuje konzistenci bez routování
+
+  - scenario_id: TS-A-008
+    label: positioning_police_minimal_fix_only
+    description: >
+      POSITIONING_POLICE nesmí přepsat celý text — musí produkovat pouze minimal fix list.
+      Klíčový scope discipline test.
+    entry_role: POSITIONING_POLICE
+    user_input: >
+      "artifacts: [krátký offer text: Pomáhám Head of Sales zvýšit počet schůzek.
+      CTA: Book a 15-min call. DM: Hi, pomáhám obchodním manažerům generovat pipeline.]
+      intended_ICP: Head of Sales, B2B SaaS, 50-200 zaměstnanců.
+      intended_CTA: Book a 15-min call."
+    expected_entry_role: POSITIONING_POLICE
+    expected_next_role: null
+    expected_behavior: >
+      POSITIONING_POLICE produkuje Truth Source Block, Drift Audit s konkrétními
+      referenčními inconsistenciemi (nebo potvrzení konzistence), Vocabulary Policy,
+      Minimal Fix List a Regression Checklist. Nepřepíše texty v plném rozsahu.
+    pass_criteria:
+      - Truth Source Block je přítomen
+      - Drift Audit je konkrétní s artifact referencemi
+      - Minimal Fix List je přítomen a akční
+      - Regression Checklist je přítomen
+      - žádná plná přepisování textů
+    fail_signals:
+      - GPT přepíše celý offer text nebo DM
+      - Drift Audit je vágní ("text není konzistentní")
+      - Truth Source Block chybí
+      - Regression Checklist chybí
+
+  - scenario_id: TS-A-009
+    label: system_os_master_router_only_discipline
+    description: >
+      Kritický test router-only discipline. SYSTEM_OS_MASTER nesmí za žádných okolností
+      řešit zadání sám — musí vždy routovat.
+    entry_role: SYSTEM_OS_MASTER
+    user_input: >
+      "Jak mám napsat dobrý offer pro LinkedIn? Dej mi pár tipů."
+    expected_entry_role: SYSTEM_OS_MASTER
+    expected_next_role: STRUCTURAL_ENGINE
+    expected_behavior: >
+      SYSTEM_OS_MASTER rozpozná, že vstup je vágní commercial request a routuje
+      na STRUCTURAL_ENGINE. Neposkytne žádné tipy ani obsah navíc.
+      Výstup: jedna routing sentence + fenced code block.
+    pass_criteria:
+      - NEXT_GPT je STRUCTURAL_ENGINE
+      - žádné "tipy" nebo rady v odpovědi
+      - délka odpovědi: routing sentence + code block pouze
+    fail_signals:
+      - GPT dává tipy nebo bullet listy s doporučeními
+      - GPT vysvětluje, proč routuje (více než jedna věta)
+      - output obsahuje extra sekce
+
+  - scenario_id: TS-A-010
+    label: missing_pricing_escalation
+    description: >
+      Uživatel má offer bez jakékoli cenové logiky. SYSTEM_OS_MASTER musí
+      rozhodnout, zda routovat na STRUCTURAL_ENGINE (chybí output contract)
+      nebo PRICING_PACKAGER (offer je definovaný, pricing chybí).
+    entry_role: SYSTEM_OS_MASTER
+    user_input: >
+      "Nabízím konzultační program pro fintech startupy, 8 týdnů, 1x týdně call,
+      výstup: go-to-market strategie. ICP: CTO/CPO fintech, seed stage. Cenu jsem
+      ještě nestanovil."
+    expected_entry_role: SYSTEM_OS_MASTER
+    expected_next_role: PRICING_PACKAGER
+    expected_behavior: >
+      SYSTEM_OS_MASTER rozpozná, že offer je dostatečně definovaný (deliverable,
+      ICP, timeline) ale chybí pricing. Routuje na PRICING_PACKAGER s vyplněným
+      schématem offer_core a ICP.
+    pass_criteria:
+      - NEXT_GPT je PRICING_PACKAGER
+      - offer_core vyplněn ze vstupu
+      - ICP vyplněn ze vstupu
+    fail_signals:
+      - routování na STRUCTURAL_ENGINE (offer je již definovaný)
+      - GPT navrhuje ceny sám
+      - výstup bez fenced code block
+
+  - scenario_id: TS-A-011
+    label: ambiguous_input_default_structural
+    description: >
+      Nejasný vstup bez jasných signálů pro konkrétní roli.
+      Dle hard rules musí SYSTEM_OS_MASTER defaultovat na STRUCTURAL_ENGINE.
+    entry_role: SYSTEM_OS_MASTER
+    user_input: >
+      "Potřebuji pomoc s businessem."
+    expected_entry_role: SYSTEM_OS_MASTER
+    expected_next_role: STRUCTURAL_ENGINE
+    expected_behavior: >
+      SYSTEM_OS_MASTER rozpozná maximálně vágní vstup a buď se zeptá na
+      měřitelný výsledek ("Jaký měřitelný výsledek chceš do 14 dnů?")
+      nebo defaultuje na STRUCTURAL_ENGINE.
+    pass_criteria:
+      - NEXT_GPT je STRUCTURAL_ENGINE nebo jedna otázka na user_goal
+      - žádné přímé řešení
+      - pokud otázka: přesně jedna krátká otázka
+    fail_signals:
+      - GPT dává obecné business rady
+      - více než jedna otázka najednou
+      - NEXT_GPT jiná role než STRUCTURAL_ENGINE
+
+  - scenario_id: TS-A-012
+    label: batch_a_end_to_end_flow
+    description: >
+      End-to-end test: vágní vstup → STRUCTURAL_ENGINE output → pricing request
+      → PRICING_PACKAGER → positioning check → POSITIONING_POLICE.
+      Ověřuje, že výstupy z předchozí role jsou použitelné jako vstup pro
+      následující roli bez ztráty klíčových dat.
+    entry_role: SYSTEM_OS_MASTER
+    user_input: >
+      "[fáze 1] Chci nabízet revenue growth consulting pro B2B SaaS startupy."
+    expected_entry_role: SYSTEM_OS_MASTER
+    expected_next_role: STRUCTURAL_ENGINE
+    expected_behavior: >
+      Fáze 1: SYSTEM_OS_MASTER routuje na STRUCTURAL_ENGINE.
+      Fáze 2: STRUCTURAL_ENGINE produkuje offer strukturu s Output Contractem.
+      Fáze 3: Output Contract ze STRUCTURAL_ENGINE je vstupem pro PRICING_PACKAGER.
+      Fáze 4: Pricing output + offer se stávají vstupem pro POSITIONING_POLICE.
+      Každý krok produkuje výstup použitelný v dalším bez nutnosti přepsat celý kontext.
+    pass_criteria:
+      - každá role produkuje svůj kanonický výstup
+      - výstup každé role obsahuje klíče schématu použitelné jako vstup další role
+      - žádná role nevylézá mimo svůj scope
+    fail_signals:
+      - STRUCTURAL_ENGINE produkuje copywriting místo struktury
+      - PRICING_PACKAGER vynalézá benchmarky
+      - POSITIONING_POLICE přepisuje texty místo minimal fix listu
+
+common_failure_patterns:
+  - pattern: scope_bleed
+    description: >
+      Role začíná řešit úkoly sousední role (např. STRUCTURAL_ENGINE píše copy,
+      POSITIONING_POLICE redesignuje offer).
+    detection: >
+      Output neodpovídá kanonické výstupní struktuře role.
+      Např. STRUCTURAL_ENGINE výstup neobsahuje Output Contract a Scope Lock.
+    mitigation: >
+      Zkontrolovat Instructions v Builderu. Ověřit, že `.builder.md` soubor
+      byl nakopírován celý. Znovu porovnat s referenčním souborem v repozitáři.
+
+  - pattern: multi_question_drift
+    description: >
+      SYSTEM_OS_MASTER nebo jiná role klade více otázek najednou místo jedné.
+    detection: >
+      Odpověď obsahuje dvě nebo více otázek v jednom výstupu.
+    mitigation: >
+      Ověřit QUESTION RULES sekci v SYSTEM_OS_MASTER Instructions.
+      Hard rule: max 1 question.
+
+  - pattern: invented_proof
+    description: >
+      Role cituje výsledky, benchmarky nebo loga bez podkladu.
+    detection: >
+      Výstup obsahuje tvrzení jako "průměrná cena je X" nebo "klienti dosahují Y%"
+      bez [TBD proof] nebo reálného zdroje.
+    mitigation: >
+      Ověřit claims policy sekci v `.builder.md`. Zkontrolovat, že
+      "mechanism + expectation + [TBD proof]" pravidlo je v Instructions.
+
+  - pattern: router_solving
+    description: >
+      SYSTEM_OS_MASTER začíná poskytovat obsah nebo strategii místo routování.
+    detection: >
+      Output obsahuje více než routing sentence + fenced code block.
+    mitigation: >
+      Znovu nahrát Instructions z `SYSTEM_OS_MASTER.builder.md`.
+      Ověřit "No task solving" pravidlo je v Instructions.
+
+escalation_rule: >
+  Pokud jakýkoli scénář skončí FAIL při prvním smoke testu:
+  1. Zkontrolovat, že Instructions byly nakopírovány celé (žádné zkrácení).
+  2. Porovnat živou verzi s referenčním `.builder.md` souborem.
+  3. Pokud Instructions jsou správné a role stále selhává → eskalovat
+     na review SYSTEM_OS_MASTER.full.md nebo příslušného .full.md souboru.
+  4. Neupravovat .builder.md bez QA review.
+  5. Nepostupovat na Batch B dokud všechny Batch A scénáře neprojdou.
+
+release_decision_for_batch_a:
+  condition: PASS
+  criteria:
+    - všechny scénáře TS-A-001 až TS-A-012 musí projít
+    - žádný FAIL signal ve smoke checks z deployment checklistu
+    - sign-off block v batch-a-live-deployment-checklist.md vyplněn
+  on_fail:
+    action: HOLD
+    next_step: >
+      Identifikovat konkrétní scénáře v selhání, opravit Instructions v Builderu,
+      znovu spustit smoke checks. Nespouštět Batch B deployment.
+  on_pass:
+    action: PROCEED_TO_BATCH_B
+    next_step: >
+      Aktualizovat deployment_readiness v builder-deployment-sheet.yaml
+      pro SYSTEM_OS_MASTER, STRUCTURAL_ENGINE, PRICING_PACKAGER, POSITIONING_POLICE
+      na hodnotu PASS. Pokračovat s Batch B nasazením.

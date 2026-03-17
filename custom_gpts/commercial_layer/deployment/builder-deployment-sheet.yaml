@@ -1,0 +1,384 @@
+schema_version: "1.0.0"
+artifact_type: builder_deployment_sheet
+stack_id: commercial_layer_top10
+version: v1
+status: draft
+purpose: >
+  Deployment sheet pro Builder nasazení Top 10 commercial GPT rolí.
+  Tento soubor určuje pořadí rolloutů, závislosti, Web ON/OFF, char-risk,
+  source references a deployment readiness status. Není určen pro runtime execution.
+
+deployment_defaults:
+  builder_mode: custom_gpt_builder
+  language: cs-CZ
+  web_default: false
+  memory_default: false
+  knowledge_default: false
+  citations_default: false
+  style_default: executive_structured_no_fluff
+  prompt_source_root: custom_gpts/commercial_layer/prompt_sources
+  builder_compact_root: custom_gpts/commercial_layer/builder_compact
+  knowledge_root: custom_gpts/commercial_layer/knowledge
+
+governance_note: >
+  Tento deployment sheet patří do commercial layer. Nepřepisuje governed truth
+  current execution engine, neovlivňuje Operator/Auditor verdicty a nesmí být
+  interpretován jako deployment readiness artifact pro gpts-decision-stack.
+
+batches:
+  batch_1:
+    id: batch_1
+    name: top10_commercial_rollout
+    purpose: >
+      Nejrychlejší commercial layer pro monetizaci nad governed execution engine.
+    deploy_window: 14_days
+    deployment_rule: >
+      Nasazovat po pořadí. Každá role má být nejdřív ověřena ve full source verzi,
+      pak zkomprimována do Builder verze a teprve potom nasazena do Builderu.
+    success_condition: >
+      Do 14 dnů existuje funkční commercial layer pro offer design, pricing,
+      positioning, asset creation, outbound research, closing a delivery SOP.
+
+roles:
+  - rollout_order: 1
+    routing_name: SYSTEM_OS_MASTER
+    builder_name: SYSTEM_OS_MASTER — Revenue Orchestrator
+    role_type: router
+    deployment_priority: P0
+    deployment_decision: deploy_now
+    web: false
+    citations: false
+    memory: false
+    char_risk: high
+    char_limit_strategy: ultra_compact_router
+    dependency_roles: []
+    dependency_knowledge:
+      - custom_gpts/commercial_layer/knowledge/domain-to-role-mapping.yaml
+      - custom_gpts/commercial_layer/knowledge/top10-role-overlays.yaml
+    prompt_source_file: custom_gpts/commercial_layer/prompt_sources/SYSTEM_OS_MASTER.full.md
+    builder_compact_file: custom_gpts/commercial_layer/builder_compact/SYSTEM_OS_MASTER.builder.md
+    deployment_readiness: "[TBD]"
+    primary_outcome: route_request_to_exact_next_gpt
+    fail_if:
+      - solves_task_instead_of_routing
+      - returns_more_than_one_next_gpt
+      - outputs_non_canonical_keys
+    notes: >
+      Musí zůstat čistý router-only orchestrátor. Nejvyšší riziko driftu i char overflow.
+
+  - rollout_order: 2
+    routing_name: STRUCTURAL_ENGINE
+    builder_name: STRUCTURAL_ENGINE — Offer & System Builder
+    role_type: offer_design
+    deployment_priority: P0
+    deployment_decision: deploy_now
+    web: false
+    citations: false
+    memory: false
+    char_risk: medium
+    char_limit_strategy: compact_with_hard_rules_preserved
+    dependency_roles:
+      - SYSTEM_OS_MASTER
+    dependency_knowledge:
+      - custom_gpts/commercial_layer/knowledge/domain-to-role-mapping.yaml
+      - custom_gpts/commercial_layer/knowledge/top10-role-overlays.yaml
+    prompt_source_file: custom_gpts/commercial_layer/prompt_sources/STRUCTURAL_ENGINE.full.md
+    builder_compact_file: custom_gpts/commercial_layer/builder_compact/STRUCTURAL_ENGINE.builder.md
+    deployment_readiness: "[TBD]"
+    primary_outcome: convert_vague_idea_into_monetizable_offer_system
+    fail_if:
+      - no_output_contract
+      - no_scope_lock
+      - no_measurable_outcome
+      - no_kill_criteria
+    notes: >
+      Klíčová role pro první commercial wedge. Bez ní není co prodávat.
+
+  - rollout_order: 3
+    routing_name: PRICING_PACKAGER
+    builder_name: PRICING_PACKAGER — Pricing & Packaging
+    role_type: pricing
+    deployment_priority: P0
+    deployment_decision: deploy_now
+    web: false
+    citations: false
+    memory: false
+    char_risk: low
+    char_limit_strategy: compact_standard
+    dependency_roles:
+      - STRUCTURAL_ENGINE
+    dependency_knowledge:
+      - custom_gpts/commercial_layer/knowledge/domain-to-role-mapping.yaml
+      - custom_gpts/commercial_layer/knowledge/top10-role-overlays.yaml
+    prompt_source_file: custom_gpts/commercial_layer/prompt_sources/PRICING_PACKAGER.full.md
+    builder_compact_file: custom_gpts/commercial_layer/builder_compact/PRICING_PACKAGER.builder.md
+    deployment_readiness: "[TBD]"
+    primary_outcome: create_pricing_logic_and_package_structure
+    fail_if:
+      - invented_market_benchmarks
+      - no_scope_boundaries
+      - no_entry_offer
+      - no_raise_price_logic
+    notes: >
+      Má být úzká a praktická. Pricing without scope lock = reject.
+
+  - rollout_order: 4
+    routing_name: POSITIONING_POLICE
+    builder_name: POSITIONING_POLICE — Positioning Consistency
+    role_type: positioning_qc
+    deployment_priority: P0
+    deployment_decision: deploy_now
+    web: false
+    citations: false
+    memory: false
+    char_risk: medium
+    char_limit_strategy: compact_with_policy_block
+    dependency_roles:
+      - STRUCTURAL_ENGINE
+      - PRICING_PACKAGER
+    dependency_knowledge:
+      - custom_gpts/commercial_layer/knowledge/domain-to-role-mapping.yaml
+      - custom_gpts/commercial_layer/knowledge/top10-role-overlays.yaml
+    prompt_source_file: custom_gpts/commercial_layer/prompt_sources/POSITIONING_POLICE.full.md
+    builder_compact_file: custom_gpts/commercial_layer/builder_compact/POSITIONING_POLICE.builder.md
+    deployment_readiness: "[TBD]"
+    primary_outcome: enforce_single_source_of_truth_for_offer_copy_call
+    fail_if:
+      - rewrites_everything
+      - no_claims_policy
+      - no_drift_audit
+    notes: >
+      QA/consistency vrstva mezi offerem, assety a sales flow.
+
+  - rollout_order: 5
+    routing_name: ASSET_ENGINE
+    builder_name: ASSET_ENGINE — Outreach & Copy Factory
+    role_type: asset_generation
+    deployment_priority: P0
+    deployment_decision: deploy_now
+    web: false
+    citations: false
+    memory: false
+    char_risk: medium
+    char_limit_strategy: compact_with_asset_defaults
+    dependency_roles:
+      - STRUCTURAL_ENGINE
+      - POSITIONING_POLICE
+    dependency_knowledge:
+      - custom_gpts/commercial_layer/knowledge/domain-to-role-mapping.yaml
+      - custom_gpts/commercial_layer/knowledge/top10-role-overlays.yaml
+    prompt_source_file: custom_gpts/commercial_layer/prompt_sources/ASSET_ENGINE.full.md
+    builder_compact_file: custom_gpts/commercial_layer/builder_compact/ASSET_ENGINE.builder.md
+    deployment_readiness: "[TBD]"
+    primary_outcome: generate_revenue_assets_with_one_cta
+    fail_if:
+      - multiple_ctas
+      - fake_proof
+      - invented_logos
+      - ignores_positioning_terms
+    notes: >
+      Generuje assets, ne strategii. Musí být rychlý a komerčně použitelný.
+
+  - rollout_order: 6
+    routing_name: REWRITE_ENGINE
+    builder_name: REWRITE_ENGINE — High-Conversion Rewriter
+    role_type: asset_rewrite
+    deployment_priority: P0
+    deployment_decision: deploy_now
+    web: false
+    citations: false
+    memory: false
+    char_risk: low
+    char_limit_strategy: compact_standard
+    dependency_roles:
+      - ASSET_ENGINE
+    dependency_knowledge:
+      - custom_gpts/commercial_layer/knowledge/domain-to-role-mapping.yaml
+      - custom_gpts/commercial_layer/knowledge/top10-role-overlays.yaml
+    prompt_source_file: custom_gpts/commercial_layer/prompt_sources/REWRITE_ENGINE.full.md
+    builder_compact_file: custom_gpts/commercial_layer/builder_compact/REWRITE_ENGINE.builder.md
+    deployment_readiness: "[TBD]"
+    primary_outcome: rewrite_existing_asset_for_clarity_and_conversion
+    fail_if:
+      - redesigns_full_offer
+      - invents_proof
+      - loses_original_intent
+    notes: >
+      Úzká role. Musí přepisovat, ne redefinovat business.
+
+  - rollout_order: 7
+    routing_name: SUGGESTION_ENGINE
+    builder_name: SUGGESTION_ENGINE — Conversion Diagnostics
+    role_type: diagnostics
+    deployment_priority: P0
+    deployment_decision: deploy_now
+    web: false
+    citations: false
+    memory: false
+    char_risk: low
+    char_limit_strategy: compact_standard
+    dependency_roles:
+      - ASSET_ENGINE
+      - POSITIONING_POLICE
+    dependency_knowledge:
+      - custom_gpts/commercial_layer/knowledge/domain-to-role-mapping.yaml
+      - custom_gpts/commercial_layer/knowledge/top10-role-overlays.yaml
+    prompt_source_file: custom_gpts/commercial_layer/prompt_sources/SUGGESTION_ENGINE.full.md
+    builder_compact_file: custom_gpts/commercial_layer/builder_compact/SUGGESTION_ENGINE.builder.md
+    deployment_readiness: "[TBD]"
+    primary_outcome: diagnose_friction_without_rewriting
+    fail_if:
+      - rewrites_asset
+      - gives_vague_feedback
+      - no_ranked_friction_points
+    notes: >
+      Diagnostický doplněk k ASSET_ENGINE a REWRITE_ENGINE.
+
+  - rollout_order: 8
+    routing_name: MARKET_SCOUT_OUTBOUND
+    builder_name: MARKET_SCOUT_OUTBOUND — Offer/ICP/Channel Finder (Web)
+    role_type: market_research
+    deployment_priority: P0
+    deployment_decision: deploy_now
+    web: true
+    citations: true
+    memory: false
+    char_risk: high
+    char_limit_strategy: compact_with_sources_preserved
+    dependency_roles:
+      - STRUCTURAL_ENGINE
+      - POSITIONING_POLICE
+    dependency_knowledge:
+      - custom_gpts/commercial_layer/knowledge/domain-to-role-mapping.yaml
+      - custom_gpts/commercial_layer/knowledge/top10-role-overlays.yaml
+    prompt_source_file: custom_gpts/commercial_layer/prompt_sources/MARKET_SCOUT_OUTBOUND.full.md
+    builder_compact_file: custom_gpts/commercial_layer/builder_compact/MARKET_SCOUT_OUTBOUND.builder.md
+    deployment_readiness: "[TBD]"
+    primary_outcome: synthesize_market_backed_outbound_offer_plan
+    fail_if:
+      - no_sources
+      - no_primary_source_preference
+      - generic_market_advice
+      - no_single_icp_recommendation
+    notes: >
+      Web ON role. Musí zůstat research-backed a source-cited.
+
+  - rollout_order: 9
+    routing_name: CALL_CLOSER
+    builder_name: CALL_CLOSER — Discovery & Close System
+    role_type: sales_conversion
+    deployment_priority: P0
+    deployment_decision: deploy_now
+    web: false
+    citations: false
+    memory: false
+    char_risk: medium
+    char_limit_strategy: compact_with_call_flow_preserved
+    dependency_roles:
+      - STRUCTURAL_ENGINE
+      - PRICING_PACKAGER
+      - POSITIONING_POLICE
+    dependency_knowledge:
+      - custom_gpts/commercial_layer/knowledge/domain-to-role-mapping.yaml
+      - custom_gpts/commercial_layer/knowledge/top10-role-overlays.yaml
+    prompt_source_file: custom_gpts/commercial_layer/prompt_sources/CALL_CLOSER.full.md
+    builder_compact_file: custom_gpts/commercial_layer/builder_compact/CALL_CLOSER.builder.md
+    deployment_readiness: "[TBD]"
+    primary_outcome: run_repeatable_discovery_to_close_process
+    fail_if:
+      - no_qualification_gates
+      - multiple_next_steps
+      - manipulative_sales_language
+      - no_follow_up_template
+    notes: >
+      Propojuje nabídku, pricing a positioning do call systému.
+
+  - rollout_order: 10
+    routing_name: DELIVERY_SOP_ENGINE
+    builder_name: DELIVERY_SOP_ENGINE — Delivery SOP & Templates
+    role_type: delivery_system
+    deployment_priority: P0
+    deployment_decision: deploy_now
+    web: false
+    citations: false
+    memory: false
+    char_risk: medium
+    char_limit_strategy: compact_with_checklists_preserved
+    dependency_roles:
+      - STRUCTURAL_ENGINE
+      - PRICING_PACKAGER
+      - CALL_CLOSER
+    dependency_knowledge:
+      - custom_gpts/commercial_layer/knowledge/domain-to-role-mapping.yaml
+      - custom_gpts/commercial_layer/knowledge/top10-role-overlays.yaml
+    prompt_source_file: custom_gpts/commercial_layer/prompt_sources/DELIVERY_SOP_ENGINE.full.md
+    builder_compact_file: custom_gpts/commercial_layer/builder_compact/DELIVERY_SOP_ENGINE.builder.md
+    deployment_readiness: "[TBD]"
+    primary_outcome: standardize_delivery_with_scope_and_qa
+    fail_if:
+      - no_onboarding
+      - no_internal_checklist
+      - no_acceptance_criteria
+      - no_scope_enforcement_language
+    notes: >
+      Delivery role musí chránit margin, kvalitu a předvídatelnost dodávky.
+
+rollout_plan:
+  day_1_2:
+    deploy:
+      - SYSTEM_OS_MASTER
+      - STRUCTURAL_ENGINE
+    target_outcome:
+      - defined_wedge
+      - defined_icp
+      - defined_output_contract
+  day_3_4:
+    deploy:
+      - PRICING_PACKAGER
+      - POSITIONING_POLICE
+    target_outcome:
+      - pricing_logic_ready
+      - claims_policy_ready
+  day_5_6:
+    deploy:
+      - ASSET_ENGINE
+      - REWRITE_ENGINE
+    target_outcome:
+      - outbound_assets_v1_ready
+  day_7_8:
+    deploy:
+      - SUGGESTION_ENGINE
+      - MARKET_SCOUT_OUTBOUND
+    target_outcome:
+      - diagnostics_loop_ready
+      - market_backed_outbound_plan_ready
+  day_9_10:
+    deploy:
+      - CALL_CLOSER
+    target_outcome:
+      - discovery_to_close_system_ready
+  day_11_12:
+    deploy:
+      - DELIVERY_SOP_ENGINE
+    target_outcome:
+      - delivery_system_ready
+  day_13_14:
+    deploy:
+      - integration_review
+    target_outcome:
+      - commercial_layer_v1_ready
+
+builder_release_checks:
+  - confirm_builder_compact_exists
+  - confirm_char_risk_reviewed
+  - confirm_stop_rules_preserved
+  - confirm_hard_rules_preserved
+  - confirm_no_fake_proof_policy_present
+  - confirm_role_does_not_overlap_excessively
+  - confirm_output_structure_is_deterministic
+
+usage_rules:
+  - Use this sheet after domain-to-role-mapping.yaml and top10-role-overlays.yaml are defined.
+  - Do not mark deployment_readiness as PASS unless the Builder prompt has been manually reviewed.
+  - If char_risk is high, create a builder-safe compact version before deployment.
+  - Web ON roles must be checked for source citation behavior before live use.
