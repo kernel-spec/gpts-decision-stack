@@ -159,6 +159,8 @@ operations:
   docs:
     - operations/Definition_of_Done.md
     - operations/Management_Summary_Checklist.md
+  evidence:
+    - operations/evidence/audit-evidence-bundle-dev.yaml
 
 qa:
   gate_reports:
