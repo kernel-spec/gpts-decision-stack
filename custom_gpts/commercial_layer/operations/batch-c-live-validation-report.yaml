@@ -1,0 +1,214 @@
+schema_version: "1.0.0"
+artifact_type: batch_live_validation_report
+stack_id: commercial_layer_top10
+version: v1
+status: PASS
+batch_id: batch_c
+test_date: "2026-03-18"
+environment: custom_gpt_builder
+
+purpose: >
+  Záznam výsledků živého testování Batch C commercial GPT rolí v prostředí
+  ChatGPT Builder. Eviduje výsledky smoke checks, cross-role handoff testů,
+  zjištěné problémy, jejich micro-fixy a závěrečné re-testy. Slouží jako
+  deployment release evidence pro finální uzavření Top 10 commercial layer rollout.
+
+roles_tested:
+  - CALL_CLOSER
+  - DELIVERY_SOP_ENGINE
+
+deployment_status_per_role:
+  CALL_CLOSER: PASS
+  DELIVERY_SOP_ENGINE: PASS
+
+scenario_results:
+  - scenario_id: smoke_check_call_closer
+    label: CALL_CLOSER smoke test
+    role: CALL_CLOSER
+    result: PASS
+    notes: >
+      One-next-step discipline zachována. Výstup obsahuje přesně jeden next step
+      v sekci Call Objective + One Next Step. Qualification Gates přítomny
+      s must-have criteria, red flags a disqualify logic. Follow-up Email Template
+      použitelný a strukturovaný. Žádné pressure tactics, false scarcity ani
+      garantované výsledky bez proof. Scope zůstal v roli — žádný bleed do
+      STRUCTURAL_ENGINE nebo PRICING_PACKAGER.
+
+  - scenario_id: smoke_check_delivery_sop_engine
+    label: DELIVERY_SOP_ENGINE smoke test (po micro-fixech)
+    role: DELIVERY_SOP_ENGINE
+    result: PASS
+    notes: >
+      Po aplikaci dvou micro-fixů produkuje všech 10 povinných výstupních bloků
+      (Delivery Objective, Client Inputs Required, Onboarding Flow, Output Contract,
+      Internal Delivery Checklist, QA + Acceptance Criteria, Scope Lock,
+      Handoff / Closeout, Risks / Failure Points, Self-Check). Žádné meta-instrukce
+      ani placeholder text ve výstupu. Inference-first chování funguje — role
+      postupuje přímo bez zbytečného dotazu při přítomnosti sold offer, client type
+      a delivery window.
+
+  - scenario_id: retest_call_closer_one_next_step
+    label: Retest — CALL_CLOSER one-next-step discipline (TS-C-002)
+    role: CALL_CLOSER
+    result: PASS
+    notes: >
+      CALL_CLOSER nevrátil více CTA ani paralelní closing varianty. Closing Script
+      obsahuje primary close a jeden fallback — žádné 3+ varianty. SELF-CHECK
+      potvrzuje one next step pravidlo. Discipline zachována ve všech testovaných
+      vstupních variantách.
+
+  - scenario_id: retest_call_closer_qualification_gates
+    label: Retest — CALL_CLOSER qualification gate discipline (TS-C-003)
+    role: CALL_CLOSER
+    result: PASS
+    notes: >
+      Qualification Gates sekce přítomna s konkrétními must-have criteria,
+      specifickými red flags a explicitní disqualify if podmínkou. Criteria
+      jsou actionable a měřitelné — žádné vágní formulace. SELF-CHECK potvrzuje
+      přítomnost qualification gates.
+
+  - scenario_id: retest_call_closer_no_pressure_tactics
+    label: Retest — CALL_CLOSER no pressure tactics discipline (TS-C-004)
+    role: CALL_CLOSER
+    result: PASS
+    notes: >
+      Closing Script a Objection Handling neobsahují pressure tactics, false
+      scarcity ani urgency manipulation. Pricing Talk Track vysvětluje hodnotu
+      bez garantování výsledků. Proof-safe framing zachován při nízkém proof
+      levelu ([TBD proof]). Disqualification nabízena jako validní výstup
+      v Objection Handling.
+
+  - scenario_id: retest_delivery_sop_meta_output_fix
+    label: Retest — DELIVERY_SOP_ENGINE meta-instruction leakage (patch 1)
+    role: DELIVERY_SOP_ENGINE
+    result: PASS
+    notes: >
+      Po prvním micro-fixu DELIVERY_SOP_ENGINE neprodukuje raw meta-instrukce
+      ani placeholder-style výstupy jako "Vlož Output Contract..." nebo
+      "Vlož Scope Lock...". Všechny povinné bloky jsou plně populovány
+      konkrétním použitelným obsahem. Checklist-first formát zachován.
+      Design-only discipline potvrzena — žádná pseudo-exekuce delivery.
+
+  - scenario_id: retest_delivery_sop_clarification_blocking
+    label: Retest — DELIVERY_SOP_ENGINE inference-first behavior (patch 2, Retest 5)
+    role: DELIVERY_SOP_ENGINE
+    result: PASS
+    notes: >
+      Po druhém micro-fixu DELIVERY_SOP_ENGINE nepokládá zbytečný clarifying
+      dotaz "Co přesně dodáváš?" při přítomnosti sold offer, client type
+      a delivery window. Pro vstup s 10denním outbound messaging sprintem pro
+      founder-led B2B SaaS produkuje kompletní SOP přímo bez dotazu.
+      Inference-first pravidla fungují: bounded offer (named scope + delivery
+      window + client type) je dostatečný k inferenci default delivery contract.
+      Inferred elementy jsou označeny jako (inferred from offer scope).
+
+  - scenario_id: retest_delivery_sop_scope_enforcement
+    label: Retest — DELIVERY_SOP_ENGINE scope enforcement (TS-C-009)
+    role: DELIVERY_SOP_ENGINE
+    result: PASS
+    notes: >
+      Scope Lock sekce obsahuje explicitní included a excluded boundary language
+      odpovídající scope_lock ze vstupu. Reakce na out-of-scope požadavky
+      je konkrétní. Role nepřidává deliverables mimo scope a neexekvuje
+      delivery sama.
+
+  - scenario_id: cross_role_close_to_delivery_handoff
+    label: Cross-role handoff — CALL_CLOSER → DELIVERY_SOP_ENGINE (TS-C-010)
+    roles:
+      - CALL_CLOSER
+      - DELIVERY_SOP_ENGINE
+    result: PASS
+    notes: >
+      Fáze 1: CALL_CLOSER produkuje kompletní call systém s Follow-up Email
+      Template obsahujícím agreed next step, scope a deliverables.
+      Fáze 2: DELIVERY_SOP_ENGINE akceptuje výstup z CALL_CLOSER jako platný
+      vstup a produkuje SOP navázaný na dohodnutý offer bez nutnosti kompletního
+      re-zadání. Žádná role nevychází ze svého scope v průběhu handoffu.
+
+summary_counts:
+  total_scenarios: 9
+  passed: 9
+  failed: 0
+  blocked: 0
+
+key_findings:
+  - finding_id: KF-C-001
+    severity: medium
+    category: meta_output_leakage
+    description: >
+      DELIVERY_SOP_ENGINE produkoval raw meta-instrukce a placeholder-style výstupy
+      z interních STOP RULES direktiv. Místo generování delivery SOP zobrazil
+      operátorské instrukce jako "Vlož Output Contract (deliverables + timeline)"
+      a pokyn pro pokračování s "[TBD]" hodnotami. Původní prompt propouštěl
+      interní STOP RULES jako literální výstup.
+    affected_files:
+      - custom_gpts/commercial_layer/builder_compact/DELIVERY_SOP_ENGINE.builder.md
+    resolution: >
+      Aplikován první micro-fix: STOP RULES přeformulována do přirozených
+      clarifying otázek místo operátorských direktiv. Průchod při dostupných
+      vstupech přepsán z "proceed with [TBD]" na "proceed immediately and produce
+      full SOP output". Přidána explicitní pravidla HARD RULES zakazující meta-instrukce
+      a placeholder text. WHAT YOU MUST PRODUCE rozšířeno na 10 explicitních bloků
+      s typovanými fieldy. SELF-CHECK zpřísněn.
+    resolution_status: RESOLVED
+    retest_result: PASS
+    retest_ids:
+      - retest_delivery_sop_meta_output_fix
+
+  - finding_id: KF-C-002
+    severity: medium
+    category: clarification_over_gating
+    description: >
+      DELIVERY_SOP_ENGINE zůstal po prvním micro-fixu přílišně brzděn clarification
+      logikou. Při absenci explicitního pole output_contract role vždy pokládala
+      dotaz "Co přesně dodáváš? (deliverables + timeline)" — i když vstup obsahoval
+      sold offer, client type a delivery window dostatečné k inferenci delivery
+      kontraktu. Role nevyužívala dostupný kontext k přímému generování SOP.
+    affected_files:
+      - custom_gpts/commercial_layer/builder_compact/DELIVERY_SOP_ENGINE.builder.md
+    resolution: >
+      Aplikován druhý micro-fix: STOP RULES přepsána na inference-first logiku —
+      výchozí chování je "proceed immediately". Clarifying dotaz povolen pouze pokud
+      jsou SPLNĚNY OBĚ podmínky: (1) offer je příliš vágní k inferenci delivery
+      shape, (2) chybějící informace by materiálně změnila strukturu SOP.
+      Přidána sekce INFERENCE RULES definující "bounded offer" threshold (≥ 2 ze 3:
+      named scope, delivery window, client type) a konzervativní sprint strukturu.
+      MIN INPUT přesunuta z hard-required na "infer when absent". HARD RULES rozšířeny
+      o přímé generování při přítomnosti sold offer + window + client type.
+      SELF-CHECK doplněn o 4 nové položky pokrývající inference disciplínu.
+    resolution_status: RESOLVED
+    retest_result: PASS
+    retest_ids:
+      - retest_delivery_sop_clarification_blocking
+
+  - finding_id: KF-C-003
+    severity: info
+    category: role_behavior
+    description: >
+      CALL_CLOSER prošel live testy bez nutnosti opravy. One-next-step discipline,
+      qualification gates, no-pressure language a expectation-setting po close
+      fungovaly správně bez micro-fixu.
+    resolution: confirmed_by_testing
+    resolution_status: CLOSED
+    retest_result: PASS
+
+blocker_count: 0
+blocker_list: []
+
+release_decision: PASS
+
+next_step: TOP_10_COMMERCIAL_LAYER_ROLLOUT_COMPLETE
+
+sign_off:
+  batch: C
+  role_count: 2
+  deployer: "[TBD]"
+  deployment_date: "2026-03-18"
+  smoke_check_CALL_CLOSER: PASS
+  smoke_check_DELIVERY_SOP_ENGINE: PASS
+  retest_delivery_sop_meta_output_fix: PASS
+  retest_delivery_sop_clarification_blocking: PASS
+  cross_role_close_to_delivery_handoff: PASS
+  deployment: COMPLETE
+  ready_for_final_stack_signoff: true
+  batch_c_live_tests_passed: true

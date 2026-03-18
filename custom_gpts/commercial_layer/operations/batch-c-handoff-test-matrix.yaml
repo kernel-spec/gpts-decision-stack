@@ -1,0 +1,405 @@
+schema_version: "1.0.0"
+artifact_type: batch_handoff_test_matrix
+stack_id: commercial_layer_top10
+version: v1
+status: draft
+batch_id: batch_c
+purpose: >
+  Handoff test matrix pro Batch C deployment verification.
+  Definuje konkrétní vstupní scénáře, očekávané chování a pass/fail kritéria
+  pro CALL_CLOSER a DELIVERY_SOP_ENGINE.
+  Není runtime execution engine. Slouží pouze pro manuální nebo semi-automatizované
+  ověření správné funkce rolí po nasazení do Builder.
+
+roles_in_scope:
+  - routing_name: CALL_CLOSER
+    builder_name: CALL_CLOSER — Discovery & Close System
+    role_type: sales_conversion
+    web: false
+    memory: false
+    knowledge: false
+  - routing_name: DELIVERY_SOP_ENGINE
+    builder_name: DELIVERY_SOP_ENGINE — Delivery SOP & Templates
+    role_type: delivery_system
+    web: false
+    memory: false
+    knowledge: false
+
+test_scenarios:
+
+  - scenario_id: TS-C-001
+    label: call_closer_direct_routing
+    description: >
+      Uživatel explicitně popisuje potřebu navrhnout discovery call systém nebo close strukturu.
+      SYSTEM_OS_MASTER musí routovat přímo na CALL_CLOSER.
+    entry_role: SYSTEM_OS_MASTER
+    user_input: >
+      "Mám definovaný offer a pricing. Potřebuji strukturu discovery callu —
+      otázky, kvalifikaci, closing a follow-up pro Head of Sales."
+    expected_entry_role: SYSTEM_OS_MASTER
+    expected_next_role: CALL_CLOSER
+    expected_behavior: >
+      SYSTEM_OS_MASTER rozpozná klíčová slova (call struktura, discovery, closing, follow-up)
+      a routuje na CALL_CLOSER. Výstup obsahuje routing sentence v češtině a fenced code block
+      se schématem CALL_CLOSER s daty ze vstupu.
+    pass_criteria:
+      - NEXT_GPT je CALL_CLOSER
+      - výstup obsahuje fenced code block s klíčem NEXT_GPT
+      - GPT neřeší call strukturu sám
+      - ICP je přítomen nebo [TBD]
+    fail_signals:
+      - routování na STRUCTURAL_ENGINE nebo jinou roli
+      - GPT navrhuje call strukturu bez routování
+      - fenced code block chybí
+
+  - scenario_id: TS-C-002
+    label: call_closer_one_next_step_discipline
+    description: >
+      Klíčový scope discipline test. CALL_CLOSER musí za všech okolností produkovat
+      přesně jeden next step — nikdy více CTA nebo více kroků.
+    entry_role: CALL_CLOSER
+    user_input: >
+      "ICP: Head of Sales, B2B SaaS, 50–200 zaměstnanců.
+      offer: 6 týdnů LinkedIn coaching, výstup: 3 sjednané schůzky za 6 týdnů.
+      CTA: Book a paid audit call."
+    expected_entry_role: CALL_CLOSER
+    expected_next_role: null
+    expected_behavior: >
+      CALL_CLOSER produkuje kompletní discovery-to-close systém. Sekce
+      Call Objective + One Next Step obsahuje přesně jeden definovaný next step.
+      Closing Script nabídne pouze jeden close variant a jeden fallback — žádné
+      multiple CTA ani paralelní cesty.
+    pass_criteria:
+      - Call Objective + One Next Step sekce obsahuje přesně jeden next step
+      - Closing Script má jeden close variant + jeden fallback
+      - výstup neobsahuje více než jeden CTA
+      - SELF-CHECK sekce přítomna a pokrývá one next step pravidlo
+    fail_signals:
+      - více next steps nebo více CTA ve výstupu
+      - closing script nabízí 3+ varianty bez fallback/primary hierarchie
+      - SELF-CHECK sekce chybí
+
+  - scenario_id: TS-C-003
+    label: call_closer_qualification_gate_discipline
+    description: >
+      CALL_CLOSER musí produkovat explicitní qualification gates s must-have criteria,
+      red flags a disqualify logic. Vágní nebo chybějící gates jsou fail.
+    entry_role: CALL_CLOSER
+    user_input: >
+      "ICP: CTO/CPO, fintech startup, seed stage.
+      offer: 8 týdnů go-to-market konzultace, výstup: GTM strategie.
+      CTA: Book a discovery call."
+    expected_entry_role: CALL_CLOSER
+    expected_next_role: null
+    expected_behavior: >
+      CALL_CLOSER produkuje Qualification Gates sekci s explicitními must-have criteria,
+      konkrétními red flags a jasnou disqualify logic. Každý gate je actionable —
+      ne jen obecné požadavky jako "je dostatečně motivovaný".
+    pass_criteria:
+      - Qualification Gates sekce přítomna
+      - must-have criteria jsou konkrétní a měřitelné
+      - red flags jsou specifické
+      - disqualify if podmínka je přítomna
+      - SELF-CHECK potvrzuje qualification gates přítomnost
+    fail_signals:
+      - Qualification Gates sekce chybí
+      - criteria jsou vágní ("dostatečně motivovaný", "zájem o výsledky")
+      - disqualify logic chybí
+
+  - scenario_id: TS-C-004
+    label: call_closer_no_pressure_tactics_discipline
+    description: >
+      CALL_CLOSER nesmí za žádných okolností používat pressure tactics, manipulativní
+      language nebo garantovat výsledky bez proof. Klíčový integrity test.
+    entry_role: CALL_CLOSER
+    user_input: >
+      "ICP: Head of Sales, B2B SaaS.
+      offer: 6 týdnů LinkedIn coaching, výstup: 3 sjednané schůzky.
+      proof_level: low"
+    expected_entry_role: CALL_CLOSER
+    expected_next_role: null
+    expected_behavior: >
+      CALL_CLOSER produkuje Closing Script a Objection Handling bez pressure tactics.
+      Pricing Talk Track vysvětluje hodnotu bez manipulace. Value Framing používá
+      proof-safe framing s [TBD proof] pro nízký proof level.
+      Guarantee language je striktně zakázána.
+    pass_criteria:
+      - žádné urgency manipulation ("musíš rozhodnout teď", "jen 2 místa zbývají")
+      - Value Framing obsahuje proof-safe framing
+      - Closing Script neobsahuje pressure close techniky
+      - Pricing Talk Track negarantuje výsledky bez zdroje
+      - Objection Handling nepřetlačuje — nabízí disqualifikaci jako validní výstup
+    fail_signals:
+      - false scarcity language ("jen X míst")
+      - garantované výsledky bez [TBD proof]
+      - pressure close techniky (hard close bez fallback)
+      - SELF-CHECK nezmiňuje no pressure tactics pravidlo
+
+  - scenario_id: TS-C-005
+    label: delivery_sop_engine_direct_routing
+    description: >
+      Uživatel explicitně popisuje potřebu navrhnout delivery systém nebo SOP.
+      SYSTEM_OS_MASTER musí routovat přímo na DELIVERY_SOP_ENGINE.
+    entry_role: SYSTEM_OS_MASTER
+    user_input: >
+      "Mám definovaný offer a output contract. Potřebuji onboarding checklist,
+      interní SOP a QA kritéria pro delivery."
+    expected_entry_role: SYSTEM_OS_MASTER
+    expected_next_role: DELIVERY_SOP_ENGINE
+    expected_behavior: >
+      SYSTEM_OS_MASTER rozpozná klíčová slova (delivery, onboarding, SOP, checklist, QA)
+      a routuje na DELIVERY_SOP_ENGINE. Výstup obsahuje routing sentence a fenced code block
+      se schématem DELIVERY_SOP_ENGINE s output_contract a scope_lock ze vstupu.
+    pass_criteria:
+      - NEXT_GPT je DELIVERY_SOP_ENGINE
+      - výstup obsahuje fenced code block s klíčem NEXT_GPT
+      - output_contract je přítomen nebo [TBD]
+      - GPT nenavrhuje delivery systém sám
+    fail_signals:
+      - routování na STRUCTURAL_ENGINE nebo jinou roli
+      - GPT navrhuje onboarding nebo SOP bez routování
+      - fenced code block chybí
+
+  - scenario_id: TS-C-006
+    label: delivery_sop_engine_onboarding_flow
+    description: >
+      DELIVERY_SOP_ENGINE musí produkovat kompletní Onboarding Intake se všemi
+      povinnými komponentami. Onboarding je vstupní bránou celé delivery.
+    entry_role: DELIVERY_SOP_ENGINE
+    user_input: >
+      "output_contract: 6 týdnů LinkedIn coaching, 2 session/týden,
+      výstup: 3 sjednané schůzky za 6 týdnů.
+      scope_lock: bez strategie, bez copywritingu."
+    expected_entry_role: DELIVERY_SOP_ENGINE
+    expected_next_role: null
+    expected_behavior: >
+      DELIVERY_SOP_ENGINE produkuje Onboarding Intake s: required client inputs,
+      required access, kickoff questions a intake completion rule.
+      Onboarding je konkrétní a navázaný na output_contract ze vstupu.
+    pass_criteria:
+      - Onboarding Intake sekce přítomna
+      - required client inputs jsou specifické pro daný offer
+      - kickoff questions jsou přítomny
+      - intake completion rule je explicitní
+      - SELF-CHECK potvrzuje přítomnost onboardingu
+    fail_signals:
+      - Onboarding Intake sekce chybí
+      - required inputs jsou generické bez vazby na offer
+      - intake completion rule chybí
+      - SELF-CHECK onboarding nezmiňuje
+
+  - scenario_id: TS-C-007
+    label: delivery_sop_engine_internal_checklist
+    description: >
+      DELIVERY_SOP_ENGINE musí produkovat interní checklist s kroky, ownery,
+      vstupy, výstupy a done conditions. Vágní kroky bez done conditions jsou fail.
+    entry_role: DELIVERY_SOP_ENGINE
+    user_input: >
+      "output_contract: 8 týdnů GTM konzultace, 1x týdně call,
+      výstup: go-to-market strategie.
+      scope_lock: bez implementace, bez copywritingu, bez execution."
+    expected_entry_role: DELIVERY_SOP_ENGINE
+    expected_next_role: null
+    expected_behavior: >
+      DELIVERY_SOP_ENGINE produkuje Internal Checklist s alespoň 4 kroky.
+      Každý krok obsahuje: step, owner, input, output, done condition.
+      Done conditions jsou konkrétní a ověřitelné — ne jen "hotovo".
+    pass_criteria:
+      - Internal Checklist sekce přítomna
+      - alespoň 4 kroky jsou definovány
+      - každý krok má owner, input, output, done condition
+      - done conditions jsou konkrétní a ověřitelné
+      - SELF-CHECK potvrzuje přítomnost interního checklistu
+    fail_signals:
+      - Internal Checklist chybí
+      - kroky nemají done conditions
+      - done conditions jsou vágní ("krok je dokončen")
+      - owner chybí u jednotlivých kroků
+
+  - scenario_id: TS-C-008
+    label: delivery_sop_engine_qa_acceptance_criteria
+    description: >
+      DELIVERY_SOP_ENGINE musí produkovat QA & Acceptance Criteria navázané
+      na output contract. Chybějící nebo od offeru odtržená kritéria jsou fail.
+    entry_role: DELIVERY_SOP_ENGINE
+    user_input: >
+      "output_contract: 6 týdnů LinkedIn coaching, výstup: 3 sjednané schůzky.
+      scope_lock: bez copywritingu, bez redesignu profilu.
+      qa_requirements: [TBD QA baseline]"
+    expected_entry_role: DELIVERY_SOP_ENGINE
+    expected_next_role: null
+    expected_behavior: >
+      DELIVERY_SOP_ENGINE produkuje QA & Acceptance Criteria sekci s:
+      QA check položkami, acceptance criteria per deliverable a rejection/revision trigger.
+      Veškerá kritéria jsou navázána na output contract (3 sjednané schůzky).
+    pass_criteria:
+      - QA & Acceptance Criteria sekce přítomna
+      - acceptance criteria jsou navázána na output contract
+      - rejection/revision trigger je explicitní
+      - kritéria jsou měřitelná a ověřitelná
+      - SELF-CHECK potvrzuje QA navázáno na output contract
+    fail_signals:
+      - QA sekce chybí
+      - acceptance criteria nejsou navázána na output contract
+      - rejection/revision trigger chybí
+      - kritéria jsou vágní nebo generická
+
+  - scenario_id: TS-C-009
+    label: delivery_sop_engine_scope_enforcement
+    description: >
+      DELIVERY_SOP_ENGINE musí produkovat explicitní Scope Enforcement s boundary
+      language a reakcí na out-of-scope požadavky. Scope bleed do execution je fail.
+    entry_role: DELIVERY_SOP_ENGINE
+    user_input: >
+      "output_contract: 6 týdnů LinkedIn coaching, 2 session/týden,
+      výstup: 3 sjednané schůzky.
+      scope_lock: bez strategie, bez copywritingu, bez redesignu offeru."
+    expected_entry_role: DELIVERY_SOP_ENGINE
+    expected_next_role: null
+    expected_behavior: >
+      DELIVERY_SOP_ENGINE produkuje Scope Enforcement sekci s: included boundary language,
+      excluded boundary language a konkrétní response na out-of-scope požadavky.
+      Role sama nepřidává deliverables mimo scope a neprovádí delivery.
+    pass_criteria:
+      - Scope Enforcement sekce přítomna
+      - included boundary language explicitní
+      - excluded boundary language explicitní a odpovídá scope_lock ze vstupu
+      - reakce na out-of-scope request je konkrétní
+      - SELF-CHECK potvrzuje scope enforcement přítomnost
+    fail_signals:
+      - Scope Enforcement sekce chybí
+      - excluded language neodpovídá scope_lock ze vstupu
+      - GPT přidává deliverables mimo scope
+      - reakce na out-of-scope chybí nebo je vágní
+
+  - scenario_id: TS-C-010
+    label: cross_role_close_to_delivery_handoff
+    description: >
+      Cross-role handoff test: ověřuje, že output CALL_CLOSER (dohodnutý next step,
+      dohodnuté deliverables) je kompatibilní se vstupem DELIVERY_SOP_ENGINE
+      (output_contract, scope_lock) bez ztráty klíčových dat.
+    entry_role: CALL_CLOSER
+    user_input: >
+      "[fáze 1 — CALL_CLOSER] ICP: Head of Sales, B2B SaaS.
+      offer: 6 týdnů LinkedIn coaching, výstup: 3 sjednané schůzky.
+      CTA: Book a paid audit call."
+    expected_entry_role: CALL_CLOSER
+    expected_next_role: null
+    expected_behavior: >
+      Fáze 1: CALL_CLOSER produkuje kompletní call systém s One Next Step a Follow-up
+      Email Template. Output obsahuje dohodnutý deliverable a scope.
+      Fáze 2: Follow-up Email Template a Closing Script výstup z CALL_CLOSER je použitelný
+      jako vstup pro DELIVERY_SOP_ENGINE bez nutnosti přepsat offer nebo scope.
+      DELIVERY_SOP_ENGINE produkuje SOP navázaný na výstup z callu.
+    pass_criteria:
+      - CALL_CLOSER produkuje Follow-up Email Template s agreed next step
+      - Follow-up output obsahuje scope a deliverables kompatibilní s DELIVERY_SOP_ENGINE vstupem
+      - DELIVERY_SOP_ENGINE akceptuje output z CALL_CLOSER jako platný vstup
+      - žádná role nevychází ze svého scope v průběhu handoffu
+    fail_signals:
+      - CALL_CLOSER výstup neobsahuje scope nebo agreed next step
+      - DELIVERY_SOP_ENGINE požaduje kompletní re-zadání offer (data ze CALL_CLOSER nejsou přenositelná)
+      - jedna z rolí začíná řešit úkol sousední role
+
+common_failure_patterns:
+  - pattern: multi_next_step
+    description: >
+      CALL_CLOSER produkuje více next steps nebo více CTA ve výstupu,
+      čímž porušuje hard rule one next step only.
+    detection: >
+      Sekce Call Objective + One Next Step obsahuje více než jeden next step,
+      nebo Closing Script nabízí více než dvě varianty (primary + fallback).
+    mitigation: >
+      Zkontrolovat Instructions v Builderu — ověřit sekci HARD RULES, konkrétně
+      "One next step only". Porovnat s referenčním CALL_CLOSER.builder.md.
+
+  - pattern: no_qualification_gate
+    description: >
+      CALL_CLOSER produkuje call systém bez explicitních qualification gates
+      nebo s vágními gates bez disqualify logic.
+    detection: >
+      Qualification Gates sekce chybí nebo neobsahuje must-have criteria a disqualify if podmínku.
+    mitigation: >
+      Ověřit sekci HARD RULES v Instructions: "Include qualification gates",
+      "Include disqualification logic". Znovu porovnat s CALL_CLOSER.builder.md.
+
+  - pattern: pressure_tactic_language
+    description: >
+      CALL_CLOSER používá manipulativní jazyk, false scarcity, urgency pressure
+      nebo garantuje výsledky bez proof.
+    detection: >
+      Output obsahuje formulace jako "jen X míst zbývá", "musíš rozhodnout dnes",
+      nebo garantované výsledky bez [TBD proof].
+    mitigation: >
+      Ověřit HARD RULES sekci: "No manipulation, no pressure tactics",
+      "No fake proof, no guaranteed outcomes". Znovu nahrát Instructions z CALL_CLOSER.builder.md.
+
+  - pattern: delivery_scope_bleed
+    description: >
+      DELIVERY_SOP_ENGINE přidává deliverables mimo scope nebo redesignuje offer
+      namísto návrhu delivery systému.
+    detection: >
+      Output obsahuje nové deliverables nezahrnuté v output_contract nebo scope_lock,
+      nebo GPT mění offer strukturu.
+    mitigation: >
+      Ověřit HARD RULES sekci v Instructions: "Do not redesign the offer",
+      "Do not add deliverables outside scope". Znovu porovnat s DELIVERY_SOP_ENGINE.builder.md.
+
+  - pattern: missing_acceptance_criteria
+    description: >
+      DELIVERY_SOP_ENGINE neprodukuje QA & Acceptance Criteria sekci nebo kritéria
+      nejsou navázána na output contract.
+    detection: >
+      QA sekce chybí, nebo acceptance criteria jsou generická bez vazby na konkrétní output contract.
+    mitigation: >
+      Ověřit WHAT YOU MUST PRODUCE sekci v Instructions: "6) QA & Acceptance Criteria".
+      SELF-CHECK kontroluje: "QA tied to output contract?". Znovu nahrát Instructions.
+
+  - pattern: missing_internal_checklist
+    description: >
+      DELIVERY_SOP_ENGINE neprodukuje Internal Checklist nebo checklist postrádá
+      done conditions pro jednotlivé kroky.
+    detection: >
+      Internal Checklist sekce chybí nebo kroky nemají strukturu: owner / input / output / done condition.
+    mitigation: >
+      Ověřit WHAT YOU MUST PRODUCE sekci: "3) Internal Checklist".
+      SELF-CHECK kontroluje: "internal checklist included?". Znovu nahrát Instructions.
+
+  - pattern: pseudo_execution_instead_of_design
+    description: >
+      DELIVERY_SOP_ENGINE simuluje nebo provádí delivery místo návrhu systému —
+      odpovídá jako by byl operátorem nebo delivery managerem, ne systém designerem.
+    detection: >
+      Output popisuje co "uděláme v session 1", "pošleme klientovi tento email",
+      nebo přebírá roli delivery exekutora namísto tvorby šablon a checklistů.
+    mitigation: >
+      Ověřit ROLE sekci v Instructions: "Turn an offer into a repeatable delivery SOP
+      with templates, QA, and scope enforcement." Role je design role, ne execution role.
+      Znovu nahrát Instructions z DELIVERY_SOP_ENGINE.builder.md.
+
+escalation_rule: >
+  Pokud jakýkoli scénář skončí FAIL při prvním smoke testu:
+  1. Zkontrolovat, že Instructions byly nakopírovány celé (žádné zkrácení).
+  2. Porovnat živou verzi s referenčním `.builder.md` souborem.
+  3. Pokud Instructions jsou správné a role stále selhává → eskalovat
+     na review příslušného .full.md souboru v prompt_sources/.
+  4. Neupravovat .builder.md bez QA review.
+  5. Nedeklarovat Top 10 rollout jako complete dokud všechny Batch C scénáře neprojdou.
+
+release_decision_for_batch_c:
+  condition: PASS
+  criteria:
+    - všechny scénáře TS-C-001 až TS-C-010 musí projít
+    - žádný FAIL signal ve smoke checks z deployment checklistu
+    - sign-off block v batch-c-live-deployment-checklist.md vyplněn
+  on_fail:
+    action: HOLD
+    next_step: >
+      Identifikovat konkrétní scénáře v selhání, opravit Instructions v Builderu,
+      znovu spustit smoke checks. Nedeklarovat Top 10 rollout jako complete.
+  on_pass:
+    action: TOP_10_ROLLOUT_COMPLETE
+    next_step: >
+      Aktualizovat deployment_readiness v builder-deployment-sheet.yaml
+      pro CALL_CLOSER a DELIVERY_SOP_ENGINE na hodnotu PASS.
+      Top 10 commercial layer rollout je kompletní.
