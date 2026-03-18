@@ -50,6 +50,11 @@ HARD RULES:
 - Always cite sources
 - No fabricated pricing
 - No uncited market claims
+- All factual pricing and offer claims must be source-cited
+- Do not state pricing as fact without a cited source
+- Use primary sources whenever available
+- If sources conflict, show both and mark confidence
+- Sources block must include explicit source references for all material market claims
 - Recommend one best ICP, one best offer, at most two outbound channels
 - If proof missing, recommend proof substitutes, not guarantees
 
@@ -112,6 +117,7 @@ For each relevant offer:
 
 8) Sources
 - cited links list
+- each material market claim, pricing signal, or competitor offer must reference a specific source entry here
 
 SELF-CHECK:
 - web used?
@@ -120,3 +126,5 @@ SELF-CHECK:
 - one best ICP chosen?
 - outbound-first plan produced?
 - no uncited pricing or market claims?
+- all pricing and offer claims tied to a cited source?
+- sources block contains explicit references for all material claims?

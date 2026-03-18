@@ -1,0 +1,199 @@
+schema_version: "1.0.0"
+artifact_type: batch_live_validation_report
+stack_id: commercial_layer_top10
+version: v1
+status: PASS
+batch_id: batch_b
+test_date: "2026-03-18"
+environment: custom_gpt_builder
+
+purpose: >
+  Záznam výsledků živého testování Batch B commercial GPT rolí v prostředí
+  ChatGPT Builder. Eviduje výsledky smoke checks, cross-role handoff testů,
+  zjištěné problémy, jejich micro-fixy a závěrečné re-testy. Slouží jako
+  deployment release evidence pro přechod na Batch C.
+
+roles_tested:
+  - ASSET_ENGINE
+  - REWRITE_ENGINE
+  - SUGGESTION_ENGINE
+  - MARKET_SCOUT_OUTBOUND
+
+deployment_status_per_role:
+  ASSET_ENGINE: PASS
+  REWRITE_ENGINE: PASS
+  SUGGESTION_ENGINE: PASS
+  MARKET_SCOUT_OUTBOUND: PASS
+
+scenario_results:
+  - scenario_id: smoke_check_asset_engine
+    label: ASSET_ENGINE smoke test
+    role: ASSET_ENGINE
+    result: PASS
+    notes: >
+      One-CTA discipline zachována. Proof-safe language použita správně
+      (mechanism + expectation + [TBD proof]). Po micro-fixu: žádné market-derived
+      pricing anchory ani benchmark claims nevloženy do generovaných assetů.
+
+  - scenario_id: smoke_check_rewrite_engine
+    label: REWRITE_ENGINE smoke test
+    role: REWRITE_ENGINE
+    result: PASS
+    notes: >
+      Scope discipline zachována. REWRITE_ENGINE přepisuje asset text bez
+      diagnostiky, zachovává positioning terms a CTA z původního assetu.
+      Žádný scope bleed do offer designu nebo positioning strategie.
+
+  - scenario_id: smoke_check_suggestion_engine
+    label: SUGGESTION_ENGINE smoke test
+    role: SUGGESTION_ENGINE
+    result: PASS
+    notes: >
+      Diagnostická disciplína zachována. SUGGESTION_ENGINE produkuje Friction
+      Points a Improvements bez přepisování textu. Žádný diagnosis-rewrite drift.
+
+  - scenario_id: smoke_check_market_scout_outbound
+    label: MARKET_SCOUT_OUTBOUND smoke test
+    role: MARKET_SCOUT_OUTBOUND
+    result: PASS
+    notes: >
+      Web research použit, zdroje citovány. Po micro-fixu: citation discipline
+      zpřísněna — všechna pricing tvrzení a offer claims jsou vázány na
+      citované zdroje. Sources sekce obsahuje explicitní reference pro všechna
+      materiální market claims.
+
+  - scenario_id: retest_14
+    label: Retest 14 — MARKET_SCOUT_OUTBOUND no uncited pricing (TS-B-014)
+    role: MARKET_SCOUT_OUTBOUND
+    result: PASS
+    notes: >
+      MARKET_SCOUT_OUTBOUND neuvádí žádné pricing tvrzení bez citovaného zdroje.
+      SELF-CHECK potvrzuje "no uncited pricing or market claims?" a
+      "all pricing and offer claims tied to a cited source?". Citation discipline
+      guardrails z micro-fixu fungují správně.
+
+  - scenario_id: retest_17
+    label: Retest 17 — MARKET_SCOUT_OUTBOUND primary sources discipline (TS-B-013)
+    role: MARKET_SCOUT_OUTBOUND
+    result: PASS
+    notes: >
+      MARKET_SCOUT_OUTBOUND preferuje primární zdroje (firemní weby, pricing
+      pages, founder posts). Sources sekce obsahuje explicitní source reference
+      pro všechna materiální market claims — nikoliv pouze vágní source labels.
+      Sources block expectations z micro-fixu validovány.
+
+  - scenario_id: retest_20
+    label: Retest 20 — ASSET_ENGINE pricing-anchor leakage prevention (TS-B-CROSS-003)
+    role: ASSET_ENGINE
+    handoff_from: MARKET_SCOUT_OUTBOUND
+    result: PASS
+    notes: >
+      V cross-role handoff MARKET_SCOUT_OUTBOUND → ASSET_ENGINE ASSET_ENGINE
+      negeneruje market-derived pricing anchory ani benchmark claims do
+      outbound copy. ICP a offer z MARKET_SCOUT_OUTBOUND jsou přijaty jako
+      vstupy; pricing data z výzkumu nejsou vložena do assetů jako nekritovaná
+      tvrzení. Micro-fix ASSET_ENGINE.builder.md validován.
+
+  - scenario_id: retest_22
+    label: Retest 22 — Web ON/OFF boundary validation (TS-B-CROSS-005)
+    roles:
+      - ASSET_ENGINE
+      - REWRITE_ENGINE
+      - SUGGESTION_ENGINE
+      - MARKET_SCOUT_OUTBOUND
+    result: PASS
+    notes: >
+      Web boundary plně validována. ASSET_ENGINE, REWRITE_ENGINE a
+      SUGGESTION_ENGINE neprovádí live web research ani necitují live URLs.
+      MARKET_SCOUT_OUTBOUND vždy používá web a cituje zdroje. Web ON/OFF
+      konfigurace v ChatGPT Builder je správná pro všechny Batch B role.
+
+summary_counts:
+  total_scenarios: 8
+  passed: 8
+  failed: 0
+  blocked: 0
+
+key_findings:
+  - finding_id: KF-B-001
+    severity: low
+    category: citation_discipline
+    description: >
+      Citation discipline v MARKET_SCOUT_OUTBOUND byla slabší než požadováno.
+      Pricing tvrzení a offer claims nebyly vždy viditelně vázány na citované
+      zdroje. Sources sekce hrozila degradací na pouhé source labels bez
+      explicitních referencí.
+    affected_files:
+      - custom_gpts/commercial_layer/builder_compact/MARKET_SCOUT_OUTBOUND.builder.md
+    resolution: >
+      Zpřísněna citation/source-binding pravidla v HARD RULES: přidáno
+      "All factual pricing and offer claims must be source-cited",
+      "Do not state pricing as fact without a cited source",
+      "Use primary sources whenever available",
+      "If sources conflict, show both and mark confidence",
+      "Sources block must include explicit source references for all material
+      market claims". Sources block output a SELF-CHECK rozšířeny.
+    resolution_status: RESOLVED
+    retest_result: PASS
+    retest_ids:
+      - retest_14
+      - retest_17
+
+  - finding_id: KF-B-002
+    severity: low
+    category: forbidden_claims
+    description: >
+      ASSET_ENGINE injektoval market-derived pricing anchory do outbound copy
+      při cross-role handoff z MARKET_SCOUT_OUTBOUND. Toto porušuje
+      forbidden_claims disciplínu, pokud uživatel explicitně neschválil
+      pricing claims jako asset input.
+    affected_files:
+      - custom_gpts/commercial_layer/builder_compact/ASSET_ENGINE.builder.md
+    resolution: >
+      Přidáno tvrdé zakázání external pricing/benchmark leakage v HARD RULES:
+      "Do not inject market-derived pricing claims into assets",
+      "Do not introduce benchmark or pricing-anchor language unless explicitly
+      provided by the user for asset use",
+      "External market research may inform strategy, but must not be inserted
+      into copy as uncited claims",
+      "Generated assets must stay proof-safe and citation-safe".
+      SELF-CHECK rozšířen o "no external pricing or benchmark claims introduced?".
+    resolution_status: RESOLVED
+    retest_result: PASS
+    retest_ids:
+      - retest_20
+
+  - finding_id: KF-B-003
+    severity: info
+    category: web_boundary
+    description: >
+      Web ON/OFF boundary pro Batch B role ověřena. ASSET_ENGINE zůstává
+      non-web. MARKET_SCOUT_OUTBOUND se chová jako web-enabled research role.
+    resolution: confirmed_by_testing
+    resolution_status: CLOSED
+    retest_result: PASS
+    retest_ids:
+      - retest_22
+
+blocker_count: 0
+blocker_list: []
+
+release_decision: PASS
+
+next_step: PROCEED_TO_BATCH_C_PREP
+
+sign_off:
+  batch: B
+  role_count: 4
+  deployer: "[TBD]"
+  deployment_date: "2026-03-18"
+  smoke_check_ASSET_ENGINE: PASS
+  smoke_check_REWRITE_ENGINE: PASS
+  smoke_check_SUGGESTION_ENGINE: PASS
+  smoke_check_MARKET_SCOUT_OUTBOUND: PASS
+  retest_14: PASS
+  retest_17: PASS
+  retest_20: PASS
+  retest_22: PASS
+  deployment: COMPLETE
+  ready_for_batch_c: true

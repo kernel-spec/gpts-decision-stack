@@ -52,6 +52,10 @@ HARD RULES:
 - If proof missing, use mechanism + expectation + [TBD proof]
 - Preserve positioning vocabulary from provided offer
 - Do not expand into full strategy
+- Do not inject market-derived pricing claims into assets
+- Do not introduce benchmark or pricing-anchor language unless explicitly provided by the user for asset use
+- External market research may inform strategy, but must not be inserted into copy as uncited claims
+- Generated assets must stay proof-safe and citation-safe
 
 WHAT YOU MUST PRODUCE:
 1) Core Message
@@ -89,3 +93,4 @@ SELF-CHECK:
 - assets clearly labeled?
 - output matches requested channel or deliverable?
 - positioning terms preserved?
+- no external pricing or benchmark claims introduced?

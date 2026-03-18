@@ -1,0 +1,577 @@
+schema_version: "1.0.0"
+artifact_type: batch_handoff_test_matrix
+stack_id: commercial_layer_top10
+version: v1
+status: draft
+batch_id: batch_b
+purpose: >
+  Handoff test matrix pro Batch B deployment verification.
+  Definuje konkrétní vstupní scénáře, očekávané chování a pass/fail kritéria
+  pro ASSET_ENGINE, REWRITE_ENGINE, SUGGESTION_ENGINE a MARKET_SCOUT_OUTBOUND.
+  Není runtime execution engine. Slouží pouze pro manuální nebo semi-automatizované
+  ověření správné funkce rolí po nasazení do Builder.
+
+roles_in_scope:
+  - routing_name: ASSET_ENGINE
+    builder_name: ASSET_ENGINE — Outreach & Copy Factory
+    role_type: asset_generation
+    web: false
+    memory: false
+    knowledge: false
+  - routing_name: REWRITE_ENGINE
+    builder_name: REWRITE_ENGINE — High-Conversion Rewriter
+    role_type: asset_rewrite
+    web: false
+    memory: false
+    knowledge: false
+  - routing_name: SUGGESTION_ENGINE
+    builder_name: SUGGESTION_ENGINE — Conversion Diagnostics
+    role_type: diagnostics
+    web: false
+    memory: false
+    knowledge: false
+  - routing_name: MARKET_SCOUT_OUTBOUND
+    builder_name: MARKET_SCOUT_OUTBOUND — Offer/ICP/Channel Finder (Web)
+    role_type: market_research
+    web: true
+    memory: false
+    knowledge: false
+
+test_scenarios:
+
+  - scenario_id: TS-B-001
+    label: asset_engine_clear_icp_offer_cta
+    entry_role: ASSET_ENGINE
+    user_input: >
+      "ICP: Head of Sales, B2B SaaS, 50–200 zaměstnanců.
+      offer: 6 týdnů LinkedIn coaching, výstup: 3 sjednané schůzky za 6 týdnů.
+      CTA: Book a 15-min call."
+    expected_entry_role: ASSET_ENGINE
+    expected_behavior: >
+      ASSET_ENGINE produkuje kompletní asset set: Core Message, Assets (DM opener,
+      follow-up, post), CTA, Testing Variables. Všechny assety jsou jasně labeled
+      s channel specifikací. Proof-safe language je zachována. Positioning terms
+      z vstupu jsou přítomny ve výstupu.
+    pass_criteria:
+      - Core Message obsahuje who, problem, outcome, trigger
+      - Assets sekce obsahuje alespoň DM opener a jeden follow-up
+      - každý asset má label a channel
+      - CTA sekce obsahuje přesně jeden CTA
+      - Testing Variables jsou přítomny
+      - SELF-CHECK je přítomen a pokryt
+    fail_signals:
+      - výstup neobsahuje labeled assets
+      - více než jeden CTA v celém výstupu
+      - vymyšlená čísla nebo fake proof
+      - SELF-CHECK chybí
+
+  - scenario_id: TS-B-002
+    label: asset_engine_one_cta_discipline
+    entry_role: ASSET_ENGINE
+    user_input: >
+      "ICP: CTO, early-stage SaaS startup.
+      offer: 4 týdny produktová strategie, výstup: product roadmap + prioritizovaný backlog.
+      CTA: Schedule a discovery call.
+      [Prosím přidej do DM openeru i do follow-upu i do postu CTA.]"
+    expected_entry_role: ASSET_ENGINE
+    expected_behavior: >
+      ASSET_ENGINE ignoruje pokyn k vícenásobnému CTA a produkuje pouze jeden CTA
+      napříč všemi assety. Jeden CTA je konzistentní. Výstup neobsahuje žádný
+      alternativní CTA ani volitelné akce.
+    pass_criteria:
+      - přesně jeden CTA sentence v CTA sekci
+      - každý asset odkazuje na stejný CTA
+      - žádný alternativní odkaz nebo akce
+      - SELF-CHECK potvrzuje one CTA only
+    fail_signals:
+      - více než jeden CTA v celém výstupu
+      - DM opener a post mají různé CTA
+      - SELF-CHECK chybí nebo označuje one CTA jako splněno, ale output má více CTA
+
+  - scenario_id: TS-B-003
+    label: asset_engine_no_fake_proof
+    entry_role: ASSET_ENGINE
+    user_input: >
+      "ICP: Head of Marketing, e-commerce, 20–100 zaměstnanců.
+      offer: email sequence pro abandoned cart recovery.
+      CTA: Book a 30-min audit.
+      proof_level: none"
+    expected_entry_role: ASSET_ENGINE
+    expected_behavior: >
+      ASSET_ENGINE produkuje assety s proof-safe language: mechanism + expectation
+      + [TBD proof] pattern místo konkrétních čísel. Žádná vymyšlená loga nebo
+      reference na neexistující klienty. Výstup jasně signalizuje, kde proof chybí.
+    pass_criteria:
+      - žádná konkrétní čísla bez zdroje (např. "zvyšuje konverze o 30%")
+      - pattern "[TBD proof]" přítomen kde proof chybí
+      - žádná vymyšlená loga nebo klientské reference
+      - SELF-CHECK potvrzuje proof-safe language
+    fail_signals:
+      - výstup obsahuje konkrétní metriky bez zdroje
+      - vymyšlená loga nebo firmy jsou citovány jako proof
+      - SELF-CHECK chybí nebo je nekritický
+
+  - scenario_id: TS-B-004
+    label: asset_engine_preserve_positioning_terms
+    entry_role: ASSET_ENGINE
+    user_input: >
+      "ICP: Founder-led B2B service business, 1–5 zaměstnanců.
+      offer: Revenue Architecture Sprint — 3 týdny, výstup: monetizable offer system.
+      CTA: Apply for Revenue Architecture Sprint.
+      positioning_terms: [Revenue Architecture, monetizable offer system, founder-led]"
+    expected_entry_role: ASSET_ENGINE
+    expected_behavior: >
+      ASSET_ENGINE zachovává všechny positioning terms z vstupu v generovaných assetech.
+      Výstup nenahrazuje nebo nepatvořuje positioning vocabulary. Termíny jsou použity
+      konzistentně v Core Message, Assets i CTA.
+    pass_criteria:
+      - Revenue Architecture přítomno v Core Message nebo Assets
+      - monetizable offer system nebo ekvivalentní výraz přítomen
+      - founder-led nebo Founder-led zachováno
+      - žádná náhrada positioning termů generickými výrazy
+    fail_signals:
+      - positioning terms nahrazeny generickými výrazy (např. "business coaching")
+      - Assets neobsahují žádný z positioning terms ze vstupu
+
+  - scenario_id: TS-B-005
+    label: rewrite_engine_concrete_asset_only
+    entry_role: REWRITE_ENGINE
+    user_input: >
+      "asset_text: 'Ahoj, pomáhám obchodním manažerům generovat víc schůzek přes LinkedIn.
+      Chcete se dozvědět víc? Klikněte na odkaz níže a zarezervujte si hovor.'
+      ICP: Head of Sales, B2B SaaS.
+      CTA: Book a 15-min call."
+    expected_entry_role: REWRITE_ENGINE
+    expected_behavior: >
+      REWRITE_ENGINE přepíše přesně dodaný asset. Výstup obsahuje Revised Version,
+      What Changed, Why It Converts Better. Nepřidá nový offer, strategii ani
+      alternativní asset typy. Scope je omezen na dodaný text.
+    pass_criteria:
+      - Revised Version je přítomna a je rewrite původního asset_text
+      - What Changed identifikuje konkrétní změny
+      - Why It Converts Better je specifické (ne vágní)
+      - žádný nový offer design nebo strategie ve výstupu
+      - SELF-CHECK potvrzuje rewrite only
+    fail_signals:
+      - výstup navrhuje nový offer nebo full strategy
+      - Revised Version je zcela jiný text bez návaznosti na originál
+      - SELF-CHECK chybí
+
+  - scenario_id: TS-B-006
+    label: rewrite_engine_preserve_intent
+    entry_role: REWRITE_ENGINE
+    user_input: >
+      "asset_text: 'Nabízím 6 týdnů LinkedIn coaching pro Head of Sales.
+      Výstup: 3 sjednané schůzky za 6 týdnů. Bez plýtvání časem na studené oslovení.'
+      ICP: Head of Sales, B2B SaaS, 50–200 zaměstnanců.
+      CTA: Book a 15-min call."
+    expected_entry_role: REWRITE_ENGINE
+    expected_behavior: >
+      REWRITE_ENGINE zachovává core intent — LinkedIn coaching pro Head of Sales
+      s výstupem 3 schůzky. Může zlepšit clarity a CTA, ale nesmí změnit
+      deliverable, timeline nebo ICP ve výstupu. Proof language zůstává bezpečná.
+    pass_criteria:
+      - Revised Version obsahuje LinkedIn coaching a 3 schůzky jako deliverable
+      - ICP (Head of Sales) je zachován
+      - timeline (6 týdnů) je zachoven nebo explicitně okomentován
+      - SELF-CHECK potvrzuje intent preserved
+    fail_signals:
+      - Revised Version mění deliverable nebo timeline bez komentáře
+      - ICP je změněn nebo vypuštěn
+      - výstup redesignuje celý offer
+
+  - scenario_id: TS-B-007
+    label: rewrite_engine_tighten_cta
+    entry_role: REWRITE_ENGINE
+    user_input: >
+      "asset_text: 'Pokud máte zájem o coaching, neváhejte mě kontaktovat
+      přes LinkedIn nebo e-mail, nebo si rezervujte hovor přes můj Calendly
+      odkaz, který najdete na mém profilu, nebo mi napište zprávu.'
+      ICP: Head of Sales, B2B SaaS.
+      CTA: Book a 15-min call."
+    expected_entry_role: REWRITE_ENGINE
+    expected_behavior: >
+      REWRITE_ENGINE odstraní víceznačný a rozvětvený CTA a nahradí ho jedním,
+      jasným a konkrétním CTA. Výstup obsahuje přesně jeden action step.
+      No offer redesign — pouze CTA tightening.
+    pass_criteria:
+      - Revised Version obsahuje přesně jeden CTA
+      - CTA je konkrétní a akceschopný
+      - What Changed identifikuje CTA tightening jako změnu
+      - žádný offer redesign ve výstupu
+    fail_signals:
+      - Revised Version stále obsahuje více akčních kroků
+      - CTA je vágní nebo chybí
+      - výstup redesignuje celý offer
+
+  - scenario_id: TS-B-008
+    label: rewrite_engine_no_offer_redesign
+    entry_role: REWRITE_ENGINE
+    user_input: >
+      "asset_text: 'Pomáhám CTO ve startupech zlepšit hiring systém za 8 týdnů.'
+      ICP: CTO, Series A SaaS.
+      CTA: Schedule a call.
+      [Přepiš celou positioning strategii a offer strukturu.]"
+    expected_entry_role: REWRITE_ENGINE
+    expected_behavior: >
+      REWRITE_ENGINE odmítne redesign offer nebo positioning strategie.
+      Přepíše pouze dodaný text asset — styl, clarity, CTA. Pokud je vstup
+      příliš vágní pro rewrite, zeptá se na konkrétní asset_text. Scope protection
+      je aktivní.
+    pass_criteria:
+      - výstup je rewrite konkrétního asset textu, ne nová strategie
+      - žádná nová positioning nebo offer sekce
+      - SELF-CHECK potvrzuje "avoid strategy redesign"
+    fail_signals:
+      - výstup obsahuje novou positioning strategii nebo offer design
+      - SELF-CHECK chybí nebo toto pravidlo nekontroluje
+
+  - scenario_id: TS-B-009
+    label: suggestion_engine_diagnose_without_rewrite
+    entry_role: SUGGESTION_ENGINE
+    user_input: >
+      "asset_text: 'Ahoj, pomáhám B2B founders zlepšit prodejní konverzi.
+      Mám 5 let zkušeností. Pojďme si promluvit.'
+      ICP: B2B founder, Series A.
+      CTA: Let's talk."
+    expected_entry_role: SUGGESTION_ENGINE
+    expected_behavior: >
+      SUGGESTION_ENGINE diagnostikuje tření bez přepisování. Produkuje Friction Points,
+      ICP Drift Signals, Strongest Node, Weakest Node, 3 Targeted Improvements.
+      Text není přepsán. Diagnostika je specifická a akční.
+    pass_criteria:
+      - Friction Points jsou přítomny a ranked (ne přepisování textu)
+      - Strongest Node je identifikován
+      - Weakest Node je identifikován
+      - 3 Targeted Improvements jsou přítomny s "how to test"
+      - výstup neobsahuje Revised Version nebo nový text
+      - SELF-CHECK potvrzuje no rewrite
+    fail_signals:
+      - výstup obsahuje přepsaný text nebo Revised Version
+      - Friction Points chybí nebo nejsou ranked
+      - Improvements nemají "how to test"
+      - SELF-CHECK chybí
+
+  - scenario_id: TS-B-010
+    label: suggestion_engine_ranked_friction_strongest_weakest
+    entry_role: SUGGESTION_ENGINE
+    user_input: >
+      "asset_text: 'Nabízím LinkedIn coaching. Pomáhám manažerům s outboundem.
+      Výsledky závisí na snaze klienta. Cena: 2000 EUR / měsíc. Zkuste to.
+      Kontaktujte mě na LinkedInu.'
+      ICP: Head of Sales, B2B SaaS.
+      CTA: Contact me on LinkedIn."
+    expected_entry_role: SUGGESTION_ENGINE
+    expected_behavior: >
+      SUGGESTION_ENGINE produkuje seřazené Friction Points s severity, identifikuje
+      ICP Drift Signals (vágní ICP v textu), jasně pojmenuje Strongest Node
+      (specifický deliverable nebo outcome) a Weakest Node (největší blokátor konverze).
+      Improvements jsou testovatelné, ne obecné.
+    pass_criteria:
+      - každý Friction Point má issue, severity, why it matters
+      - Strongest Node je konkrétní, ne vágní
+      - Weakest Node identifikuje hlavní blokátor
+      - alespoň jeden ICP Drift Signal je identifikován
+      - 3 Improvements jsou akční a testovatelné
+    fail_signals:
+      - Friction Points nejsou ranked nebo chybí severity
+      - Strongest/Weakest Node jsou vágní nebo chybí
+      - Improvements jsou obecné bez "how to test"
+
+  - scenario_id: TS-B-011
+    label: suggestion_engine_testable_improvements_only
+    entry_role: SUGGESTION_ENGINE
+    user_input: >
+      "asset_text: 'Pomáhám startupům s product-market fit. Jsem expert s 10 lety zkušeností.
+      Výsledky jsou garantovány. Zavolejte mi kdykoliv.'
+      ICP: Founder, pre-seed SaaS.
+      CTA: Call me anytime."
+    expected_entry_role: SUGGESTION_ENGINE
+    expected_behavior: >
+      SUGGESTION_ENGINE identifikuje konkrétní friction body — vágní CTA, garantovaný
+      výsledek jako proof risk, chybějící výstup a timeline. Improvements jsou
+      specifické a testovatelné A/B kroky. Žádné obecné "improve your messaging" rady.
+    pass_criteria:
+      - vágní CTA je identifikován jako friction
+      - guarantee jako proof risk je identifikován
+      - Improvements jsou formulovány jako konkrétní testovatelné změny
+      - každé improvement má "how to test"
+    fail_signals:
+      - výstup je obecná marketingová rada
+      - proof risk (garantovány výsledky) není identifikován
+      - Improvements nemají "how to test"
+
+  - scenario_id: TS-B-012
+    label: market_scout_web_required_and_sourced
+    entry_role: MARKET_SCOUT_OUTBOUND
+    user_input: >
+      "market_topic: LinkedIn outbound coaching pro B2B obchodní manažery, Evropa."
+    expected_entry_role: MARKET_SCOUT_OUTBOUND
+    expected_behavior: >
+      MARKET_SCOUT_OUTBOUND použije web research a produkuje Research Snapshot,
+      Market Offer Map s reálnými nabídkami, ICP Recommendation, Offer Recommendation,
+      Outbound Channel Plan, 14-Day Execution Plan, Validation Metrics, Sources.
+      Každé pricing tvrzení a market claim jsou citovány. Sources sekce je neprázdná.
+    pass_criteria:
+      - Sources sekce je přítomna a obsahuje alespoň 2 citované zdroje
+      - Market Offer Map obsahuje reálné nabídky s source URL
+      - ICP Recommendation identifikuje jeden best ICP
+      - žádné pricing tvrzení bez zdroje
+      - SELF-CHECK potvrzuje web used a sources cited
+    fail_signals:
+      - Sources sekce chybí nebo je prázdná
+      - pricing claims bez citace
+      - Market Offer Map obsahuje generická nebo vymyšlená data
+      - SELF-CHECK chybí nebo nekontroluje web used
+
+  - scenario_id: TS-B-013
+    label: market_scout_prefer_primary_sources
+    entry_role: MARKET_SCOUT_OUTBOUND
+    user_input: >
+      "market_topic: B2B sales coaching a training programy, Německo, Švýcarsko, Česko."
+    expected_entry_role: MARKET_SCOUT_OUTBOUND
+    expected_behavior: >
+      MARKET_SCOUT_OUTBOUND preferuje primární zdroje — firemní weby, pricing pages,
+      founder LinkedIn posts, officiální produktové stránky. Pokud existují konfliktní
+      zdroje, zobrazí oboje a označí confidence level. Nedoporučuje více než 2 outbound
+      kanály. Produkuje jeden best ICP a jeden best offer.
+    pass_criteria:
+      - Market Offer Map cituje firemní weby nebo pricing pages (ne pouze zpravodajské články)
+      - ICP Recommendation je jeden konkrétní ICP s trigger a reason
+      - Offer Recommendation je jeden konkrétní offer
+      - Outbound Channel Plan doporučuje max 2 kanály
+      - pokud konfliktní zdroje, jsou oba zobrazeny s confidence
+    fail_signals:
+      - Market Offer Map cituje pouze sekundární zdroje bez primárních
+      - doporučeny více než 2 outbound kanály
+      - ICP nebo Offer Recommendation chybí nebo jsou vágní
+
+  - scenario_id: TS-B-014
+    label: market_scout_no_uncited_pricing
+    entry_role: MARKET_SCOUT_OUTBOUND
+    user_input: >
+      "market_topic: executive coaching pro C-level, enterprise, DACH region."
+    expected_entry_role: MARKET_SCOUT_OUTBOUND
+    expected_behavior: >
+      MARKET_SCOUT_OUTBOUND neuvede žádné pricing tvrzení bez citovaného zdroje.
+      Pokud pricing data nejsou dostupná, explicitně uvede "pricing not publicly available"
+      nebo doporučí proof substitute. Outbound-first doporučení je přítomno.
+    pass_criteria:
+      - žádné pricing tvrzení bez source URL nebo citace
+      - pokud pricing není dostupné, výstup explicitně uvede důvod
+      - Outbound Channel Plan je outbound-first (ne inbound nebo branding)
+      - SELF-CHECK potvrzuje no uncited pricing
+    fail_signals:
+      - pricing tvrzení bez zdroje (např. "executive coaching stojí 5000 EUR/měsíc")
+      - Outbound Channel Plan doporučuje primárně inbound kanály
+      - SELF-CHECK chybí nebo nekontroluje uncited pricing
+
+cross_role_scenarios:
+
+  - scenario_id: TS-B-CROSS-001
+    label: asset_engine_output_to_rewrite_engine
+    description: >
+      Výstup ASSET_ENGINE je předán jako vstup REWRITE_ENGINE. Ověřuje, že
+      REWRITE_ENGINE akceptuje formát ASSET_ENGINE a přepisuje konkrétní asset
+      bez ztráty positioning terms nebo CTA.
+    entry_role: ASSET_ENGINE
+    handoff_to: REWRITE_ENGINE
+    flow: >
+      Fáze 1: ASSET_ENGINE produkuje DM opener pro Head of Sales + 6 týdnů LinkedIn coaching.
+      Fáze 2: DM opener z fáze 1 je vložen jako asset_text do REWRITE_ENGINE.
+    pass_criteria:
+      - REWRITE_ENGINE akceptuje výstup ASSET_ENGINE jako asset_text
+      - Revised Version zachovává positioning terms a CTA z ASSET_ENGINE výstupu
+      - žádná role nevylézá mimo svůj scope
+    fail_signals:
+      - REWRITE_ENGINE odmítá formát nebo přepisuje celý offer
+      - positioning terms z ASSET_ENGINE jsou ztraceny v REWRITE_ENGINE výstupu
+
+  - scenario_id: TS-B-CROSS-002
+    label: asset_engine_output_to_suggestion_engine
+    description: >
+      Výstup ASSET_ENGINE je předán jako vstup SUGGESTION_ENGINE. Ověřuje, že
+      SUGGESTION_ENGINE diagnostikuje bez přepisování a respektuje positioning terms
+      z ASSET_ENGINE výstupu.
+    entry_role: ASSET_ENGINE
+    handoff_to: SUGGESTION_ENGINE
+    flow: >
+      Fáze 1: ASSET_ENGINE produkuje DM opener + follow-up pro CTO, 4 týdny product sprint.
+      Fáze 2: DM opener z fáze 1 je vložen jako asset_text do SUGGESTION_ENGINE.
+    pass_criteria:
+      - SUGGESTION_ENGINE produkuje diagnostiku, ne přepisování
+      - Friction Points se vztahují ke konkrétnímu assetu z fáze 1
+      - positioning terms jsou zachovány jako reference, ne přepsány
+    fail_signals:
+      - SUGGESTION_ENGINE přepisuje asset místo diagnostiky
+      - Friction Points jsou generické, ne vázané na konkrétní asset text
+
+  - scenario_id: TS-B-CROSS-003
+    label: market_scout_findings_as_asset_engine_input
+    description: >
+      ICP Recommendation a Offer Recommendation z MARKET_SCOUT_OUTBOUND jsou použity
+      jako vstup pro ASSET_ENGINE. Ověřuje upstream handoff — market research → asset creation.
+    entry_role: MARKET_SCOUT_OUTBOUND
+    handoff_to: ASSET_ENGINE
+    flow: >
+      Fáze 1: MARKET_SCOUT_OUTBOUND produkuje ICP Recommendation a Offer Recommendation
+      pro LinkedIn coaching, Evropa.
+      Fáze 2: ICP a Offer z fáze 1 jsou předány do ASSET_ENGINE jako vstup.
+    pass_criteria:
+      - ASSET_ENGINE akceptuje ICP a offer z MARKET_SCOUT_OUTBOUND výstupu
+      - generované assety reflektují market-backed positioning z fáze 1
+      - Sources z MARKET_SCOUT_OUTBOUND nejsou vynalezeny v ASSET_ENGINE výstupu
+    fail_signals:
+      - ASSET_ENGINE ignoruje ICP nebo offer z fáze 1
+      - ASSET_ENGINE vymyšluje proof nebo pricing claims nepodložené fází 1
+
+  - scenario_id: TS-B-CROSS-004
+    label: role_boundary_rewrite_vs_suggestion
+    description: >
+      Kritický scope discipline test. REWRITE_ENGINE nesmí diagnostikovat
+      (to je scope SUGGESTION_ENGINE) a SUGGESTION_ENGINE nesmí přepisovat
+      (to je scope REWRITE_ENGINE).
+    test_cases:
+      - role: REWRITE_ENGINE
+        input: >
+          "Diagnostikuj tento text a dej mi seznam problémů místo přepisu.
+          asset_text: 'Pomáhám manažerům s LinkedIn.'"
+        expected: >
+          REWRITE_ENGINE odmítne diagnostiku nebo produkuje Revised Version
+          bez friction points / diagnostiky. Nepřevezme roli SUGGESTION_ENGINE.
+      - role: SUGGESTION_ENGINE
+        input: >
+          "Přepiš tento text pro lepší konverzi.
+          asset_text: 'Pomáhám manažerům s LinkedIn.'"
+        expected: >
+          SUGGESTION_ENGINE odmítne přepis nebo produkuje diagnostiku
+          bez Revised Version. Nepřevezme roli REWRITE_ENGINE.
+    pass_criteria:
+      - REWRITE_ENGINE neprodukuje ranked friction points jako primární výstup
+      - SUGGESTION_ENGINE neprodukuje Revised Version jako primární výstup
+    fail_signals:
+      - REWRITE_ENGINE produkuje diagnostiku místo rewrite
+      - SUGGESTION_ENGINE produkuje přepsaný text místo diagnostiky
+
+  - scenario_id: TS-B-CROSS-005
+    label: web_on_only_market_scout
+    description: >
+      Ověřuje, že Web je aktivní pouze pro MARKET_SCOUT_OUTBOUND a není aktivní
+      pro ASSET_ENGINE, REWRITE_ENGINE ani SUGGESTION_ENGINE. Web OFF role nesmí
+      provádět web research ani citovat live URLs z aktuálního internetu.
+    test_cases:
+      - role: ASSET_ENGINE
+        check: web_must_be_off
+      - role: REWRITE_ENGINE
+        check: web_must_be_off
+      - role: SUGGESTION_ENGINE
+        check: web_must_be_off
+      - role: MARKET_SCOUT_OUTBOUND
+        check: web_must_be_on
+    pass_criteria:
+      - ASSET_ENGINE, REWRITE_ENGINE, SUGGESTION_ENGINE neprovádějí live web research
+      - MARKET_SCOUT_OUTBOUND vždy používá web a cituje zdroje
+    fail_signals:
+      - ASSET_ENGINE, REWRITE_ENGINE nebo SUGGESTION_ENGINE citují live web zdroje
+      - MARKET_SCOUT_OUTBOUND produkuje output bez citovaných zdrojů
+
+common_failure_patterns:
+  - pattern: fake_proof
+    description: >
+      Role cituje konkrétní výsledky, benchmarky, metriky nebo loga bez podkladu.
+      Typicky v ASSET_ENGINE nebo REWRITE_ENGINE výstupu.
+    detection: >
+      Výstup obsahuje tvrzení jako "průměrná konverze je X%" nebo "klienti dosahují Y schůzek"
+      bez [TBD proof] nebo citovaného zdroje.
+    mitigation: >
+      Ověřit HARD RULES sekci v `.builder.md`. Zkontrolovat, že pravidlo
+      "mechanism + expectation + [TBD proof]" je v Instructions.
+
+  - pattern: multi_cta_output
+    description: >
+      ASSET_ENGINE produkuje více CTA nebo alternativní akční kroky v jednom výstupu.
+    detection: >
+      Výstup obsahuje více než jeden CTA sentence nebo více odkazů na různé akce.
+    mitigation: >
+      Ověřit "One CTA only" pravidlo v ASSET_ENGINE Instructions.
+      Zkontrolovat SELF-CHECK sekci — musí explicitně kontrolovat "one CTA only?".
+
+  - pattern: rewrite_scope_bleed
+    description: >
+      REWRITE_ENGINE překračuje scope do offer designu nebo positioning strategie.
+    detection: >
+      Výstup obsahuje novou offer strukturu, ICP redesign nebo positioning doporučení
+      namísto přepisu dodaného asset textu.
+    mitigation: >
+      Ověřit "No redesign of entire offer" pravidlo v REWRITE_ENGINE Instructions.
+      Zkontrolovat SELF-CHECK sekci — "did I avoid strategy redesign?".
+
+  - pattern: diagnosis_rewrite_drift
+    description: >
+      SUGGESTION_ENGINE začne přepisovat asset místo diagnostiky.
+    detection: >
+      Výstup SUGGESTION_ENGINE obsahuje Revised Version nebo přepsaný text
+      jako primární output místo Friction Points a Improvements.
+    mitigation: >
+      Ověřit "Do not rewrite" pravidlo v SUGGESTION_ENGINE Instructions.
+      Zkontrolovat SELF-CHECK sekci — "no rewrite included?".
+
+  - pattern: uncited_market_claims
+    description: >
+      MARKET_SCOUT_OUTBOUND produkuje pricing tvrzení nebo market claims bez zdroje.
+    detection: >
+      Sources sekce chybí nebo pricing claim neobsahuje citaci.
+      Výstup obsahuje tvrzení jako "trh roste o X%" bez URL.
+    mitigation: >
+      Ověřit "No uncited market claims" pravidlo v MARKET_SCOUT_OUTBOUND Instructions.
+      Zkontrolovat SELF-CHECK sekci — "sources cited?" a "no uncited pricing?".
+
+  - pattern: web_off_when_required
+    description: >
+      MARKET_SCOUT_OUTBOUND produkuje output bez použití webu. Sources sekce je
+      prázdná nebo chybí.
+    detection: >
+      Výstup neobsahuje žádné citované URL nebo Sources sekce je prázdná.
+    mitigation: >
+      Ověřit, že Web Search je v ChatGPT Builder pro MARKET_SCOUT_OUTBOUND nastaven na ON.
+      Zkontrolovat SELF-CHECK sekci — "web used?".
+
+  - pattern: web_on_when_not_allowed
+    description: >
+      ASSET_ENGINE, REWRITE_ENGINE nebo SUGGESTION_ENGINE jsou omylem nasazeny s Web ON
+      a citují live web data, která nebyla součástí vstupu.
+    detection: >
+      Výstup těchto rolí obsahuje citace live URL nebo real-time market data.
+    mitigation: >
+      Ověřit nastavení Web Search v ChatGPT Builder — musí být OFF pro všechny
+      role kromě MARKET_SCOUT_OUTBOUND.
+
+escalation:
+  escalation_rule: >
+    Pokud jakýkoli scénář skončí FAIL při prvním smoke testu:
+    1. Zkontrolovat, že Instructions byly nakopírovány celé (žádné zkrácení).
+    2. Porovnat živou verzi s referenčním `.builder.md` souborem.
+    3. Ověřit Web ON/OFF nastavení v Builder pro každou roli.
+    4. Pokud Instructions jsou správné a role stále selhává → eskalovat
+       na review příslušného .full.md souboru.
+    5. Neupravovat .builder.md bez QA review.
+    6. Nepostupovat na Batch C dokud všechny Batch B scénáře neprojdou.
+
+  release_decision_for_batch_b:
+    condition: PASS
+    criteria:
+      - všechny scénáře TS-B-001 až TS-B-014 musí projít
+      - všechny cross-role scénáře TS-B-CROSS-001 až TS-B-CROSS-005 musí projít
+      - žádný FAIL signal ve smoke checks z deployment checklistu
+      - sign-off block v batch-b-live-deployment-checklist.md vyplněn
+    on_fail:
+      action: HOLD
+      next_step: >
+        Identifikovat konkrétní scénáře v selhání, opravit Instructions v Builderu,
+        znovu spustit smoke checks. Nespouštět Batch C deployment.
+    on_pass:
+      action: PROCEED_TO_BATCH_C_PREP
+      next_step: >
+        Aktualizovat deployment_readiness v builder-deployment-sheet.yaml
+        pro ASSET_ENGINE, REWRITE_ENGINE, SUGGESTION_ENGINE a MARKET_SCOUT_OUTBOUND
+        na hodnotu PASS. Pokračovat s Batch C přípravou.
