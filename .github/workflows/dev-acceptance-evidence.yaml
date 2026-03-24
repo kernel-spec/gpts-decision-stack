@@ -1,0 +1,44 @@
+name: Dev Acceptance Evidence
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-evidence:
+    name: Run Dev Acceptance Evidence Pipeline
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run dev acceptance evidence script
+        run: node scripts/evidence/run-dev-acceptance-evidence.mjs
+        env:
+          DEV_WORKER_URL: ${{ secrets.DEV_WORKER_URL }}
+          DEV_API_KEY: ${{ secrets.DEV_API_KEY }}
+
+      - name: Upload acceptance trace artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-acceptance-trace
+          path: |
+            artifacts/dev-acceptance-trace.json
+            artifacts/dev-acceptance-summary.json
+          if-no-files-found: warn
+
+      - name: Upload acceptance evidence artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-run-output-dev
+          path: operations/evidence/acceptance-run-output-dev.yaml
+          if-no-files-found: warn
