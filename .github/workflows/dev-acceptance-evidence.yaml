@@ -1,12 +1,6 @@
 name: Dev Acceptance Evidence
 
 on:
-  push:
-    branches:
-      - "copilot/**"
-    paths:
-      - "scripts/evidence/run-dev-acceptance-evidence.mjs"
-      - ".github/workflows/dev-acceptance-evidence.yaml"
   workflow_dispatch:
 
 jobs:

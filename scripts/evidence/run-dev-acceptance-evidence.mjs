@@ -1140,21 +1140,24 @@ function yamlValue(v, indent) {
   if (typeof v === "string") {
     // Use block scalar for long strings, quoted for short
     if (v.includes("\n") || v.length > 80) {
-      return `>-\n${" ".repeat(indent + 2)}${v.replace(/\n/g, `\n${" ".repeat(indent + 2)}`)}`;
+      const childPad = " ".repeat(indent + 2);
+      return `>-\n${childPad}${v.replace(/\n/g, `\n${childPad}`)}`;
     }
     return `"${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
   }
   if (Array.isArray(v)) {
     if (v.length === 0) return "[]";
-    return "\n" + v.map((item) => `${" ".repeat(indent)}- ${yamlValue(item, indent + 2)}`).join("\n");
+    const pad = " ".repeat(indent);
+    return "\n" + v.map((item) => `${pad}- ${yamlValue(item, indent + 2)}`).join("\n");
   }
   if (typeof v === "object") {
     const entries = Object.entries(v);
     if (entries.length === 0) return "{}";
+    const pad = " ".repeat(indent);
     return (
       "\n" +
       entries
-        .map(([k, val]) => `${" ".repeat(indent)}${k}: ${yamlValue(val, indent + 2)}`)
+        .map(([k, val]) => `${pad}${k}: ${yamlValue(val, indent + 2)}`)
         .join("\n")
     );
   }
