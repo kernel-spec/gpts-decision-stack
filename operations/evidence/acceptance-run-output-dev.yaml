@@ -2,8 +2,8 @@ schema_version: "1.0.0"
 artifact_type: acceptance_run_output
 environment: dev
 execution_date: "2026-03-24"
-started_at: "2026-03-24T16:07:35.990Z"
-completed_at: "2026-03-24T16:07:38.204Z"
+started_at: "2026-03-24T17:06:34.098Z"
+completed_at: "2026-03-24T17:06:36.353Z"
 backend_target: "https://gpts-decision-stack-dev.victorain92.workers.dev"
 auth_mode: api_key_header_x-api-key
 test_run_scope:
