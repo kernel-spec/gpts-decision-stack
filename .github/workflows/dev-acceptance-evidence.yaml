@@ -1,0 +1,51 @@
+name: Dev Acceptance Evidence
+
+on:
+  push:
+    branches:
+      - "copilot/**"
+    paths:
+      - "scripts/evidence/run-dev-acceptance-evidence.mjs"
+      - ".github/workflows/dev-acceptance-evidence.yaml"
+  workflow_dispatch:
+
+jobs:
+  run-acceptance-evidence:
+    name: Run Acceptance Test Evidence (AC-001 – AC-012)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run acceptance evidence script
+        run: node scripts/evidence/run-dev-acceptance-evidence.mjs
+        env:
+          DEV_WORKER_URL: ${{ secrets.DEV_WORKER_URL }}
+          DEV_API_KEY: ${{ secrets.DEV_API_KEY }}
+
+      - name: Upload evidence artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-run-output-dev
+          path: operations/evidence/acceptance-run-output-dev.yaml
+          if-no-files-found: warn
+
+      - name: Commit evidence to branch
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add operations/evidence/acceptance-run-output-dev.yaml
+          git diff --staged --quiet || git commit -m "test(governance): persist acceptance run evidence from CI [evidence-only]"
+          git push
