@@ -10,7 +10,7 @@ info:
     exclusively in the Cloudflare Workers backend service.
 
 servers:
-  - url: https://gpts-decision-stack-dev.victorain92.workers.dev
+  - url: https://gpts-decision-stack.victorain92.workers.dev
     description: Development backend service (Cloudflare Workers)
 
 security:

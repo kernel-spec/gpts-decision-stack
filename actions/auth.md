@@ -4,7 +4,7 @@
 
 Systém `gpts-decision-stack` využívá API klíče pro autentizaci GPT agentů
 k backend službě. Každý GPT deployment slot obdrží unikátní API klíč spravovaný
-prostřednictvím Cloudflare Worker Secrets.
+prostřednictvím Google Secret Manager.
 
 ## Metoda autentizace
 
@@ -12,15 +12,15 @@ prostřednictvím Cloudflare Worker Secrets.
 |---|---|
 | Typ | API klíč |
 | HTTP header | `X-API-Key` |
-| Správa klíčů | Cloudflare Worker Secrets |
+| Správa klíčů | Google Secret Manager |
 | Rotace | každých 90 dní |
 | Scope | jeden klíč per GPT deployment slot |
 
 ## Injektování klíče do GPT slotu
 
-API klíč je nastaven jako Cloudflare Worker Secret (`wrangler secret put API_KEY_SECRET`)
-a injektován do prostředí workeru za běhu. Klíč nesmí být součástí systémového promptu,
-nesmí být přenášen v konverzaci a nesmí být ukládán modelem.
+API klíč je injektován do GPT deployment slotu jako service secret v okamžiku
+nasazení. Klíč nesmí být součástí systémového promptu, nesmí být přenášen
+v konverzaci a nesmí být ukládán modelem.
 
 Injektování klíče probíhá výhradně prostřednictvím deployment procesu
 popsaného v `release/deployment_target.yaml`.
@@ -45,7 +45,7 @@ popsaného v `release/deployment_target.yaml`.
 
 ## Audit přístupu
 
-Každý pokus o přístup k action endpointu je zaznamenán v Cloudflare Workers Logs
+Každý pokus o přístup k action endpointu je zaznamenán v Cloud Logging
 ve strukturovaném JSON formátu se dvěma povinými hodnotami:
 - identifikátor GPT slotu (`submitted_by`)
 - identifikátor pipeline session (`session_id`)
