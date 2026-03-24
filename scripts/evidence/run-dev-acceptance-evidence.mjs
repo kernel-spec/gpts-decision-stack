@@ -16,6 +16,8 @@
  * Required env:
  *   DEV_WORKER_URL  — base URL of the dev Cloudflare Worker
  *   DEV_API_KEY     — API key for X-API-Key header
+ *
+ * @restored hotfix/restore-acceptance-runner — real runner, replaces placeholder stub
  */
 
 import { writeFileSync, mkdirSync } from "node:fs";
