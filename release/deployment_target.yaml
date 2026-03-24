@@ -17,25 +17,27 @@ backend_service:
   runtime: Cloudflare Workers (serverless edge)
 
   dev:
-    worker_name: gpts-decision-stack-worker-dev
+    worker_name: gpts-decision-stack-dev
     d1_database: gpts-decision-stack-db-dev
     r2_bucket: gpts-decision-stack-artifacts-dev
     kv_namespace: POLICY_STORE (dev)
-    url: https://gpts-decision-stack-worker-dev.<account>.workers.dev
+    url: https://gpts-decision-stack-dev.victorain92.workers.dev
     note: >
-      URL se nastaví po deploymentu. Nejedná se o placeholder skutečně
-      provisioned produkční infrastruktury — jde o konfigurační šablonu.
+      Worker name gpts-decision-stack-dev musí přesně odpovídat poli name
+      v sekci [env.dev] souboru backend/worker/wrangler.toml.
+      URL je ve tvaru {worker-name}.{account-subdomain}.workers.dev.
 
   prod:
-    worker_name: gpts-decision-stack-worker
+    worker_name: gpts-decision-stack
     d1_database: gpts-decision-stack-db
     r2_bucket: gpts-decision-stack-artifacts
     kv_namespace: POLICY_STORE (prod)
-    url: https://gpts-decision-stack-worker.<account>.workers.dev
+    url: https://gpts-decision-stack.victorain92.workers.dev
     custom_domain: nakonfigurovat po provisionování (volitelné)
     note: >
+      Worker name gpts-decision-stack musí přesně odpovídat poli name
+      v sekci [env.prod] souboru backend/worker/wrangler.toml.
       URL a custom domain se nastaví po prvním úspěšném deploymentu.
-      Žádná live produkční URL není v tomto souboru vynalezena.
 
 gpt_deployment:
   description: >

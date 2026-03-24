@@ -1,0 +1,151 @@
+schema_version: "1.0.0"
+artifact_type: binding_target_diagnosis
+environment: dev
+diagnosis_date: "2026-03-24"
+trigger: >
+  Acceptance tests (AC-001 – AC-012) failing with
+  D1_ERROR: no such table: sessions after remote migration rerun.
+  /health = PASS, all 12 session-touching tests = FAIL.
+
+# ---------- Findings ----------
+
+finding_1_runtime_binding_name:
+  question: What D1 binding name does the code use at runtime?
+  answer: DECISIONS_DB
+  evidence:
+    - backend/worker/src/types/index.ts — "DECISIONS_DB: D1Database" in Env interface
+    - backend/worker/src/handlers/session.ts — env.DECISIONS_DB passed to stateService
+    - backend/worker/src/services/state.ts — db parameter typed as Env["DECISIONS_DB"]
+  verdict: CORRECT — binding name is consistent across code, types, and wrangler.toml
+
+finding_2_dev_wrangler_binding:
+  question: What D1 binding does the dev worker receive in wrangler.toml?
+  answer:
+    binding: DECISIONS_DB
+    database_name: gpts-decision-stack-db-dev
+    database_id: "597ae973-2869-4ebb-89bd-1ebc62ac6674"
+  evidence:
+    - backend/worker/wrangler.toml — [[env.dev.d1_databases]] section
+  verdict: CORRECT — dev binding is properly declared
+
+finding_3_url_mismatch:
+  question: Could DEV_WORKER_URL point to a different worker/env than the migrated DB target?
+  answer: YES — prior to this fix, actions/openapi.yaml carried the wrong server URL.
+  details:
+    openapi_yaml_before_fix: https://gpts-decision-stack.victorain92.workers.dev
+    openapi_yaml_description: "Development backend service (Cloudflare Workers)"
+    actual_dev_worker_url: https://gpts-decision-stack-dev.victorain92.workers.dev
+    openapi_openai_yaml_url: https://gpts-decision-stack-dev.victorain92.workers.dev
+  impact: >
+    If an operator configured DEV_WORKER_URL using the openapi.yaml server URL
+    (https://gpts-decision-stack.victorain92.workers.dev — the DEFAULT/prod worker),
+    acceptance tests would hit the DEFAULT worker which is bound to
+    gpts-decision-stack-db (d10b83ff-...), NOT gpts-decision-stack-db-dev.
+    The CI migration step only applies to gpts-decision-stack-db-dev, so the
+    default DB would have no sessions table → D1_ERROR: no such table: sessions.
+  verdict: URL MISMATCH — fixed in this change
+
+finding_4_deployment_target_worker_name:
+  question: Does release/deployment_target.yaml accurately describe the dev worker?
+  answer: NO — worker_name was gpts-decision-stack-worker-dev, should be gpts-decision-stack-dev.
+  before_fix:
+    worker_name: gpts-decision-stack-worker-dev
+    url: https://gpts-decision-stack-worker-dev.<account>.workers.dev
+  after_fix:
+    worker_name: gpts-decision-stack-dev
+    url: https://gpts-decision-stack-dev.victorain92.workers.dev
+  evidence:
+    - backend/worker/wrangler.toml — [env.dev] name = "gpts-decision-stack-dev"
+  verdict: WORKER NAME MISMATCH — fixed in this change
+
+finding_5_prod_missing_bindings:
+  question: Are production D1/R2/KV bindings declared in wrangler.toml?
+  answer: NO — [env.prod] had only name = "gpts-decision-stack", zero bindings.
+  impact: >
+    In wrangler, environment-specific bindings do NOT inherit from the global
+    [[d1_databases]] / [[r2_buckets]] / [[kv_namespaces]] sections.
+    A prod deployment would result in a worker with NO DECISIONS_DB binding,
+    causing every DB operation to throw at runtime.
+  verdict: MISSING PROD BINDINGS — fixed in this change (added [[env.prod.d1_databases]],
+    [[env.prod.r2_buckets]], [[env.prod.kv_namespaces]])
+
+finding_6_migration_remote_flag:
+  question: Is the CI migration apply command unambiguously targeting the remote D1?
+  answer: >
+    Before fix: wrangler d1 migrations apply gpts-decision-stack-db-dev --env dev
+    (no --remote flag). While wrangler v3 defaults to remote for migrations apply,
+    the absence of --remote leaves room for operator confusion and potential
+    version-specific behaviour changes.
+  verdict: AMBIGUOUS — fixed by adding --remote flag explicitly
+
+finding_7_auth_md_incorrect_references:
+  question: Does actions/auth.md correctly describe the key management platform?
+  answer: NO — auth.md referenced "Google Secret Manager" and "Cloud Logging".
+  correct_platform: Cloudflare Worker Secrets (wrangler secret put API_KEY_SECRET)
+  correct_logging: Cloudflare Workers Logs
+  verdict: INCORRECT PLATFORM REFERENCES — fixed in this change
+
+# ---------- Root cause summary ----------
+
+root_cause:
+  primary: >
+    actions/openapi.yaml server URL pointed to the DEFAULT worker
+    (gpts-decision-stack.victorain92.workers.dev) instead of the DEV worker
+    (gpts-decision-stack-dev.victorain92.workers.dev). The default worker is
+    bound to gpts-decision-stack-db, not gpts-decision-stack-db-dev.
+    CI migrations only run against gpts-decision-stack-db-dev, so the default
+    DB has no sessions table. Any operator or tooling that derived DEV_WORKER_URL
+    from openapi.yaml would hit the wrong worker → D1_ERROR: no such table: sessions.
+  secondary:
+    - release/deployment_target.yaml dev worker_name did not match wrangler.toml
+    - [env.prod] missing all D1/R2/KV bindings in wrangler.toml
+    - --remote flag absent from CI migration command
+    - auth.md referenced wrong infrastructure platform
+
+# ---------- Changes made ----------
+
+changes:
+  - file: actions/openapi.yaml
+    change: Fix server URL to https://gpts-decision-stack-dev.victorain92.workers.dev
+  - file: release/deployment_target.yaml
+    change: >
+      Fix dev worker_name to gpts-decision-stack-dev and URL to
+      https://gpts-decision-stack-dev.victorain92.workers.dev
+  - file: backend/worker/wrangler.toml
+    change: Add [[env.prod.d1_databases]], [[env.prod.r2_buckets]], [[env.prod.kv_namespaces]]
+  - file: .github/workflows/deploy-workers.yaml
+    change: >
+      Add --remote to dev migration command; add prod migration step before
+      prod deployment
+  - file: actions/auth.md
+    change: >
+      Replace "Google Secret Manager" with "Cloudflare Worker Secrets";
+      replace "Cloud Logging" with "Cloudflare Workers Logs"
+
+# ---------- Operator action required ----------
+
+operator_actions:
+  immediate:
+    - description: >
+        Verify DEV_WORKER_URL GitHub secret is set to the correct dev worker URL.
+      expected_value: https://gpts-decision-stack-dev.victorain92.workers.dev
+      check_command: >
+        curl https://gpts-decision-stack-dev.victorain92.workers.dev/health
+        should return {"ok":true,...}
+    - description: >
+        Manually apply migrations to the dev D1 database if the CI deploy-dev
+        job has not yet run successfully since migrations were added.
+      command: >
+        cd backend/worker &&
+        npx wrangler d1 migrations apply gpts-decision-stack-db-dev --env dev --remote
+    - description: >
+        Re-run the dev-acceptance-evidence workflow after confirming the above.
+      action: GitHub Actions → Dev Acceptance Evidence → Run workflow
+  notes:
+    - >
+      If /health returns PASS but session operations return D1_ERROR, the worker
+      is live but its D1 database has not had migrations applied. Apply migrations
+      and re-run acceptance tests.
+    - >
+      The --remote flag in wrangler d1 migrations apply is now explicit in CI.
+      This eliminates any ambiguity about local vs remote target.
