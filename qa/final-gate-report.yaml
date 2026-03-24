@@ -28,9 +28,6 @@ runtime_validation:
   evidence_level: STRONG_PARTIAL
   evidence_ref:
     - operations/evidence/audit-evidence-bundle-dev.yaml
-  acceptance_test_evidence_ref:
-    - operations/evidence/acceptance-run-output-dev.yaml
-  acceptance_test_evidence_status: BLOCKED
   proven:
     - health
     - create_session
@@ -40,8 +37,6 @@ runtime_validation:
   note: >
     Dev runtime evidence je silná a explicitně doložená, ale nepřepisuje
     fail-closed governed deployment readiness verdict.
-    Acceptance test evidence je BLOCKED pending workflow_dispatch execution
-    (viz operations/evidence/acceptance-run-output-dev.yaml).
 
 layer_status:
   control_plane_prompts:
@@ -255,23 +250,6 @@ provisioning_gaps:
     description: >
       Acceptance testy existují jako YAML definice. DEPLOY-READY STACK
       vyžaduje jejich evaluaci (ne pouze definici) — viz operations/Definition_of_Done.md.
-    evidence_infrastructure_ready: true
-    evidence_script: scripts/evidence/run-dev-acceptance-evidence.mjs
-    evidence_workflow: .github/workflows/dev-acceptance-evidence.yaml
-    evidence_output: operations/evidence/acceptance-run-output-dev.yaml
-    execution_status: BLOCKED
-    execution_blocker: >
-      GitHub CI workflow (dev-acceptance-evidence.yaml) musí být spuštěn přes
-      workflow_dispatch vlastníkem repozitáře. Automatický push-triggered run byl
-      blokován GitHub security policy (action_required, run #23488113279).
-      Po spuštění workflow skript provede volání na live dev Worker
-      (https://gpts-decision-stack-dev.victorain92.workers.dev) a výsledky
-      zapíše do operations/evidence/acceptance-run-output-dev.yaml.
-    required_actions:
-      - "Go to GitHub Actions → Dev Acceptance Evidence → Run workflow"
-      - "Verify DEV_WORKER_URL and DEV_API_KEY secrets are set"
-      - "Review committed operations/evidence/acceptance-run-output-dev.yaml for PASS verdict"
-      - "Update qa/final-gate-report.yaml PROV-002 to resolved when all 12 tests PASS"
 
 resolved_gaps:
   - id: RESOLVED-001
