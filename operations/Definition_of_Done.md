@@ -54,7 +54,7 @@ Repozitář je DEPLOY-READY STACK pokud navíc existují a jsou ověřeny:
 - [ ] QA gate report s `overall_status: PASS`
 - [ ] Acceptance testy prošly evaluací (ne pouze definicí)
 
-**Aktuální stav:** NESPLNĚNO — backend binding je IMPLEMENTATION-BACKED, ale acceptance testy nebyly evaluovány oproti live backendu (PROV-002) a QA gate report stále eviduje `overall_status: FAIL` (fail-closed governance).
+**Aktuální stav:** NESPLNĚNO — backend binding je IMPLEMENTATION-BACKED a acceptance testy byly evaluovány a prošly (12/12 PASS, RESOLVED-011, PROV-002 uzavřen). Zbývá pouze PROV-001 (provisioning produkční Cloudflare infrastruktury) a QA gate report eviduje `overall_status: FAIL` (fail-closed governance) dokud není prod provisioning dokončen.
 
 ---
 

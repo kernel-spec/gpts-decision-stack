@@ -118,15 +118,14 @@ current_gate_position:
 
   remaining_blockers:
     - authoritative_final_gate_still_fail
-    - executed_governed_gate_evidence_incomplete
     - staging_promotion_readiness_not_evidenced
     - production_promotion_readiness_not_evidenced
 
   reason: >
     Repo vrstvy jsou fyzicky přítomny (repo_integrity_status PASS) a dev runtime
     evidence je explicitně doložena (dev_runtime_evidence PASS) prostřednictvím
-    operations/evidence/audit-evidence-bundle-dev.yaml. Governed deployment
-    readiness však zůstává FAIL a staging/prod zůstávají BLOCKED, protože
-    authoritative final gate artifacts stále evidují FAIL a executed governed gate
-    evidence pro DEPLOY-READY STACK není kompletní. Runtime úspěch v dev nesmí
-    přepsat fail-closed promotion governance.
+    operations/evidence/audit-evidence-bundle-dev.yaml. Governed acceptance evidence
+    (AC-001 až AC-012) byla evaluována a prošla (RESOLVED-011, PROV-002 uzavřen).
+    Governed deployment readiness však zůstává FAIL a staging/prod zůstávají BLOCKED,
+    protože produkční Cloudflare infrastruktura není provisionována (PROV-001).
+    Runtime úspěch v dev nesmí přepsat fail-closed promotion governance.
