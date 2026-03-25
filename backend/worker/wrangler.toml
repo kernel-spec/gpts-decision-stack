@@ -46,3 +46,16 @@ id = "02dbad5ba7dd496f8f44865fba72ebed"
 
 [env.prod]
 name = "gpts-decision-stack"
+
+[[env.prod.d1_databases]]
+binding = "DECISIONS_DB"
+database_name = "gpts-decision-stack-db"
+database_id = "d10b83ff-29a0-4ddd-99ac-c8fecf0a8ef3"
+
+[[env.prod.r2_buckets]]
+binding = "ARTIFACTS_BUCKET"
+bucket_name = "gpts-decision-stack-artifacts"
+
+[[env.prod.kv_namespaces]]
+binding = "POLICY_STORE"
+id = "b406728e872e41c8ac865946295ad4fc"
