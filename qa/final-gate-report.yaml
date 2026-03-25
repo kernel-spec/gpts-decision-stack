@@ -1,7 +1,7 @@
 schema_version: "1.0.0"
 artifact_type: qa_final_gate_report
 report_date: "2026-03-14"
-report_updated: "2026-03-17"
+report_updated: "2026-03-25"
 repository: gpts-decision-stack
 description: >
   Finální QA gate report pro repozitář gpts-decision-stack.
@@ -18,9 +18,11 @@ summary: >
   Repozitář obsahuje kompletní implementační strukturu systému a backend je
   IMPLEMENTATION-BACKED. Dev runtime evidence je explicitně doložena a silná
   (ACTIONS, STRONG_PARTIAL), včetně pipeline progression až do release_decision.
+  Governed acceptance evidence (AC-001 až AC-012) je nyní doložena a PASS
+  (operations/evidence/acceptance-run-output-dev.yaml). PROV-002 je uzavřen.
   Governed deployment readiness však zůstává FAIL a bundle_classification zůstává
-  REPO-READY SKELETON, protože authoritative gate evidence pro DEPLOY-READY STACK
-  není ještě kompletní.
+  REPO-READY SKELETON, protože produkční Cloudflare infrastruktura není ještě
+  provisionována (PROV-001).
 
 runtime_validation:
   status: PASS
@@ -28,14 +30,20 @@ runtime_validation:
   evidence_level: STRONG_PARTIAL
   evidence_ref:
     - operations/evidence/audit-evidence-bundle-dev.yaml
+  acceptance_test_evidence_ref:
+    - operations/evidence/acceptance-run-output-dev.yaml
+  acceptance_test_evidence_status: PASS
   proven:
     - health
     - create_session
     - artifact_submission
     - get_session_state
     - state_machine_progression_to_release_decision
+    - acceptance_scenarios_AC-001_through_AC-012
   note: >
-    Dev runtime evidence je silná a explicitně doložená, ale nepřepisuje
+    Dev runtime evidence je silná a explicitně doložená. Governed acceptance evidence
+    (AC-001 až AC-012) byla evaluována a prošla — doloženo v
+    operations/evidence/acceptance-run-output-dev.yaml. Tato evidence nepřepisuje
     fail-closed governed deployment readiness verdict.
 
 layer_status:
@@ -244,12 +252,6 @@ provisioning_gaps:
       - "wrangler secret put API_KEY_SECRET (pro prod prostředí)"
       - "Verifikovat produkční D1/R2/KV prostředky jsou provisionovány (IDs jsou v backend/worker/wrangler.toml)"
       - "wrangler d1 execute gpts-decision-stack-db --file backend/worker/migrations/0001_init.sql (prod)"
-  - id: PROV-002
-    layer: acceptance_tests
-    severity: informational
-    description: >
-      Acceptance testy existují jako YAML definice. DEPLOY-READY STACK
-      vyžaduje jejich evaluaci (ne pouze definici) — viz operations/Definition_of_Done.md.
 
 resolved_gaps:
   - id: RESOLVED-001
@@ -288,6 +290,14 @@ resolved_gaps:
       Cloudflare Worker implementace fyzicky existuje v backend/worker/.
       Spustitelný TypeScript, backend/worker/wrangler.toml (D1/R2/KV bindings),
       GitHub Actions deploy workflow a D1 schema migrace jsou přítomny.
+  - id: RESOLVED-011
+    layer: acceptance_tests
+    prov_id: PROV-002
+    description: >
+      Všechny acceptance scénáře AC-001 až AC-012 byly evaluovány a prošly
+      (12/12 PASS, 191 kroků) proti live dev Cloudflare Workeru.
+      Evidence: operations/evidence/acceptance-run-output-dev.yaml
+      (workflow run 23537156141, 2026-03-25T10:51:25Z).
 
 audit_note: >
   Tento report nesmí být ručně upraven za účelem zlepšení hodnocení.

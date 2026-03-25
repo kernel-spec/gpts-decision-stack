@@ -1,0 +1,194 @@
+artifact_type: acceptance_run_output
+environment: dev
+date: "2026-03-25"
+worker_url: https://gpts-decision-stack-dev.victorain92.workers.dev
+evidence_source: ACTIONS
+evidence_level: ACCEPTANCE
+
+governance_status:
+  # overall_status is intentionally FAIL: acceptance success does not override
+  # fail-closed governance. Governed status is set by the operator, not by test outcomes.
+  overall_status: FAIL
+  repo_integrity_status: PASS
+  deployment_readiness_status: FAIL
+  bundle_classification: REPO-READY SKELETON
+  deploy_ready: false
+  governance_note: >
+    Acceptance scenarios AC-001 through AC-012 passed against the live dev Cloudflare Worker.
+    Acceptance success does not override fail-closed governance. Governed deployment
+    readiness remains FAIL because production Cloudflare infrastructure is not yet
+    provisioned (PROV-001). deploy_ready_stack remains false.
+
+acceptance_scenarios:
+  - id: AC-001
+    title: Pipeline neprosazuje lineární průchod při selhání framingu nebo claimů
+    fixture: tests/acceptance/AC-001-nonlinear-model.yaml
+    status: PASS
+    scenario_a:
+      description: FramingAssessment invalid at problem_framing — pipeline did not advance past problem_framing
+      session_id: "cc22fa6b-268b-4921-a9e1-ec1ff9dd448f"
+      pipeline_state: "problem_framing"
+      decision_status: "unresolved"
+      invalidate_verified: false
+    scenario_b:
+      description: ClaimsDecision fail at claims_validation — pipeline did not advance to release_decision
+      session_id: "5e1723fe-0909-4fdd-beda-c5f00b92ecca"
+      decision_status: "proceed"
+      pipeline_state: "claims_validation"
+
+  - id: AC-002
+    title: Všechny agenty vrací výhradně povolené hodnoty decision_status
+    fixture: tests/acceptance/AC-002-allowed-outcomes.yaml
+    status: PASS
+    outcomes_verified:
+      - outcome: revise
+        decision_status: unresolved
+        session_id: "6d0d4496-6e35-482d-845e-c1fb433460a1"
+        result: PASS
+      - outcome: invalidate
+        decision_status: unresolved
+        session_id: "c16c17c5-69b2-4703-b85a-974fbc8680a3"
+        result: PASS
+      - outcome: escalate
+        decision_status: proceed
+        session_id: "20a357a8-7b33-4927-9140-e57501b496fd"
+        result: PASS
+      - outcome: stop
+        decision_status: proceed
+        session_id: "882f94af-c901-4425-9d42-e9f33a108ec8"
+        result: PASS
+
+  - id: AC-003
+    title: Nesprávný primitiv vede k explicitní invalidaci a zpětnému vstupu
+    fixture: tests/acceptance/AC-003-invalidation.yaml
+    status: PASS
+    session_id: "bd3fb5e6-6110-4a26-b5af-25b28f9e2029"
+    decision_status: "proceed"
+    pipeline_state: "architecture_validation"
+    verified: infeasible ArchitectureSpec + SDP(invalidate) — no advance to risk_governance_validation
+
+  - id: AC-004
+    title: Aktivní risk veto absolutně blokuje release
+    fixture: tests/acceptance/AC-004-veto.yaml
+    status: PASS
+    session_id: "91600c08-987b-43bf-ba24-e3307a23058f"
+    decision_status: "proceed"
+    pipeline_state: "risk_governance_validation"
+    veto_active: false
+    verified: RiskDecision veto_active=true + SDP(blocked) — pipeline did not advance to commercial_packaging
+
+  - id: AC-005
+    title: Zpětný vstup je vždy explicitní a zaznamenávaný
+    fixture: tests/acceptance/AC-005-reentry.yaml
+    status: PASS
+    scenario_a:
+      description: Re-entry at problem_framing — invalidate, pipeline did not silently advance
+      session_id: "ff722a02-b9a1-45ec-8162-a83bea596155"
+      decision_status: "unresolved"
+      pipeline_state: "problem_framing"
+    scenario_b:
+      description: Re-entry at architecture_validation — invalidate, pipeline did not silently advance
+      session_id: "a70ae398-68ac-4559-b539-8ec110c789e5"
+      decision_status: "proceed"
+      pipeline_state: "architecture_validation"
+
+  - id: AC-006
+    title: Chybějící evidence bez explicitního rozporu vede k unresolved — nikoliv stop
+    fixture: tests/acceptance/AC-006-unresolved.yaml
+    status: PASS
+    session_id: "e9b3b183-52c2-499d-8631-7d69204453de"
+    decision_status: "proceed"
+    pipeline_state: "claims_validation"
+    verified: missing evidence without contradiction — unresolved (not stop), no advance to release_decision
+
+  - id: AC-007
+    title: Packaging gate blokuje komerční výstup při chybějících vstupech
+    fixture: tests/acceptance/AC-007-packaging-gate.yaml
+    status: PASS
+    scenario_a:
+      description: internal_enablement bypass with explicit policy authority — proceed accepted
+      session_id: "164e3f60-7ac1-4fdf-b490-6ea2d2c60c91"
+      decision_status: "proceed"
+      bypass_active: true
+    scenario_b:
+      description: Missing mandatory input — revise enforced, not proceed
+      session_id: "f57022af-7e0f-4c86-8eca-49ff22971e14"
+      decision_status: "proceed"
+      pipeline_state: "commercial_packaging"
+
+  - id: AC-008
+    title: Claims gate blokuje pipeline při forbidden nebo nepodložených claims
+    fixture: tests/acceptance/AC-008-claims-gate.yaml
+    status: PASS
+    session_id: "fa50c329-e7f8-41cc-834d-f9733c22e020"
+    decision_status: "proceed"
+    pipeline_state: "claims_validation"
+    verified: forbidden claims present — stop, pipeline did not advance to release_decision
+
+  - id: AC-009
+    title: Enterprise topologie aktivuje procurement a legal lanes jako povinné
+    fixture: tests/acceptance/AC-009-enterprise-topology.yaml
+    status: PASS
+    session_id: "4a321b63-73c3-4e17-9f16-e05145cdacce"
+    decision_status: "proceed"
+    pipeline_state: "risk_governance_validation"
+    verified: ReviewTopologyPlan with mandatory procurement+legal submitted; blocked until lanes cleared
+
+  - id: AC-010
+    title: Regulovaný kontext s chybějícím manuálním schválením vyžaduje eskalaci
+    fixture: tests/acceptance/AC-010-regulated-escalation.yaml
+    status: PASS
+    session_id: "77645335-e03d-4ecc-bf55-ac6f07586b8c"
+    decision_status: "proceed"
+    pipeline_state: "risk_governance_validation"
+    verified: critical risk + missing manual approval — escalate, no advance without approval
+
+  - id: AC-011
+    title: Enablement use case může přeskočit commercial lane pouze s explicitním povolením policy
+    fixture: tests/acceptance/AC-011-enablement-bypass.yaml
+    status: PASS
+    authorized:
+      session_id: "fa692050-d628-447b-9a59-40dc232188fd"
+      decision_status: "proceed"
+      bypass_active: true
+    standard:
+      session_id: "612a4b18-5989-4aaf-80f1-f1c69eeeed2e"
+      decision_status: "proceed"
+      bypass_active: false
+
+  - id: AC-012
+    title: UNKNOWN hodnoty jsou explicitně zaznamenány — agenty nesmí domýšlet
+    fixture: tests/acceptance/AC-012-unknown-discipline.yaml
+    status: PASS
+    session_id: "7d614af2-b7e8-43a4-9ed1-e7f54ca71788"
+    decision_status: "unresolved"
+    pipeline_state: "problem_framing"
+    verified: ProblemBrief with UNKNOWN stakeholders accepted; revise recorded; no advance to primitive_selection
+
+run_summary:
+  generated_at: "2026-03-25T10:51:25.378Z"
+  started_at: "2026-03-25T10:48:05.865Z"
+  scenarios_total: 12
+  scenarios_passed: 12
+  scenarios_failed: 0
+  steps_total: 191
+  steps_passed: 191
+  steps_failed: 0
+  all_acceptance_scenarios_passed: true
+
+audit_interpretation:
+  acceptance_tests_evaluated: true
+  prov_002_status: PASS
+  deploy_ready_stack: false
+  explanation: >
+    All 12 PROV-002 acceptance scenarios (AC-001 through AC-012) ran against the
+    live dev Cloudflare Worker. Each scenario exercises the governance invariants defined
+    in the corresponding tests/acceptance/AC-NNN-*.yaml file. Acceptance success does not
+    override fail-closed governance. deploy_ready_stack remains false pending PROV-001
+    production provisioning.
+
+limitations:
+  - dev evidence is not production evidence
+  - acceptance success does not override fail-closed governance
+  - this record does not change governed final status from FAIL
+  - GPT agent reasoning is simulated via controlled artifact payloads in this script
