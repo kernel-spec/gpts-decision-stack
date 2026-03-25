@@ -622,7 +622,6 @@ async function runAC007() {
   assertNotState(sB.pipeline_state, "claims_validation", "AC-007B/revise must not advance to claims_validation");
   // Soft verification: confirm revise from SDP response payload or decision-log / artifact record where available
   const ac007bReviseVerified =
-    sB.decision_status === "revise" ||
     sdpResultB.body?.data?.outcome === "revise" ||
     (Array.isArray(sB.decision_log) && sB.decision_log.some((e) => e.outcome === "revise"));
   log("AC-007B/verify", "GET", `/session/${sidB}`, 200, true,
