@@ -1,0 +1,134 @@
+schema_version: "1.0.0"
+artifact_type: custom_gpt_pilot_audit
+pilot_id: "PILOT-003"
+pilot_name: "REWRITE_ENGINE"
+date: "2026-03-26"
+status: PASS
+
+operator_context:
+  environment: "ChatGPT web + ChatGPT iOS"
+  visibility: "private"
+  model: "GPT-5.4 Thinking"
+  capabilities:
+    web_browsing: false
+    image_generation: false
+    code_interpreter: false
+    actions_enabled: false
+    knowledge_files_attached: false
+
+builder_config:
+  name: "REWRITE_ENGINE"
+  description: >
+    Přepisuje konkrétní asset pro vyšší jasnost a konverzi bez fake proof
+    a bez ztráty původního intentu. Je úzká rewrite role, ne strategy role.
+  prompt_source_type: "hybrid_builder_version"
+  canonical_repo_source: "custom_gpts/commercial_layer/prompt_sources/REWRITE_ENGINE.full.md"
+
+test_scope:
+  objectives:
+    - "Ověřit boundary discipline při nevalidním vstupu"
+    - "Ověřit plnohodnotný rewrite výkon při validním vstupu"
+    - "Ověřit web/iOS parity"
+    - "Ověřit rewrite boundary control — bez full-regeneration driftu"
+    - "Ověřit proof safety při nepodložených nebo zakázaných claims"
+  test_groups:
+    - "boundary_discipline"
+    - "web_functional_audit"
+    - "ios_functional_audit"
+    - "web_ios_parity"
+    - "rewrite_boundary_control"
+    - "proof_safety"
+
+boundary_discipline:
+  verdict: PASS
+  notes:
+    - "Při nevalidním vstupu GPT nehalucinoval rewrite."
+    - "Správně vrátil stop message pro chybějící asset_text."
+    - "Držel rewrite-only roli a nepřešel do strategy ani offer-design role."
+
+web_functional_audit:
+  verdict: PASS
+  notes:
+    - "Při validním inputu vytvořil jednu použitelnou Revised Version."
+    - "Zachoval původní intent assetu."
+    - "Zpřesnil CTA."
+    - "Zlepšil clarity a specificity."
+    - "Nevymyslel fake proof ani fake metrics."
+    - "Dodržel 3 required output blocks."
+  key_findings:
+    - "Rewrite zvýšil ICP relevance bez přestavby celé nabídky."
+    - "Odstranil vágní a nedoložitelné formulace."
+    - "Přepsaný asset zůstal použitelný jako stejný asset type."
+
+ios_functional_audit:
+  verdict: PASS
+  notes:
+    - "Zachována stejná rewrite logika jako na webu."
+    - "Kvalita odpovědi byla srovnatelná s webem."
+    - "Nebyla pozorována zásadní mobilní degradace."
+  key_findings:
+    - "iOS zachoval stejnou 3-blokovou strukturu výstupu."
+    - "iOS držel proof-safe jazyk i rewrite-only charakter."
+
+web_ios_parity:
+  verdict: PASS
+  notes:
+    - "Obě platformy se chovaly konzistentně."
+    - "Stejná role discipline."
+    - "Stejný typ rewrite výstupu."
+    - "Stejné proof-safe chování."
+    - "Žádná zásadní parity degradace nebyla pozorována."
+
+rewrite_boundary_control:
+  verdict: PASS
+  notes:
+    - "Initial soft fail was resolved by tightening builder instructions."
+    - "Retest potvrdil exactly one revised version only."
+    - "Po zpřísnění instrukcí model nepřidával nevyžádané alternativní varianty."
+    - "Scope drift mimo supplied asset již nebyl pozorován."
+
+proof_safety:
+  verdict: PASS
+  notes:
+    - "Zakázané a nepodložené claims nebyly zesíleny."
+    - "Model nepoužil fake proof."
+    - "Nepodložené tvrzení bylo přepsáno do proof-safe jazyka."
+    - "CTA zůstalo použitelné bez agresivního tlaku."
+
+minor_issues:
+  - id: "MINOR-001"
+    severity: low
+    description: >
+      Původní builder verze měla tendenci přidávat nevyžádanou alternativní rewrite
+      variantu po splnění požadovaného outputu.
+    recommended_follow_up: >
+      Zachovat v baseline explicitní pravidla:
+      "return exactly one revised version only",
+      "do not provide alternative versions unless explicitly requested",
+      "do not append optional extra rewrites after the required output".
+  - id: "MINOR-002"
+    severity: low
+    description: >
+      V krátkém stress testu model občas lehce změkčil ICP specificity oproti inputu.
+    recommended_follow_up: >
+      Ve v2 ještě zpřísnit pravidlo, že ICP specificity se nesmí rozšiřovat ani
+      zobecňovat mimo supplied input, pokud to není explicitně vyžádáno.
+
+final_verdict:
+  overall: PASS
+  rationale: >
+    Pilot prokázal stabilní boundary discipline, silný rewrite výkon na webu i iOS,
+    dostatečnou web/iOS parity, proof-safe práci s claims a po zpřísnění builder
+    instrukcí i korektní rewrite boundary control bez nevyžádaných alternativních variant.
+
+decision:
+  outcome: "approved_as_baseline"
+  next_logical_step: "Vybrat a připravit PILOT-004"
+
+evidence_checklist:
+  config_screenshots_captured: true
+  web_screenshots_captured: true
+  ios_screenshots_captured: true
+  prompts_recorded: true
+  outputs_recorded: true
+  verdict_recorded: true
