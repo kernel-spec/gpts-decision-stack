@@ -1,0 +1,122 @@
+schema_version: "1.0.0"
+artifact_type: custom_gpt_pilot_audit
+pilot_id: "PILOT-002"
+pilot_name: "STRUCTURAL_ENGINE"
+date: "2026-03-26"
+status: PASS
+
+operator_context:
+  environment: "ChatGPT web + ChatGPT iOS"
+  visibility: "private"
+  model: "GPT-5.4 Thinking"
+  capabilities:
+    web_browsing: false
+    image_generation: false
+    code_interpreter: false
+    actions_enabled: false
+    knowledge_files_attached: false
+
+builder_config:
+  name: "STRUCTURAL_ENGINE"
+  description: >
+    Strukturuje chaotický multi-segment vstup do jednoho testovatelného offeru s jasným
+    ICP, hodnotovou propozicí, monetizační logikou a validačními metrikami. Výstupem je
+    strukturovaný offer brief s explicitním output contractem, scope lockem a kill kritérii.
+    Je to strukturovací role, ne rewrite ani delivery role.
+  prompt_source_type: "hybrid_builder_version"
+  canonical_repo_source: "custom_gpts/commercial_layer/prompt_sources/STRUCTURAL_ENGINE.full.md"
+
+test_scope:
+  objectives:
+    - "Ověřit boundary discipline při nevalidním vstupu"
+    - "Ověřit plnohodnotný strukturovací výkon při validním vstupu"
+    - "Ověřit web/iOS parity"
+    - "Ověřit overscope convergence — kolaps multi-segment chaosu do jediného offeru"
+  test_groups:
+    - "boundary_discipline"
+    - "web_functional_audit"
+    - "ios_functional_audit"
+    - "web_ios_parity"
+    - "overscope_convergence"
+
+boundary_discipline:
+  verdict: PASS
+  notes:
+    - "Při nevalidním vstupu GPT nehalucinoval strukturu."
+    - "Správně odmítl produkovat offer brief bez dostatečného vstupu."
+    - "Držel strukturovací roli a nepřešel do rewrite ani delivery role."
+
+web_functional_audit:
+  verdict: PASS
+  notes:
+    - "Při validním inputu produkoval strukturovaný offer brief."
+    - "Explicitní output contract byl přítomen."
+    - "Explicitní scope lock byl přítomen."
+    - "Monetizační logika byla přítomna."
+    - "Validační metrika a kill kritéria byla přítomna."
+    - "One buyer / one offer konvergence byla dodržena."
+    - "Všech 7 required blocks bylo přítomno."
+  key_findings:
+    - "7/7 required blocks present — žádný blok nechyběl."
+    - "Broad multi-segment chaos byl správně kolapsován do jediného testovatelného offeru."
+    - "Explicitní output contract zabraňuje scope creep v downstream rolích."
+
+ios_functional_audit:
+  verdict: PASS
+  notes:
+    - "Zachována stejná strukturovací logika jako na webu."
+    - "Kvalita odpovědi byla srovnatelná s webem."
+    - "Nebyla pozorována zásadní mobilní degradace."
+  key_findings:
+    - "iOS odpověď zachovala one buyer / one offer disciplínu."
+    - "Kill kritéria byla konzistentní s webovou verzí."
+
+web_ios_parity:
+  verdict: PASS
+  notes:
+    - "Obě platformy se chovaly konzistentně."
+    - "Stejné hlavní strukturovací závěry."
+    - "Stejná role discipline."
+    - "Žádná zásadní parity degradace nebyla pozorována."
+
+overscope_convergence:
+  verdict: PASS
+  notes:
+    - "Broad multi-segment chaos vstup byl správně kolapsován do jediného testovatelného offeru."
+    - "One buyer / one offer convergence byla explicitně vynucena."
+    - "Model nerozštěpil výstup do více paralelních offer variant."
+
+minor_issues:
+  - id: "MINOR-001"
+    severity: low
+    description: >
+      Některé bounded assumptions by měly zůstat explicitně označeny jako assumptions,
+      nikoliv jako potvrzená fakta.
+    recommended_follow_up: >
+      Ve v2 přidat explicitní "assumptions block" do output contractu pro transparentnost.
+  - id: "MINOR-002"
+    severity: low
+    description: >
+      Některé komerční targety jsou ambiciózní, ale stále validní pro pilot design.
+    recommended_follow_up: >
+      Při přechodu z pilot do produkce ověřit komerční targety s reálnými tržními daty.
+
+final_verdict:
+  overall: PASS
+  rationale: >
+    Pilot prokázal silnou role disciplínu, přítomnost všech 7 required blocks,
+    one buyer / one offer konvergenci, explicitní output contract, explicitní scope lock,
+    přítomnou monetizační logiku a validační metriky s kill kritérii. Broad multi-segment
+    chaos byl správně kolapsován do jediného testovatelného offeru.
+
+decision:
+  outcome: "approved_as_baseline"
+  next_logical_step: "Vybrat a připravit PILOT-003"
+
+evidence_checklist:
+  config_screenshots_captured: true
+  web_screenshots_captured: true
+  ios_screenshots_captured: true
+  prompts_recorded: true
+  outputs_recorded: true
+  verdict_recorded: true
