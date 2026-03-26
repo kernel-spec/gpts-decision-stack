@@ -1,0 +1,104 @@
+schema_version: "1.0.0"
+artifact_type: custom_gpt_pilot_audit
+pilot_id: "PILOT-001"
+pilot_name: "POSITIONING_POLICE"
+date: "2026-03-25"
+status: PASS
+
+operator_context:
+  environment: "ChatGPT web + ChatGPT iOS"
+  visibility: "private"
+  model: "GPT-5.4 Thinking"
+  capabilities:
+    web_browsing: false
+    image_generation: false
+    code_interpreter: false
+    actions_enabled: false
+    knowledge_files_attached: false
+
+builder_config:
+  name: "POSITIONING_POLICE"
+  description: >
+    Audituje konzistenci mezi offerem, assety a call skriptem. Detekuje ICP drift,
+    claim drift a messaging nekonzistenci. Výstupem je truth source block, drift audit,
+    vocabulary policy, minimal fix list a regression checklist. Je to QA/konzistenční
+    role, ne rewrite role ani pricing role.
+  prompt_source_type: "hybrid_builder_version"
+  canonical_repo_source: "custom_gpts/commercial_layer/prompt_sources/POSITIONING_POLICE.full.md"
+
+test_scope:
+  objectives:
+    - "Ověřit boundary discipline při nevalidním vstupu"
+    - "Ověřit plnohodnotný audit při validním vstupu"
+    - "Ověřit web/iOS parity"
+  test_groups:
+    - "boundary_discipline"
+    - "web_functional_audit"
+    - "ios_functional_audit"
+    - "web_ios_parity"
+
+boundary_discipline:
+  verdict: PASS
+  notes:
+    - "Při nevalidním vstupu GPT nehalucinoval audit."
+    - "Správně vrátil stop message pro chybějící artifacts."
+    - "Držel audit-first boundary a nepřešel do rewrite role."
+
+web_functional_audit:
+  verdict: PASS
+  notes:
+    - "Při validním inputu vytvořil Truth Source Block."
+    - "Při validním inputu vytvořil Drift Audit."
+    - "Při validním inputu vytvořil Vocabulary Policy."
+    - "Při validním inputu vytvořil Minimal Fix List."
+    - "Při validním inputu vytvořil Regression Checklist."
+    - "Správně identifikoval ICP drift, claim drift, vocabulary drift, CTA drift a tone drift."
+    - "Nepřešel do full rewrite módu."
+  key_findings:
+    - "Landing page hero byl správně identifikován jako hlavní zdroj driftu."
+    - "Nepodložený výkonový claim byl správně označen jako nepřípustný."
+    - "Chybějící CTA ukotvení bylo správně označeno."
+
+ios_functional_audit:
+  verdict: PASS
+  notes:
+    - "Zachována stejná auditní struktura jako na webu."
+    - "Kvalita odpovědi byla srovnatelná nebo mírně lepší."
+    - "Nebyla pozorována zásadní mobilní degradace."
+  key_findings:
+    - "iOS odpověď správně označila i sémantické varianty banned claims."
+    - "Regression checklist byl praktický a znovupoužitelný."
+
+web_ios_parity:
+  verdict: PASS
+  notes:
+    - "Obě platformy se chovaly konzistentně."
+    - "Stejné hlavní závěry."
+    - "Stejná role discipline."
+    - "Žádná zásadní parity degradace nebyla pozorována."
+
+minor_issues:
+  - id: "MINOR-001"
+    severity: low
+    description: >
+      Model má lehkou tendenci rozšiřovat approved vocabulary nad explicitně dodaný seznam.
+    recommended_follow_up: >
+      Ve v2 oddělit "explicitly approved phrases" od "recommended additions".
+
+final_verdict:
+  overall: PASS
+  rationale: >
+    Pilot prokázal stabilní boundary discipline, plnohodnotný auditní výkon na validním vstupu
+    a konzistentní chování mezi webem a iOS.
+
+decision:
+  outcome: "approved_as_baseline"
+  next_logical_step: "Vybrat a připravit PILOT-002"
+
+evidence_checklist:
+  config_screenshots_captured: true
+  web_screenshots_captured: true
+  ios_screenshots_captured: true
+  prompts_recorded: true
+  outputs_recorded: true
+  verdict_recorded: true
