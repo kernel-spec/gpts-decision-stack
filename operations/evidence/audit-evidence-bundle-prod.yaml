@@ -1,0 +1,63 @@
+artifact_type: audit_evidence_bundle
+environment: prod
+date: "2026-03-25"
+worker_url: https://gpts-decision-stack.victorain92.workers.dev
+
+d1_database:
+  name: gpts-decision-stack-db
+  id: d10b83ff-29a0-4ddd-99ac-c8fecf0a8ef3
+
+r2_bucket:
+  name: gpts-decision-stack-artifacts
+
+kv_namespace:
+  title: POLICY_STORE
+  id: b406728e872e41c8ac865946295ad4fc
+
+confirmed_tables:
+  - _cf_KV
+  - approvals
+  - artifacts
+  - d1_migrations
+  - decision_log
+  - sessions
+  - sqlite_sequence
+  - veto_records
+
+confirmed_migrations:
+  - id: 1
+    name: 0001_init.sql
+    applied_at: "2026-03-25 17:35:23"
+  - id: 2
+    name: 0002_add_requestor_columns.sql
+    applied_at: "2026-03-25 17:35:23"
+
+health_check:
+  method: GET
+  url: https://gpts-decision-stack.victorain92.workers.dev/health
+  http_status: 200
+  response:
+    ok: true
+    service: gpts-decision-stack-worker
+    timestamp: "2026-03-25T17:43:47.108Z"
+  result: PASS
+
+create_session:
+  method: POST
+  url: https://gpts-decision-stack.victorain92.workers.dev/session
+  http_status: 201
+  auth: authenticated
+  response:
+    ok: true
+    session_id: 8a7e11a0-ad24-4706-b309-a880a3a1ca44
+    requestor_type: founder-led
+    pipeline_state: intake
+    decision_status: unresolved
+  result: PASS
+
+evidence_verdict: PASS
+verdict_note: >
+  All prod provisioning and runtime checks passed. D1 database provisioned with
+  both migrations applied. R2 bucket and KV namespace confirmed present.
+  Health endpoint returns HTTP 200 with ok=true. Authenticated create_session
+  returns HTTP 201 with correct initial pipeline state.

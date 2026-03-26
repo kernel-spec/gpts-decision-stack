@@ -8,11 +8,11 @@ description: >
   Tento report odráží aktuální fyzický stav repozitáře k datu sestaven.
   Report nesmí být upraven za účelem vylepšení výsledku — musí vždy odrážet skutečnost.
 
-overall_status: FAIL
+overall_status: PASS
 repo_integrity_status: PASS
-deployment_readiness_status: FAIL
-bundle_classification: REPO-READY SKELETON
-deploy_ready: false
+deployment_readiness_status: PASS
+bundle_classification: DEPLOY-READY STACK
+deploy_ready: true
 
 summary: >
   Repozitář obsahuje kompletní implementační strukturu systému a backend je
@@ -20,9 +20,11 @@ summary: >
   (ACTIONS, STRONG_PARTIAL), včetně pipeline progression až do release_decision.
   Governed acceptance evidence (AC-001 až AC-012) je nyní doložena a PASS
   (operations/evidence/acceptance-run-output-dev.yaml). PROV-002 je uzavřen.
-  Governed deployment readiness však zůstává FAIL a bundle_classification zůstává
-  REPO-READY SKELETON, protože produkční Cloudflare infrastruktura není ještě
-  provisionována (PROV-001).
+  Produkční Cloudflare infrastruktura je nyní provisionována a verifikována —
+  D1, R2, KV, health endpoint a authenticated create_session jsou potvrzeny
+  (operations/evidence/audit-evidence-bundle-prod.yaml). PROV-001 je uzavřen.
+  Authoritative gate může nyní přejít na PASS a bundle_classification na
+  DEPLOY-READY STACK.
 
 runtime_validation:
   status: PASS
@@ -30,6 +32,7 @@ runtime_validation:
   evidence_level: STRONG_PARTIAL
   evidence_ref:
     - operations/evidence/audit-evidence-bundle-dev.yaml
+    - operations/evidence/audit-evidence-bundle-prod.yaml
   acceptance_test_evidence_ref:
     - operations/evidence/acceptance-run-output-dev.yaml
   acceptance_test_evidence_status: PASS
@@ -40,11 +43,17 @@ runtime_validation:
     - get_session_state
     - state_machine_progression_to_release_decision
     - acceptance_scenarios_AC-001_through_AC-012
+    - prod_d1_migrations_applied
+    - prod_health
+    - prod_authenticated_create_session
+    - prod_r2_kv_present
   note: >
     Dev runtime evidence je silná a explicitně doložená. Governed acceptance evidence
     (AC-001 až AC-012) byla evaluována a prošla — doloženo v
-    operations/evidence/acceptance-run-output-dev.yaml. Tato evidence nepřepisuje
-    fail-closed governed deployment readiness verdict.
+    operations/evidence/acceptance-run-output-dev.yaml. Produkční runtime evidence
+    je doložena v operations/evidence/audit-evidence-bundle-prod.yaml:
+    D1 migrace aplikovány, health endpoint HTTP 200, authenticated create_session
+    HTTP 201, R2 bucket a KV namespace potvrzeny.
 
 layer_status:
   control_plane_prompts:
@@ -230,28 +239,12 @@ layer_status:
       wrangler konfiguraci s binding deklaracemi a reálnými resource IDs,
       D1 schema migraci a GitHub Actions deployment workflow. Dev prostředí
       je provisionováno a live (viz operations/evidence/audit-evidence-bundle-dev.yaml).
-      Provisioning produkčního prostředí a nastavení GitHub Secrets je nezbytné
-      před prvním produkčním deploymentem. Toto je důvodem, proč bundle_classification
-      zůstává REPO-READY SKELETON a deploy_ready je false.
+      Produkční prostředí je provisionováno a verifikováno
+      (viz operations/evidence/audit-evidence-bundle-prod.yaml). PROV-001 uzavřen.
 
 blocking_gaps: []
 
-provisioning_gaps:
-  - id: PROV-001
-    layer: backend_binding
-    severity: informational
-    description: >
-      Cloudflare infrastruktura musí být provisionována pro produkci před prvním
-      produkčním live deploymentem. Dev prostředí je live a provisionováno
-      (viz operations/evidence/audit-evidence-bundle-dev.yaml). Resource IDs
-      (D1 database_id, KV namespace id) jsou již vyplněny v backend/worker/wrangler.toml.
-      Toto není blocking gap pro repo readiness (REPO-READY SKELETON),
-      ale produkční provisioning je vyžadován před dosažením DEPLOY-READY STACK.
-    required_actions:
-      - "Nastavit CLOUDFLARE_API_TOKEN a CLOUDFLARE_ACCOUNT_ID jako GitHub Secrets pro prod deployment"
-      - "wrangler secret put API_KEY_SECRET (pro prod prostředí)"
-      - "Verifikovat produkční D1/R2/KV prostředky jsou provisionovány (IDs jsou v backend/worker/wrangler.toml)"
-      - "wrangler d1 execute gpts-decision-stack-db --file backend/worker/migrations/0001_init.sql (prod)"
+provisioning_gaps: []
 
 resolved_gaps:
   - id: RESOLVED-001
@@ -298,13 +291,24 @@ resolved_gaps:
       (12/12 PASS, 191 kroků) proti live dev Cloudflare Workeru.
       Evidence: operations/evidence/acceptance-run-output-dev.yaml
       (workflow run 23537156141, 2026-03-25T10:51:25Z).
+  - id: RESOLVED-012
+    layer: backend_binding
+    prov_id: PROV-001
+    description: >
+      Produkční Cloudflare infrastruktura je provisionována a verifikována.
+      D1: gpts-decision-stack-db (d10b83ff-29a0-4ddd-99ac-c8fecf0a8ef3), obě migrace aplikovány.
+      R2: gpts-decision-stack-artifacts přítomen.
+      KV: POLICY_STORE (b406728e872e41c8ac865946295ad4fc) přítomen.
+      Health endpoint: HTTP 200, ok=true.
+      Authenticated create_session: HTTP 201, ok=true, pipeline_state=intake.
+      Evidence: operations/evidence/audit-evidence-bundle-prod.yaml.
 
 audit_note: >
   Tento report nesmí být ručně upraven za účelem zlepšení hodnocení.
-  overall_status musí být FAIL dokud deployment readiness podmínky nejsou splněny
-  (fail-closed governance). repo_integrity_status PASS odráží fyzickou přítomnost
-  všech repo vrstev a je odděleným signálem od deployment gate.
-  bundle_classification DEPLOY-CANDIDATE bylo odstraněno jako nekanonická hodnota.
-  Kanonické hodnoty jsou REPO-READY SKELETON a DEPLOY-READY STACK
-  (viz operations/Definition_of_Done.md). Falešné PASS je stejně závažné selhání
-  jako falešný proceed v pipeline.
+  overall_status je PASS protože všechny deployment readiness podmínky jsou splněny:
+  produkční infrastruktura je provisionována a verifikována (PROV-001 uzavřen),
+  governed acceptance evidence prošla (PROV-002 uzavřen).
+  repo_integrity_status PASS odráží fyzickou přítomnost všech repo vrstev.
+  bundle_classification DEPLOY-READY STACK je kanonická hodnota dle
+  operations/Definition_of_Done.md. Falešné PASS je stejně závažné selhání
+  jako falešný proceed v pipeline — tento PASS je podložen explicitní prod evidencí.
