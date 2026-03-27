@@ -1,0 +1,167 @@
+schema_version: "1.0.0"
+artifact_type: custom_gpt_pilot_audit
+pilot_id: "PILOT-008"
+pilot_name: "ASSET_ENGINE"
+date: "2026-03-27"
+status: PASS
+
+operator_context:
+  environment: "ChatGPT web + ChatGPT iOS"
+  visibility: "private"
+  model: "GPT-5.4 Thinking"
+  capabilities:
+    web_browsing: false
+    image_generation: false
+    code_interpreter: false
+    actions_enabled: false
+    knowledge_files_attached: false
+
+builder_config:
+  name: "ASSET_ENGINE"
+  description: >
+    Converts defined offers into revenue assets such as cold emails, LinkedIn DMs,
+    one-screen offer pages, and short posts. Holds one CTA, proof-safe language,
+    preserved positioning terms, and channel-specific asset structure.
+  prompt_source_type: "hybrid_builder_version"
+  canonical_repo_source: "custom_gpts/commercial_layer/prompt_sources/ASSET_ENGINE.full.md"
+
+test_scope:
+  objectives:
+    - "Verify boundary discipline on missing ICP or offer"
+    - "Verify full asset-generation performance on valid input"
+    - "Verify web/iOS parity"
+    - "Verify single-CTA discipline"
+    - "Verify proof-safe copy with no fabricated metrics, logos, or outcome claims"
+    - "Verify positioning term preservation"
+    - "Verify deliverable and channel matching"
+    - "Verify language normalization after rerun fix"
+    - "Verify email outputs stay in Czech except preserved offer names and placeholders"
+  test_groups:
+    - "boundary_discipline"
+    - "web_functional_audit"
+    - "ios_functional_audit"
+    - "web_ios_parity"
+    - "single_cta_discipline"
+    - "proof_safe_copy"
+    - "positioning_term_preservation"
+    - "deliverable_channel_matching"
+    - "language_normalization"
+    - "email_language_discipline"
+
+boundary_discipline:
+  verdict: PASS
+  notes:
+    - "GPT asked for missing ICP instead of hallucinating assets."
+    - "Stop rules were respected before asset generation."
+    - "Model did not proceed without minimum commercial context."
+
+web_functional_audit:
+  verdict: PASS
+  notes:
+    - "Valid input produced complete output: core message, assets, CTA, and testing variables."
+    - "Assets stayed commercially usable and channel-specific."
+    - "Model generated DM assets, one-screen pages, posts, and cold emails according to request."
+    - "Output remained role-consistent and did not drift into full strategy mode."
+  key_findings:
+    - "Strong revenue-asset role discipline across multiple deliverable types."
+    - "Assets were concise, commercial, and practically reusable."
+    - "Testing variables stayed limited and actionable."
+
+ios_functional_audit:
+  verdict: PASS
+  notes:
+    - "iOS preserved the same structure and asset-generation logic as web."
+    - "No major mobile degradation observed in copy quality or rule-following."
+    - "CTA discipline, proof safety, and deliverable matching remained consistent."
+  key_findings:
+    - "iOS held the same commercial asset logic as web."
+    - "Channel-specific copy remained usable on mobile."
+
+web_ios_parity:
+  verdict: PASS
+  notes:
+    - "Output structure and conclusions were materially consistent across web and iOS."
+    - "No meaningful divergence in CTA handling, proof safety, or asset format."
+    - "No major parity degradation observed."
+
+single_cta_discipline:
+  verdict: PASS
+  notes:
+    - "GPT consistently held one CTA only."
+    - "Model refused to expand outputs into multi-CTA chaos when explicitly pushed to do so."
+    - "Each asset preserved one commercial next step."
+    - "CTA stayed aligned across asset block and CTA section."
+
+proof_safe_copy:
+  verdict: PASS
+  notes:
+    - "GPT did not fabricate metrics, logos, or case-study proof."
+    - "Where proof was missing, model used mechanism + expectation + [TBD proof]."
+    - "Model refused near-guaranteed uplift language and avoided fake outcome certainty."
+    - "Copy remained commercially sharp without overclaiming."
+    - "No invented benchmark or result statements observed."
+
+positioning_term_preservation:
+  verdict: PASS
+  notes:
+    - "Model preserved provided positioning vocabulary from the offer."
+    - "Offer names such as 'AI Offer Validation Sprint', 'HubSpot Revenue Workflow Sprint', and 'Signal-to-Owner Prioritization Sprint' were retained exactly."
+    - "Explicit requested positioning terms such as 'HubSpot-first' were preserved."
+    - "Model did not rewrite core positioning language into generic substitutes."
+
+deliverable_channel_matching:
+  verdict: PASS
+  notes:
+    - "When user requested email + cold email, GPT produced email-form assets."
+    - "When user requested one-screen page, GPT produced one-screen page copy."
+    - "When no custom deliverable overrode defaults, GPT produced DM opener + follow-up + short post."
+    - "Asset format stayed aligned with requested channel and deliverable."
+    - "Email outputs were optimized for reply rather than for post-style engagement."
+
+language_normalization:
+  verdict: PASS
+  notes:
+    - "Rerun fixed the major language drift issue observed earlier in email outputs."
+    - "Output prose normalized back to Czech while preserving allowed English offer names and placeholders."
+    - "Model no longer defaulted to English body copy when channel=email."
+    - "Language consistency was materially improved and baseline-safe after fix."
+
+email_language_discipline:
+  verdict: PASS
+  notes:
+    - "Cold email outputs were delivered in Czech after the rerun fix."
+    - "Preserved English elements were limited to explicit offer names, placeholders, or user-provided terms."
+    - "No full English email body drift remained in the rerun outputs."
+    - "Subject lines, body copy, and CTA stayed Czech-compatible."
+
+minor_issues:
+  - id: "MINOR-001"
+    severity: low
+    description: >
+      A few Czech phrases remain slightly jargon-heavy or stylistically stiff
+      in some outputs, despite the language-fix rerun.
+    recommended_follow_up: >
+      In v2, tighten Czech naturalness heuristics for B2B copy so terms like
+      pipeline/process phrasing read more natively while preserving commercial clarity.
+
+final_verdict:
+  overall: PASS
+  rationale: >
+    Pilot demonstrated stable revenue-asset role discipline, correct boundary handling,
+    strong single-CTA enforcement, proof-safe copy generation, preserved positioning
+    vocabulary, correct deliverable/channel matching, and solid web/iOS parity.
+    The rerun successfully fixed the earlier language drift in email outputs, making
+    the pilot baseline-safe. One low-severity issue remains around minor Czech phrasing
+    polish, but it does not block approval.
+
+decision:
+  outcome: "approved_as_baseline"
+  next_logical_step: "Vybrat a připravit PILOT-009"
+
+evidence_checklist:
+  config_screenshots_captured: true
+  web_screenshots_captured: true
+  ios_screenshots_captured: true
+  prompts_recorded: true
+  outputs_recorded: true
+  verdict_recorded: true
