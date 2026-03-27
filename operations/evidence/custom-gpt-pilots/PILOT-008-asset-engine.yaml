@@ -19,9 +19,9 @@ operator_context:
 builder_config:
   name: "ASSET_ENGINE"
   description: >
-    Converts defined offers into revenue assets such as cold emails, LinkedIn DMs,
-    one-screen offer pages, and short posts. Holds one CTA, proof-safe language,
-    preserved positioning terms, and channel-specific asset structure.
+    Converts a defined offer into revenue assets: email, DM, one-screen offer page,
+    short post, and related commercial copy. Holds one CTA, proof-safe language,
+    deliverable-match discipline, and preserves positioning vocabulary.
   prompt_source_type: "hybrid_builder_version"
   canonical_repo_source: "custom_gpts/commercial_layer/prompt_sources/ASSET_ENGINE.full.md"
 
@@ -30,133 +30,130 @@ test_scope:
     - "Verify boundary discipline on missing ICP or offer"
     - "Verify full asset-generation performance on valid input"
     - "Verify web/iOS parity"
-    - "Verify single-CTA discipline"
-    - "Verify proof-safe copy with no fabricated metrics, logos, or outcome claims"
-    - "Verify positioning term preservation"
-    - "Verify deliverable and channel matching"
-    - "Verify language normalization after rerun fix"
-    - "Verify email outputs stay in Czech except preserved offer names and placeholders"
+    - "Verify language-lock discipline"
+    - "Verify one-CTA discipline"
+    - "Verify proof safety when proof is missing"
+    - "Verify deliverable-match discipline"
+    - "Verify positioning vocabulary preservation"
   test_groups:
     - "boundary_discipline"
     - "web_functional_audit"
     - "ios_functional_audit"
     - "web_ios_parity"
-    - "single_cta_discipline"
-    - "proof_safe_copy"
-    - "positioning_term_preservation"
-    - "deliverable_channel_matching"
-    - "language_normalization"
-    - "email_language_discipline"
+    - "language_lock_discipline"
+    - "one_cta_discipline"
+    - "proof_safety"
+    - "deliverable_match_discipline"
+    - "positioning_preservation"
 
 boundary_discipline:
   verdict: PASS
   notes:
-    - "GPT asked for missing ICP instead of hallucinating assets."
-    - "Stop rules were respected before asset generation."
-    - "Model did not proceed without minimum commercial context."
+    - "On missing ICP, model returned the correct stop question and did not generate assets."
+    - "On missing offer, model returned the correct stop question and did not generate assets."
+    - "Role did not drift into strategy mode during boundary tests."
 
 web_functional_audit:
   verdict: PASS
   notes:
-    - "Valid input produced complete output: core message, assets, CTA, and testing variables."
-    - "Assets stayed commercially usable and channel-specific."
-    - "Model generated DM assets, one-screen pages, posts, and cold emails according to request."
-    - "Output remained role-consistent and did not drift into full strategy mode."
+    - "On valid input, model produced commercially usable assets aligned to the requested deliverable."
+    - "One-CTA discipline held across the generated assets."
+    - "No invented proof, logos, or fake metrics appeared."
+    - "Deliverable scope remained controlled rather than expanding into extra formats."
   key_findings:
-    - "Strong revenue-asset role discipline across multiple deliverable types."
-    - "Assets were concise, commercial, and practically reusable."
-    - "Testing variables stayed limited and actionable."
+    - "Output stayed practical rather than strategic."
+    - "CTA stayed singular and consistent."
+    - "Positioning terms remained preserved."
 
 ios_functional_audit:
   verdict: PASS
   notes:
-    - "iOS preserved the same structure and asset-generation logic as web."
-    - "No major mobile degradation observed in copy quality or rule-following."
-    - "CTA discipline, proof safety, and deliverable matching remained consistent."
+    - "iOS rerun preserved the same asset logic and proof-safe behavior."
+    - "No major mobile degradation observed."
+    - "Deliverable-match and one-CTA discipline held on iOS."
+    - "Asset body copy remained in Czech across tested outputs."
   key_findings:
-    - "iOS held the same commercial asset logic as web."
-    - "Channel-specific copy remained usable on mobile."
+    - "LinkedIn DM body copy stayed in Czech while preserving the exact English CTA string."
+    - "One-screen page requests returned only the one-screen page format."
+    - "Cold email requests returned only cold email output."
 
 web_ios_parity:
   verdict: PASS
   notes:
-    - "Output structure and conclusions were materially consistent across web and iOS."
-    - "No meaningful divergence in CTA handling, proof safety, or asset format."
-    - "No major parity degradation observed."
+    - "Conclusions and asset structure were materially consistent across web and iOS."
+    - "No meaningful parity degradation was observed."
+    - "Language-lock, CTA discipline, and deliverable scope remained aligned across environments."
 
-single_cta_discipline:
+language_lock_discipline:
   verdict: PASS
   notes:
-    - "GPT consistently held one CTA only."
-    - "Model refused to expand outputs into multi-CTA chaos when explicitly pushed to do so."
-    - "Each asset preserved one commercial next step."
-    - "CTA stayed aligned across asset block and CTA section."
+    - "Asset body copy remained in Czech."
+    - "English was preserved only where explicitly allowed, such as the exact user-provided CTA."
+    - "No unnecessary English drift appeared inside the asset body."
+    - "Prior mixed-language instability was resolved at the body-copy level."
 
-proof_safe_copy:
+one_cta_discipline:
   verdict: PASS
   notes:
-    - "GPT did not fabricate metrics, logos, or case-study proof."
-    - "Where proof was missing, model used mechanism + expectation + [TBD proof]."
-    - "Model refused near-guaranteed uplift language and avoided fake outcome certainty."
-    - "Copy remained commercially sharp without overclaiming."
-    - "No invented benchmark or result statements observed."
+    - "Each asset used exactly one CTA."
+    - "Model did not introduce optional secondary CTAs."
+    - "When prompted toward multiple next steps, model retained only one CTA."
+    - "No CTA expansion into call / audit / interested variants occurred."
 
-positioning_term_preservation:
+proof_safety:
   verdict: PASS
   notes:
-    - "Model preserved provided positioning vocabulary from the offer."
-    - "Offer names such as 'AI Offer Validation Sprint', 'HubSpot Revenue Workflow Sprint', and 'Signal-to-Owner Prioritization Sprint' were retained exactly."
-    - "Explicit requested positioning terms such as 'HubSpot-first' were preserved."
-    - "Model did not rewrite core positioning language into generic substitutes."
+    - "Model did not invent proof, metrics, or logos."
+    - "Missing proof was handled with proof-safe framing and [TBD proof]."
+    - "Unsupported outcome claims were not amplified."
+    - "No guaranteed-uplift or guaranteed-pipeline-impact framing appeared."
 
-deliverable_channel_matching:
+deliverable_match_discipline:
   verdict: PASS
   notes:
-    - "When user requested email + cold email, GPT produced email-form assets."
-    - "When user requested one-screen page, GPT produced one-screen page copy."
-    - "When no custom deliverable overrode defaults, GPT produced DM opener + follow-up + short post."
-    - "Asset format stayed aligned with requested channel and deliverable."
-    - "Email outputs were optimized for reply rather than for post-style engagement."
+    - "When user requested one-screen page, model did not add DM or post."
+    - "When user requested cold email, model did not expand into other deliverables."
+    - "Requested DM opener + DM follow-up output stayed within that exact scope."
+    - "No unsolicited format expansion was observed."
 
-language_normalization:
+positioning_preservation:
   verdict: PASS
   notes:
-    - "Rerun fixed the major language drift issue observed earlier in email outputs."
-    - "Output prose normalized back to Czech while preserving allowed English offer names and placeholders."
-    - "Model no longer defaulted to English body copy when channel=email."
-    - "Language consistency was materially improved and baseline-safe after fix."
-
-email_language_discipline:
-  verdict: PASS
-  notes:
-    - "Cold email outputs were delivered in Czech after the rerun fix."
-    - "Preserved English elements were limited to explicit offer names, placeholders, or user-provided terms."
-    - "No full English email body drift remained in the rerun outputs."
-    - "Subject lines, body copy, and CTA stayed Czech-compatible."
+    - "Provided offer vocabulary remained preserved."
+    - "Model did not silently broaden or reposition the offer."
+    - "Commercial framing stayed aligned with supplied positioning terms."
 
 minor_issues:
   - id: "MINOR-001"
     severity: low
     description: >
-      A few Czech phrases remain slightly jargon-heavy or stylistically stiff
-      in some outputs, despite the language-fix rerun.
+      Output scaffold still shows slight English label drift in some runs
+      (e.g. 'Core Message', 'Assets', 'Testing Variables', 'Cold email'),
+      even though the generated asset body itself stays in Czech.
     recommended_follow_up: >
-      In v2, tighten Czech naturalness heuristics for B2B copy so terms like
-      pipeline/process phrasing read more natively while preserving commercial clarity.
+      In v2, standardize all section labels and testing-variable labels into
+      canonical Czech so the full response is language-consistent, not only the asset body.
+  - id: "MINOR-002"
+    severity: low
+    description: >
+      In a few proof-missing scenarios the model still adds brief explanatory notes
+      about proof handling or CTA usage, even when the generated asset itself is already compliant.
+    recommended_follow_up: >
+      In v2, tighten note discipline so explanatory notes appear only when operationally necessary,
+      not as lightweight compliance commentary.
 
 final_verdict:
   overall: PASS
   rationale: >
-    Pilot demonstrated stable revenue-asset role discipline, correct boundary handling,
-    strong single-CTA enforcement, proof-safe copy generation, preserved positioning
-    vocabulary, correct deliverable/channel matching, and solid web/iOS parity.
-    The rerun successfully fixed the earlier language drift in email outputs, making
-    the pilot baseline-safe. One low-severity issue remains around minor Czech phrasing
-    polish, but it does not block approval.
+    Pilot demonstrated stable asset-generation role discipline after language-lock hardening.
+    Boundary behavior was correct, assets remained in Czech body copy, one-CTA discipline held,
+    proof-safe language remained intact, deliverable matching was consistent, and positioning
+    vocabulary was preserved. Prior language-drift instability was resolved without introducing
+    new strategy drift.
 
 decision:
   outcome: "approved_as_baseline"
-  next_logical_step: "Vybrat a připravit PILOT-009"
+  next_logical_step: "Uzavřít PILOT-010"
 
 evidence_checklist:
   config_screenshots_captured: true
