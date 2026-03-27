@@ -3,7 +3,7 @@ artifact_type: custom_gpt_pilot_audit
 pilot_id: "PILOT-009"
 pilot_name: "DELIVERY_SOP_ENGINE"
 date: "2026-03-27"
-status: PASS
+status: NEEDS_RERUN
 
 operator_context:
   environment: "ChatGPT web + ChatGPT iOS"
@@ -54,12 +54,16 @@ test_scope:
     - "no_scope_expansion_discipline"
 
 boundary_discipline:
-  verdict: PASS
+  verdict: FAIL
   notes:
-    - "GPT asked exactly for Output Contract when it was missing before proceeding."
-    - "GPT asked exactly for Scope Lock when it was missing before proceeding."
-    - "Model did not hallucinate SOP output before minimum required input was present."
-    - "Stop rules were respected consistently; model did not drift into delivery output prematurely."
+    - "Stop-rule language was not exact: model did not ask precisely for 'Output Contract' by that exact term before continuing."
+    - "Stop-rule language was not exact: model did not ask precisely for 'Scope Lock' by that exact term before continuing."
+    - "In at least one boundary test the model softened the stop gate — it proceeded with partial or paraphrased input rather than halting and requesting the exact required artifact."
+    - "Model did not fully hallucinate SOP output, but stop-rule exactness was insufficient for boundary_discipline PASS."
+  blocker: >
+    Boundary exactness is not yet clean. Stop-rule language in the prompt must be
+    tightened to require the exact artifact names (Output Contract, Scope Lock)
+    before any SOP generation proceeds. Rerun required after fix.
 
 web_functional_audit:
   verdict: PASS
@@ -173,19 +177,27 @@ minor_issues:
       remains fully actionable rather than advisory.
 
 final_verdict:
-  overall: PASS
+  overall: NEEDS_RERUN
   rationale: >
-    Pilot demonstrated strong delivery-system role discipline across all 12 test groups.
-    Boundary gates for Output Contract and Scope Lock were enforced before any SOP
-    generation. All 8 required SOP sections were present and operationally specific on
-    both web and iOS. QA was contract-bound, definition of done was explicit, scope
-    enforcement was precise, and the model did not redesign the offer or silently
-    expand scope. Web/iOS parity held with no meaningful divergence. One low-severity
-    minor issue noted in risk-item specificity but it does not block approval.
+    Functional delivery-SOP behavior is strong. Valid-run output included all 8 required
+    sections (Delivery Overview, Onboarding Intake, Internal Checklist, Client Touchpoints,
+    Templates, QA & Acceptance Criteria, Scope Enforcement, Risks + Mitigations). Output
+    was operational, margin-aware, and tied to output_contract/scope_lock. However,
+    boundary_discipline exactness is not yet clean: stop-rule language in the prompt did
+    not enforce the exact artifact names (Output Contract, Scope Lock) with sufficient
+    precision — the model softened the gate in at least one test scenario. All other 11
+    test groups passed. Baseline approval is blocked pending stop-rule language fix and
+    boundary rerun.
 
 decision:
-  outcome: "approved_as_baseline"
-  next_logical_step: "Vybrat a připravit PILOT-010"
+  outcome: "rerun_required"
+  blocking_issue: "boundary_discipline stop-rule language not exact"
+  required_action: >
+    Apply stop-rule language fix to the DELIVERY_SOP_ENGINE prompt to enforce exact
+    artifact names (Output Contract, Scope Lock) as hard blocking gates. Rerun
+    boundary_discipline tests after fix. Do not advance to PILOT-010 until
+    boundary rerun passes.
+  next_logical_step: "Apply stop-rule language fix and rerun boundary_discipline tests"
 
 evidence_checklist:
   config_screenshots_captured: true
