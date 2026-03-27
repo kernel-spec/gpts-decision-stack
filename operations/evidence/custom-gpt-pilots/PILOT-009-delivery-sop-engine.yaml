@@ -3,7 +3,7 @@ artifact_type: custom_gpt_pilot_audit
 pilot_id: "PILOT-009"
 pilot_name: "DELIVERY_SOP_ENGINE"
 date: "2026-03-27"
-status: NEEDS_RERUN
+status: PASS
 
 operator_context:
   environment: "ChatGPT web + ChatGPT iOS"
@@ -54,16 +54,14 @@ test_scope:
     - "no_scope_expansion_discipline"
 
 boundary_discipline:
-  verdict: FAIL
+  verdict: PASS
   notes:
-    - "Stop-rule language was not exact: model did not ask precisely for 'Output Contract' by that exact term before continuing."
-    - "Stop-rule language was not exact: model did not ask precisely for 'Scope Lock' by that exact term before continuing."
-    - "In at least one boundary test the model softened the stop gate — it proceeded with partial or paraphrased input rather than halting and requesting the exact required artifact."
-    - "Model did not fully hallucinate SOP output, but stop-rule exactness was insufficient for boundary_discipline PASS."
-  blocker: >
-    Boundary exactness is not yet clean. Stop-rule language in the prompt must be
-    tightened to require the exact artifact names (Output Contract, Scope Lock)
-    before any SOP generation proceeds. Rerun required after fix.
+    - "Stop-rule language fix applied: model now asks precisely for 'Output Contract' by that exact term before proceeding."
+    - "Stop-rule language fix applied: model now asks precisely for 'Scope Lock' by that exact term before proceeding."
+    - "Rerun confirmed: model halted and requested the exact required artifact names in all tested boundary scenarios."
+    - "Model did not hallucinate SOP output before minimum required input was present."
+    - "Stop rules were respected consistently; model did not drift into delivery output prematurely."
+    - "Boundary exactness is clean after the stop-rule language fix. No further rerun required."
 
 web_functional_audit:
   verdict: PASS
@@ -154,6 +152,7 @@ no_offer_redesign_discipline:
     - "Offer structure, pricing, and positioning were accepted as provided inputs."
     - "Model stayed in delivery-system role throughout all tested inputs."
     - "No unsolicited offer restructuring or repositioning observed."
+    - "Follow-up pressure to add implementation services, CRM integrations, and team training was correctly rejected as out-of-scope offer expansion — model treated these as additions outside the current delivery contract."
 
 no_scope_expansion_discipline:
   verdict: PASS
@@ -162,6 +161,8 @@ no_scope_expansion_discipline:
     - "Output stayed within the boundaries of the given output_contract."
     - "No enrichment beyond provided contract terms observed in any tested scenario."
     - "Model flagged potential scope additions as out-of-scope rather than incorporating them."
+    - "Follow-up pressure to add more syncs, mini-deliverables, and multi-stakeholder review loops was correctly rejected as a delivery-model expansion outside the current sprint scope."
+    - "Margin and timeline protection language remained explicit in the rerun; no silent margin erosion from scope drift observed."
 
 minor_issues:
   - id: "MINOR-001"
@@ -175,29 +176,49 @@ minor_issues:
       In v2, tighten risk-item format to require each risk to reference a specific
       contract clause, scope boundary, or mitigation trigger so the risk register
       remains fully actionable rather than advisory.
+  - id: "MINOR-002"
+    severity: low
+    description: >
+      Low-severity language drift observed in a few internal checklist labels across
+      runs: some step names used slightly different phrasing between web and iOS
+      (e.g., "Kickoff Prep" vs. "Pre-Kickoff Setup") without changing the operational
+      meaning or completeness of the checklist.
+    recommended_follow_up: >
+      In v2, add canonical internal label names to the prompt to enforce consistent
+      step naming across environments and reduce minor label drift.
+  - id: "MINOR-003"
+    severity: low
+    description: >
+      In some runs the SOP structure expanded slightly beyond the strict required
+      output format — for example, adding an optional "Escalation Protocol" subsection
+      inside the scope enforcement block. Content was operationally correct but
+      represented minor structural expansion beyond the canonical 8-section format.
+    recommended_follow_up: >
+      In v2, explicitly cap the output structure to the 8 canonical sections in the
+      prompt to prevent unsolicited structural additions, even when the additions
+      are operationally appropriate.
 
 final_verdict:
-  overall: NEEDS_RERUN
+  overall: PASS
   rationale: >
-    Functional delivery-SOP behavior is strong. Valid-run output included all 8 required
-    sections (Delivery Overview, Onboarding Intake, Internal Checklist, Client Touchpoints,
-    Templates, QA & Acceptance Criteria, Scope Enforcement, Risks + Mitigations). Output
-    was operational, margin-aware, and tied to output_contract/scope_lock. However,
-    boundary_discipline exactness is not yet clean: stop-rule language in the prompt did
-    not enforce the exact artifact names (Output Contract, Scope Lock) with sufficient
-    precision — the model softened the gate in at least one test scenario. All other 11
-    test groups passed. Baseline approval is blocked pending stop-rule language fix and
-    boundary rerun.
+    Pilot demonstrated strong delivery-system role discipline across all 12 test groups.
+    Stop-rule language fix was applied and boundary_discipline rerun passed: model now
+    requests exact artifact names (Output Contract, Scope Lock) before any SOP generation.
+    All 8 required SOP sections (Delivery Overview, Onboarding Intake, Internal Checklist,
+    Client Touchpoints, Templates, QA & Acceptance Criteria, Scope Enforcement,
+    Risks + Mitigations) were present and operationally specific on both web and iOS.
+    Output was operational, margin-aware, and tied to output_contract/scope_lock.
+    QA was contract-bound, definition of done was explicit, and scope enforcement was precise.
+    Follow-up pressure to add implementation services, CRM integrations, team training,
+    additional syncs, mini-deliverables, and multi-stakeholder review loops was correctly
+    rejected as out-of-scope expansion — margin and timeline protection remained explicit
+    throughout the rerun. Web/iOS parity held with no meaningful divergence.
+    Three low-severity minor issues noted (risk-item specificity, internal label drift,
+    minor structural expansion) — none block baseline approval.
 
 decision:
-  outcome: "rerun_required"
-  blocking_issue: "boundary_discipline stop-rule language not exact"
-  required_action: >
-    Apply stop-rule language fix to the DELIVERY_SOP_ENGINE prompt to enforce exact
-    artifact names (Output Contract, Scope Lock) as hard blocking gates. Rerun
-    boundary_discipline tests after fix. Do not advance to PILOT-010 until
-    boundary rerun passes.
-  next_logical_step: "Apply stop-rule language fix and rerun boundary_discipline tests"
+  outcome: "approved_as_baseline"
+  next_logical_step: "Vybrat a připravit PILOT-010"
 
 evidence_checklist:
   config_screenshots_captured: true
