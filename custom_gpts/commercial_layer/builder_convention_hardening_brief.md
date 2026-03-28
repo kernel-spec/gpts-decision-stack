@@ -57,6 +57,9 @@ Explicitně mimo scope:
 - evidence YAML zapisuje audit, ne prompt authoring truth
 - summary / verification docs shrnují stav, ale nepřepisují file inventory
 
+Pokud se `*.full.md`, `*.builder.md`, evidence nebo summary doc dostanou do konfliktu,
+rozhoduje `*.full.md` a ostatní artefakty se musí opravit proti němu.
+
 ---
 
 ## 2) Builder deployment convention

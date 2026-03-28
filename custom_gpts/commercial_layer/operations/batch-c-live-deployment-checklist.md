@@ -20,8 +20,7 @@ Tento soubor definuje manuální deployment postup pro Batch C commercial GPT ro
 | `custom_gpts/commercial_layer/builder_compact/CALL_CLOSER.builder.md` | Instructions pro Builder |
 | `custom_gpts/commercial_layer/builder_compact/DELIVERY_SOP_ENGINE.builder.md` | Instructions pro Builder |
 
-Canonical source pro význam role, hard rules a scope zůstává v odpovídajícím
-`prompt_sources/*.full.md` souboru.
+Canonical source pro každou roli zůstává v odpovídajícím `prompt_sources/ROLE_NAME.full.md` souboru.
 
 ---
 
