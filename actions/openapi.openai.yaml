@@ -381,6 +381,7 @@ paths:
     get:
       operationId: getHealth
       summary: Health check
+      description: Public liveness probe that returns only minimal service status metadata.
       responses:
         "200":
           description: Health response
