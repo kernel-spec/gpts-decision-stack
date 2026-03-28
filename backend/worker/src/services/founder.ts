@@ -22,8 +22,8 @@ function asJsonBlock(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
-const STATE_PLANS: Record<PipelineState, FounderStatePlan> = {
-  intake: {
+function buildProblemBriefPlan(): FounderStatePlan {
+  return {
     current_step: "await_problem_brief",
     why_now:
       "The session is in intake. Worker advances to problem_framing only after a ProblemBrief artifact is stored.",
@@ -36,109 +36,56 @@ const STATE_PLANS: Record<PipelineState, FounderStatePlan> = {
     }),
     evidence_to_save: ["ProblemBrief"],
     fail_signal: null,
-  },
-  problem_framing: {
-    current_step: "await_problem_framing_decision",
+  };
+}
+
+function buildStateDecisionPlan(state: Exclude<PipelineState, "intake" | "release_decision">): FounderStatePlan {
+  const step = `await_${state}_decision`;
+
+  return {
+    current_step: step,
     why_now:
-      "The session is in problem_framing. Worker advances only after a StateDecisionPacket for problem_framing is stored with outcome=proceed.",
+      `The session is in ${state}. Worker advances only after a StateDecisionPacket for ${state} is stored with outcome=proceed.`,
     next_surface: "founder_console",
     next_action: "save_state_decision_packet",
     where_to_do_it: "/session/{project_id}/artifact",
     copy_paste_block: asJsonBlock({
       artifact_type: "StateDecisionPacket",
       payload: {
-        state_id: "problem_framing",
+        state_id: state,
         outcome: "proceed",
       },
     }),
-    evidence_to_save: ["StateDecisionPacket(problem_framing, proceed)"],
+    evidence_to_save: [`StateDecisionPacket(${state}, proceed)`],
     fail_signal: null,
-  },
-  primitive_selection: {
-    current_step: "await_primitive_selection_decision",
-    why_now:
-      "The session is in primitive_selection. Worker advances only after a StateDecisionPacket for primitive_selection is stored with outcome=proceed.",
+  };
+}
+
+function buildReadOnlyPlan(
+  why_now: string,
+  fail_signal: string,
+  next_action = "no_supported_action_in_pr3"
+): FounderStatePlan {
+  return {
+    current_step: "await_read_only_followup",
+    why_now,
     next_surface: "founder_console",
-    next_action: "save_state_decision_packet",
-    where_to_do_it: "/session/{project_id}/artifact",
-    copy_paste_block: asJsonBlock({
-      artifact_type: "StateDecisionPacket",
-      payload: {
-        state_id: "primitive_selection",
-        outcome: "proceed",
-      },
-    }),
-    evidence_to_save: ["StateDecisionPacket(primitive_selection, proceed)"],
-    fail_signal: null,
-  },
-  architecture_validation: {
-    current_step: "await_architecture_validation_decision",
-    why_now:
-      "The session is in architecture_validation. Worker advances only after a StateDecisionPacket for architecture_validation is stored with outcome=proceed.",
-    next_surface: "founder_console",
-    next_action: "save_state_decision_packet",
-    where_to_do_it: "/session/{project_id}/artifact",
-    copy_paste_block: asJsonBlock({
-      artifact_type: "StateDecisionPacket",
-      payload: {
-        state_id: "architecture_validation",
-        outcome: "proceed",
-      },
-    }),
-    evidence_to_save: ["StateDecisionPacket(architecture_validation, proceed)"],
-    fail_signal: null,
-  },
-  claims_validation: {
-    current_step: "await_claims_validation_decision",
-    why_now:
-      "The session is in claims_validation. Worker advances only after a StateDecisionPacket for claims_validation is stored with outcome=proceed.",
-    next_surface: "founder_console",
-    next_action: "save_state_decision_packet",
-    where_to_do_it: "/session/{project_id}/artifact",
-    copy_paste_block: asJsonBlock({
-      artifact_type: "StateDecisionPacket",
-      payload: {
-        state_id: "claims_validation",
-        outcome: "proceed",
-      },
-    }),
-    evidence_to_save: ["StateDecisionPacket(claims_validation, proceed)"],
-    fail_signal: null,
-  },
-  risk_governance_validation: {
-    current_step: "await_risk_governance_validation_decision",
-    why_now:
-      "The session is in risk_governance_validation. Worker advances only after a StateDecisionPacket for risk_governance_validation is stored with outcome=proceed.",
-    next_surface: "founder_console",
-    next_action: "save_state_decision_packet",
-    where_to_do_it: "/session/{project_id}/artifact",
-    copy_paste_block: asJsonBlock({
-      artifact_type: "StateDecisionPacket",
-      payload: {
-        state_id: "risk_governance_validation",
-        outcome: "proceed",
-      },
-    }),
-    evidence_to_save: ["StateDecisionPacket(risk_governance_validation, proceed)"],
-    fail_signal: null,
-  },
-  commercial_packaging: {
-    current_step: "await_commercial_packaging_decision",
-    why_now:
-      "The session is in commercial_packaging. Worker advances only after a StateDecisionPacket for commercial_packaging is stored with outcome=proceed.",
-    next_surface: "founder_console",
-    next_action: "save_state_decision_packet",
-    where_to_do_it: "/session/{project_id}/artifact",
-    copy_paste_block: asJsonBlock({
-      artifact_type: "StateDecisionPacket",
-      payload: {
-        state_id: "commercial_packaging",
-        outcome: "proceed",
-      },
-    }),
-    evidence_to_save: ["StateDecisionPacket(commercial_packaging, proceed)"],
-    fail_signal: null,
-  },
+    next_action,
+    where_to_do_it: "/founder/project/{project_id}/status",
+    copy_paste_block: null,
+    evidence_to_save: [],
+    fail_signal,
+  };
+}
+
+const STATE_PLANS: Record<PipelineState, FounderStatePlan> = {
+  intake: buildProblemBriefPlan(),
+  problem_framing: buildStateDecisionPlan("problem_framing"),
+  primitive_selection: buildStateDecisionPlan("primitive_selection"),
+  architecture_validation: buildStateDecisionPlan("architecture_validation"),
+  claims_validation: buildStateDecisionPlan("claims_validation"),
+  risk_governance_validation: buildStateDecisionPlan("risk_governance_validation"),
+  commercial_packaging: buildStateDecisionPlan("commercial_packaging"),
   release_decision: {
     current_step: "await_future_release_decision_handler",
     why_now:
@@ -199,43 +146,32 @@ function getNextActionPlan(session: Session): FounderStatePlan {
 
   if (session.decision_status === "stop") {
     return {
-      current_step: STATE_PLANS[session.pipeline_state].current_step,
-      why_now:
+      ...buildReadOnlyPlan(
         "The session decision_status is stop. PR-3 does not reopen or close stopped sessions, so no additional founder action is exposed here.",
-      next_surface: "founder_console",
-      next_action: "no_supported_action_in_pr3",
-      where_to_do_it: "/founder/project/{project_id}/status",
-      copy_paste_block: null,
-      evidence_to_save: [],
-      fail_signal: "SESSION_STOPPED",
+        "SESSION_STOPPED"
+      ),
+      current_step: STATE_PLANS[session.pipeline_state].current_step,
     };
   }
 
   if (session.decision_status === "invalidate") {
     return {
-      current_step: STATE_PLANS[session.pipeline_state].current_step,
-      why_now:
+      ...buildReadOnlyPlan(
         "The session decision_status is invalidate. PR-3 does not implement invalidation recovery or closure handlers.",
-      next_surface: "founder_console",
-      next_action: "no_supported_action_in_pr3",
-      where_to_do_it: "/founder/project/{project_id}/status",
-      copy_paste_block: null,
-      evidence_to_save: [],
-      fail_signal: "SESSION_INVALIDATED",
+        "SESSION_INVALIDATED"
+      ),
+      current_step: STATE_PLANS[session.pipeline_state].current_step,
     };
   }
 
   if (session.decision_status === "escalate") {
     return {
-      current_step: STATE_PLANS[session.pipeline_state].current_step,
-      why_now:
+      ...buildReadOnlyPlan(
         "The session decision_status is escalate. PR-3 keeps escalations read-only and returns the stored Worker state without adding new escalation workflows.",
-      next_surface: "founder_console",
-      next_action: "review_escalation_status",
-      where_to_do_it: "/founder/project/{project_id}/status",
-      copy_paste_block: null,
-      evidence_to_save: [],
-      fail_signal: "SESSION_ESCALATED",
+        "SESSION_ESCALATED",
+        "review_escalation_status"
+      ),
+      current_step: STATE_PLANS[session.pipeline_state].current_step,
     };
   }
 
