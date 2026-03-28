@@ -431,7 +431,7 @@ components:
             Worker runtime also tolerates stringified JSON for canonical
             founder dual-write artifact types to preserve fail-closed behavior
             during Builder contract rollouts.
-          examples:
+          example:
             state_id: primitive_selection
             outcome: proceed
         submitted_by:
