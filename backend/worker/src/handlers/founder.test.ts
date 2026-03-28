@@ -268,9 +268,9 @@ describe("founder artifact handler", () => {
     });
   });
 
-  it("dual-writes StateDecisionPacket into founder and canonical stores and advances state", async () => {
+  it("dual-writes structured StateDecisionPacket content and advances primitive_selection to architecture_validation", async () => {
     const { env, founderArtifacts, artifacts, decisionLog, sessions, writes } = createEnv({
-      pipeline_state: "problem_framing",
+      pipeline_state: "primitive_selection",
       decision_status: "proceed",
     });
 
@@ -281,7 +281,7 @@ describe("founder artifact handler", () => {
           artifact_type: "StateDecisionPacket",
           metadata: { run_id: "run-002" },
           content: {
-            state_id: "problem_framing",
+            state_id: "primitive_selection",
             outcome: "proceed",
           },
           submitted_by: "founder-console",
@@ -306,7 +306,7 @@ describe("founder artifact handler", () => {
       artifact_type: "StateDecisionPacket",
     });
     expect(sessions.get("project-123")).toMatchObject({
-      pipeline_state: "primitive_selection",
+      pipeline_state: "architecture_validation",
       decision_status: "proceed",
     });
     expect(decisionLog.map((entry) => entry.action)).toEqual([
@@ -319,15 +319,53 @@ describe("founder artifact handler", () => {
     const nextAction = await founderService.getNextAction(env.DECISIONS_DB, "project-123");
 
     expect(status).toMatchObject({
-      current_phase: "primitive_selection",
-      current_step: "await_primitive_selection_decision",
+      current_phase: "architecture_validation",
+      current_step: "await_architecture_validation_decision",
       next_action: "save_state_decision_packet",
     });
     expect(nextAction).toMatchObject({
       next_action: "save_state_decision_packet",
       next_surface: "founder_console",
     });
-    expect(nextAction?.copy_paste_block).toContain('"state_id": "primitive_selection"');
+    expect(nextAction?.copy_paste_block).toContain('"state_id": "architecture_validation"');
+  });
+
+  it("tolerates stringified StateDecisionPacket JSON for canonical founder progression", async () => {
+    const { env, founderArtifacts, artifacts, decisionLog, sessions } = createEnv({
+      pipeline_state: "primitive_selection",
+      decision_status: "proceed",
+    });
+
+    const response = await handleSaveArtifact(
+      new Request("https://example.com/founder/project/project-123/artifact", {
+        method: "POST",
+        body: JSON.stringify({
+          artifact_type: "StateDecisionPacket",
+          metadata: { run_id: "run-003" },
+          content: JSON.stringify({
+            state_id: "primitive_selection",
+            outcome: "proceed",
+          }),
+          submitted_by: "founder-console",
+        }),
+        headers: { "content-type": "application/json" },
+      }),
+      "project-123",
+      env
+    );
+
+    expect(response.status).toBe(200);
+    expect(founderArtifacts).toHaveLength(1);
+    expect(artifacts).toHaveLength(1);
+    expect(decisionLog.map((entry) => entry.action)).toEqual([
+      "founder.artifact.saved",
+      "artifact.submitted",
+      "pipeline.transition",
+    ]);
+    expect(sessions.get("project-123")).toMatchObject({
+      pipeline_state: "architecture_validation",
+      decision_status: "proceed",
+    });
   });
 
   it("fails closed when ProblemBrief is not legal for the current state", async () => {
@@ -362,9 +400,9 @@ describe("founder artifact handler", () => {
     expect(sessions.get("project-123")?.pipeline_state).toBe("problem_framing");
   });
 
-  it("fails closed when StateDecisionPacket is not legal for the current state", async () => {
+  it("fails closed when stringified StateDecisionPacket content names the wrong state", async () => {
     const { env, founderArtifacts, artifacts, decisionLog, sessions } = createEnv({
-      pipeline_state: "problem_framing",
+      pipeline_state: "primitive_selection",
       decision_status: "proceed",
     });
 
@@ -373,11 +411,11 @@ describe("founder artifact handler", () => {
         method: "POST",
         body: JSON.stringify({
           artifact_type: "StateDecisionPacket",
-          metadata: { run_id: "run-003" },
-          content: {
-            state_id: "primitive_selection",
+          metadata: { run_id: "run-004" },
+          content: JSON.stringify({
+            state_id: "problem_framing",
             outcome: "proceed",
-          },
+          }),
           submitted_by: "founder-console",
         }),
         headers: { "content-type": "application/json" },
@@ -396,7 +434,7 @@ describe("founder artifact handler", () => {
     expect(artifacts).toHaveLength(0);
     expect(decisionLog).toHaveLength(0);
     expect(sessions.get("project-123")).toMatchObject({
-      pipeline_state: "problem_framing",
+      pipeline_state: "primitive_selection",
       decision_status: "proceed",
     });
   });

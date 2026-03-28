@@ -424,7 +424,16 @@ components:
             - type: number
             - type: boolean
           nullable: true
-          description: Artifact content to be persisted through Worker-backed validation and storage. Supports structured objects, strings, and other JSON payloads accepted by the Worker runtime.
+          description: >
+            Artifact content to be persisted through Worker-backed validation and
+            storage. When sending structured JSON such as StateDecisionPacket,
+            pass content as a JSON object instead of a stringified blob. The
+            Worker runtime also tolerates stringified JSON for canonical
+            founder dual-write artifact types to preserve fail-closed behavior
+            during Builder contract rollouts.
+          examples:
+            - state_id: primitive_selection
+              outcome: proceed
         submitted_by:
           type: string
           description: Founder-surface or operator identity submitting the artifact.
@@ -1030,6 +1039,18 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/FounderArtifactSaveRequest"
+            examples:
+              structuredStateDecisionPacket:
+                summary: Structured StateDecisionPacket content sent as an object
+                value:
+                  artifact_type: StateDecisionPacket
+                  metadata:
+                    run_id: run-001
+                  content:
+                    state_id: primitive_selection
+                    outcome: proceed
+                  submitted_by: founder-console
+                  linked_decision_id: null
       responses:
         "200":
           description: Artifact persisted.

@@ -86,6 +86,24 @@ function asStateDecisionPacketPayload(
   };
 }
 
+export function normalizeFounderCanonicalPayload(
+  artifact_type: string,
+  payload: unknown
+): unknown {
+  if (
+    getFounderCanonicalArtifactType(artifact_type) === null ||
+    typeof payload !== "string"
+  ) {
+    return payload;
+  }
+
+  try {
+    return JSON.parse(payload);
+  } catch {
+    return payload;
+  }
+}
+
 export function getFounderCanonicalArtifactType(
   artifact_type: string
 ): SubmitArtifactRequest["artifact_type"] | null {

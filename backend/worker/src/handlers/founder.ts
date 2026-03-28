@@ -138,11 +138,14 @@ export async function handleSaveArtifact(
     body.artifact_type
   );
   const canonicalRequest = canonicalArtifactType
-    ? {
-        artifact_type: canonicalArtifactType,
-        payload: body.content,
-      }
-    : null;
+      ? {
+          artifact_type: canonicalArtifactType,
+          payload: artifactService.normalizeFounderCanonicalPayload(
+            canonicalArtifactType,
+            body.content
+          ),
+        }
+      : null;
   if (canonicalRequest) {
     const canonicalError = artifactService.getFounderCanonicalArtifactError(
       session,
