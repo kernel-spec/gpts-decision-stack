@@ -317,6 +317,11 @@ components:
 
     FounderProjectStatus:
       type: object
+      description: >
+        Canonical founder-surface project status returned by Worker-backed state.
+        The open and closed flags are returned explicitly by the backend and
+        must be rendered as-is because Worker may manage them independently
+        during transition or re-open flows.
       required: [project_id, current_phase, current_step, closed, open, main_blocker, next_surface, next_action, founder_decision_required]
       properties:
         project_id:
@@ -330,10 +335,10 @@ components:
           description: Current canonical project step from Worker-backed state.
         closed:
           type: boolean
-          description: Canonical closure flag returned by Worker-backed state. Callers must not infer it from the open flag.
+          description: Canonical closure flag returned by Worker-backed state.
         open:
           type: boolean
-          description: Canonical open-work flag returned by Worker-backed state. Callers must not infer it from the closed flag.
+          description: Canonical open-work flag returned by Worker-backed state.
         main_blocker:
           type: string
           nullable: true
@@ -396,7 +401,7 @@ components:
           oneOf:
             - type: object
             - type: string
-          description: Artifact content to be persisted through Worker-backed validation and storage.
+          description: Artifact content to be persisted through Worker-backed validation and storage. Use an object for structured canonical payloads and a string for founder-authored notes or markdown blocks; the backend still applies artifact-type-specific validation for either shape.
         submitted_by:
           type: string
           description: Founder-surface or operator identity submitting the artifact.
@@ -436,7 +441,7 @@ components:
           oneOf:
             - type: object
             - type: string
-          description: Raw model-produced output stored as evidence, not canonical truth by itself.
+          description: Raw model-produced output stored as evidence, not canonical truth by itself. Use an object for structured outputs and a string for plain-text model traces; the backend still applies output-type-specific validation for either shape.
         operator_notes:
           type: string
           nullable: true
@@ -534,7 +539,7 @@ components:
       properties:
         decision_needed:
           type: boolean
-          description: True when the Worker kernel requires an explicit founder decision before progress can continue.
+          description: True when the Worker kernel has an active founder decision gate for this project.
         why_it_cannot_be_skipped:
           type: string
         option_a:
@@ -545,6 +550,7 @@ components:
           type: string
         founder_response_required:
           type: boolean
+          description: True when the founder console must collect a founder response now, even if a decision gate has already been opened or refreshed earlier.
 
     ErrorResponse:
       type: object
