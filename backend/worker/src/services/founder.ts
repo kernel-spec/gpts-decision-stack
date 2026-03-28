@@ -22,6 +22,21 @@ function asJsonBlock(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
+function buildFounderArtifactSaveBlock(
+  artifact_type: string,
+  content: unknown
+): string {
+  return asJsonBlock({
+    artifact_type,
+    metadata: {
+      run_id: "[REQUIRED_RUN_ID]",
+    },
+    content,
+    submitted_by: "founder-console",
+    linked_decision_id: null,
+  });
+}
+
 function buildProblemBriefPlan(): FounderStatePlan {
   return {
     current_step: "await_problem_brief",
@@ -29,11 +44,8 @@ function buildProblemBriefPlan(): FounderStatePlan {
       "The session is in intake. Worker advances to problem_framing only after a ProblemBrief artifact is stored.",
     next_surface: "founder_console",
     next_action: "save_problem_brief",
-    where_to_do_it: "/session/{project_id}/artifact",
-    copy_paste_block: asJsonBlock({
-      artifact_type: "ProblemBrief",
-      payload: {},
-    }),
+    where_to_do_it: "/founder/project/{project_id}/artifact",
+    copy_paste_block: buildFounderArtifactSaveBlock("ProblemBrief", "[TBD]"),
     evidence_to_save: ["ProblemBrief"],
     fail_signal: null,
   };
@@ -48,13 +60,10 @@ function buildStateDecisionPlan(state: Exclude<PipelineState, "intake" | "releas
       `The session is in ${state}. Worker advances only after a StateDecisionPacket for ${state} is stored with outcome=proceed.`,
     next_surface: "founder_console",
     next_action: "save_state_decision_packet",
-    where_to_do_it: "/session/{project_id}/artifact",
-    copy_paste_block: asJsonBlock({
-      artifact_type: "StateDecisionPacket",
-      payload: {
+    where_to_do_it: "/founder/project/{project_id}/artifact",
+    copy_paste_block: buildFounderArtifactSaveBlock("StateDecisionPacket", {
         state_id: state,
         outcome: "proceed",
-      },
     }),
     evidence_to_save: [`StateDecisionPacket(${state}, proceed)`],
     fail_signal: null,

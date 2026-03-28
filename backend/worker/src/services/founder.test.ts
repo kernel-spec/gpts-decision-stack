@@ -48,14 +48,19 @@ describe("founder service projections", () => {
         "The session is in problem_framing. Worker advances only after a StateDecisionPacket for problem_framing is stored with outcome=proceed.",
       next_surface: "founder_console",
       next_action: "save_state_decision_packet",
-      where_to_do_it: "/session/{project_id}/artifact",
+      where_to_do_it: "/founder/project/{project_id}/artifact",
       copy_paste_block: JSON.stringify(
         {
           artifact_type: "StateDecisionPacket",
-          payload: {
+          metadata: {
+            run_id: "[REQUIRED_RUN_ID]",
+          },
+          content: {
             state_id: "problem_framing",
             outcome: "proceed",
           },
+          submitted_by: "founder-console",
+          linked_decision_id: null,
         },
         null,
         2
@@ -63,6 +68,29 @@ describe("founder service projections", () => {
       evidence_to_save: ["StateDecisionPacket(problem_framing, proceed)"],
       fail_signal: null,
       founder_decision_required: false,
+    });
+  });
+
+  it("builds founder-safe intake artifact routing and save payload", () => {
+    const action = buildFounderNextAction(makeSession());
+
+    expect(action).toMatchObject({
+      next_surface: "founder_console",
+      next_action: "save_problem_brief",
+      where_to_do_it: "/founder/project/{project_id}/artifact",
+      copy_paste_block: JSON.stringify(
+        {
+          artifact_type: "ProblemBrief",
+          metadata: {
+            run_id: "[REQUIRED_RUN_ID]",
+          },
+          content: "[TBD]",
+          submitted_by: "founder-console",
+          linked_decision_id: null,
+        },
+        null,
+        2
+      ),
     });
   });
 
