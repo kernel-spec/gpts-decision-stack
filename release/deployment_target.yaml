@@ -41,9 +41,11 @@ gpt_deployment:
   description: >
     Deployment GPT agentů na platformu OpenAI ChatGPT Custom GPTs.
     Každý agent je nasazen jako samostatný GPT slot s vlastní action
-    konfigurací odkazující na actions/openapi.yaml.
+    konfigurací odkazující na builder-safe import `actions/openapi.openai.yaml`.
+    Plný kontrakt `actions/openapi.yaml` zůstává autoritativní referencí
+    pro backend surface, ale OpenAI Builder má používat builder-safe variantu.
   platform: OpenAI ChatGPT Custom GPTs
-  action_schema: actions/openapi.yaml
+  action_schema: actions/openapi.openai.yaml
   auth_config: actions/auth.md
 
   slots:

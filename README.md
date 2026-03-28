@@ -101,7 +101,8 @@ This includes:
 - `backend/worker/wrangler.toml` — Worker config
 
 ### API + auth
-- `actions/openapi.yaml` — OpenAPI/action contract
+- `actions/openapi.yaml` — authoritative backend action contract
+- `actions/openapi.openai.yaml` — OpenAI Builder-safe import contract
 - `actions/auth.md` — auth model and action access notes
 
 ### Knowledge + rules

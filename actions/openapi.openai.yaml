@@ -139,6 +139,229 @@ components:
         - target_state
         - reentry_reason
 
+    FounderProjectStatusData:
+      type: object
+      properties:
+        project_id:
+          type: string
+        current_phase:
+          type: string
+        current_step:
+          type: string
+        closed:
+          type: boolean
+        open:
+          type: boolean
+        main_blocker:
+          type: string
+          nullable: true
+        next_surface:
+          type: string
+        next_action:
+          type: string
+        founder_decision_required:
+          type: boolean
+      required:
+        - project_id
+        - current_phase
+        - current_step
+        - closed
+        - open
+        - main_blocker
+        - next_surface
+        - next_action
+        - founder_decision_required
+
+    FounderProjectStatusResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/FounderProjectStatusData"
+      required:
+        - ok
+        - data
+
+    FounderNextActionData:
+      type: object
+      properties:
+        why_now:
+          type: string
+        next_surface:
+          type: string
+        next_action:
+          type: string
+        where_to_do_it:
+          type: string
+        copy_paste_block:
+          type: string
+          nullable: true
+        evidence_to_save:
+          type: array
+          items:
+            type: string
+        fail_signal:
+          type: string
+          nullable: true
+        founder_decision_required:
+          type: boolean
+      required:
+        - why_now
+        - next_surface
+        - next_action
+        - where_to_do_it
+        - copy_paste_block
+        - evidence_to_save
+        - fail_signal
+        - founder_decision_required
+
+    FounderNextActionResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/FounderNextActionData"
+      required:
+        - ok
+        - data
+
+    FounderArtifactMetadata:
+      type: object
+      properties:
+        run_id:
+          type: string
+        source_surface:
+          type: string
+          nullable: true
+        source_role:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+      required:
+        - run_id
+      additionalProperties: false
+
+    FounderJsonValue:
+      description: JSON-compatible value accepted by the Worker-backed founder endpoints.
+      anyOf:
+        - type: object
+          additionalProperties: true
+        - type: array
+          items: {}
+        - type: string
+        - type: number
+        - type: boolean
+        - type: "null"
+
+    FounderArtifactSaveRequest:
+      type: object
+      properties:
+        artifact_type:
+          type: string
+        metadata:
+          $ref: "#/components/schemas/FounderArtifactMetadata"
+        content:
+          $ref: "#/components/schemas/FounderJsonValue"
+        submitted_by:
+          type: string
+        linked_decision_id:
+          type: string
+          nullable: true
+      required:
+        - artifact_type
+        - metadata
+        - content
+        - submitted_by
+
+    FounderArtifactSaveData:
+      type: object
+      properties:
+        artifact_id:
+          type: string
+        status:
+          type: string
+        version:
+          type: integer
+        storage_path:
+          type: string
+        linked_decision_id:
+          type: string
+          nullable: true
+      required:
+        - artifact_id
+        - status
+        - version
+        - storage_path
+        - linked_decision_id
+
+    FounderArtifactSaveResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/FounderArtifactSaveData"
+      required:
+        - ok
+        - data
+
+    FounderModelOutputRecordRequest:
+      type: object
+      properties:
+        run_id:
+          type: string
+        role_name:
+          type: string
+        output_type:
+          type: string
+        raw_output:
+          $ref: "#/components/schemas/FounderJsonValue"
+        operator_notes:
+          type: string
+          nullable: true
+      required:
+        - run_id
+        - role_name
+        - output_type
+        - raw_output
+
+    FounderModelOutputRecordData:
+      type: object
+      properties:
+        record_id:
+          type: string
+        status:
+          type: string
+        linked_run_id:
+          type: string
+          nullable: true
+        suggested_artifact_update:
+          type: string
+          nullable: true
+        founder_decision_required:
+          type: boolean
+      required:
+        - record_id
+        - status
+        - linked_run_id
+        - suggested_artifact_update
+        - founder_decision_required
+
+    FounderModelOutputRecordResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          $ref: "#/components/schemas/FounderModelOutputRecordData"
+      required:
+        - ok
+        - data
+
     ErrorResponse:
       type: object
       properties:
@@ -158,8 +381,6 @@ paths:
     get:
       operationId: getHealth
       summary: Health check
-      security:
-        - ApiKeyAuth: []
       responses:
         "200":
           description: Health response
@@ -333,6 +554,158 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /founder/project/{project_id}/status:
+    get:
+      operationId: get_project_status
+      summary: Get canonical founder project status
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Project status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FounderProjectStatusResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /founder/project/{project_id}/next-action:
+    get:
+      operationId: get_next_action
+      summary: Get canonical founder next action
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Founder next action
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FounderNextActionResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /founder/project/{project_id}/artifact:
+    post:
+      operationId: save_artifact
+      summary: Persist a founder-facing artifact
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FounderArtifactSaveRequest"
+      responses:
+        "200":
+          description: Artifact persisted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FounderArtifactSaveResponse"
+        "400":
+          description: Invalid artifact request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /founder/project/{project_id}/model-output:
+    post:
+      operationId: record_model_output
+      summary: Record model output as founder evidence
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FounderModelOutputRecordRequest"
+      responses:
+        "200":
+          description: Model output recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FounderModelOutputRecordResponse"
+        "400":
+          description: Invalid model output request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Project not found
           content:
             application/json:
               schema:

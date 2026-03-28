@@ -77,6 +77,7 @@ Záznamy governance endpointů (veto, approval) jsou uchovávány 365 dní.
 
 ## Reference
 
+- OpenAI Builder import schema: `actions/openapi.openai.yaml`
 - Action contract: `actions/openapi.yaml`
 - Mapování vlastníků endpointů: `operations/endpoint_owner_mapping.yaml`
 - Backend binding: `operations/backend_binding.yaml`
