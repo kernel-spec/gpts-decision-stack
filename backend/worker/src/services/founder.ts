@@ -1,7 +1,11 @@
 import type {
+  FounderDecisionRequest,
+  FounderDecisionResponse,
   Env,
   FounderNextAction,
+  FounderProductionClosureStatus,
   FounderProjectStatus,
+  FounderSellReadyStatus,
   PipelineState,
   Session,
 } from "../types/index.js";
@@ -18,8 +22,181 @@ type FounderStatePlan = {
   fail_signal: string | null;
 };
 
+type FounderDecisionGate = {
+  decision_type: string;
+  blocker: string;
+  why_it_cannot_be_skipped: string;
+  option_a: string;
+  option_b: string;
+  recommended_option: string;
+};
+
+type FounderBlockerProjection = {
+  go_no_go: "no_go" | "incomplete";
+  blocker: string;
+  founder_decision_required: boolean;
+  decision_type: string | null;
+};
+
+const PIPELINE_ORDER: PipelineState[] = [
+  "intake",
+  "problem_framing",
+  "primitive_selection",
+  "architecture_validation",
+  "risk_governance_validation",
+  "commercial_packaging",
+  "claims_validation",
+  "release_decision",
+];
+
 function asJsonBlock(value: unknown): string {
   return JSON.stringify(value, null, 2);
+}
+
+function hasReachedState(
+  current: PipelineState,
+  target: PipelineState
+): boolean {
+  return PIPELINE_ORDER.indexOf(current) >= PIPELINE_ORDER.indexOf(target);
+}
+
+function buildArtifactSet(artifactTypes: Iterable<string>): Set<string> {
+  return new Set(artifactTypes);
+}
+
+function hasArtifact(
+  artifactTypes: Set<string>,
+  artifactType: string
+): boolean {
+  return artifactTypes.has(artifactType);
+}
+
+function pushIfMissing(
+  missing: string[],
+  condition: boolean,
+  label: string
+): void {
+  if (!condition) {
+    missing.push(label);
+  }
+}
+
+function getWorkerBlockerProjection(session: Session): FounderBlockerProjection | null {
+  if (session.veto_active || session.decision_status === "blocked") {
+    return {
+      go_no_go: "no_go",
+      blocker: "active_veto",
+      founder_decision_required: true,
+      decision_type: "closure_exception_resolution",
+    };
+  }
+
+  if (session.decision_status === "stop") {
+    return {
+      go_no_go: "no_go",
+      blocker: "session_stopped",
+      founder_decision_required: true,
+      decision_type: "closure_exception_resolution",
+    };
+  }
+
+  if (session.decision_status === "invalidate") {
+    return {
+      go_no_go: "no_go",
+      blocker: "session_invalidated",
+      founder_decision_required: false,
+      decision_type: null,
+    };
+  }
+
+  if (session.decision_status === "escalate") {
+    return {
+      go_no_go: "incomplete",
+      blocker: "manual_escalation_pending",
+      founder_decision_required: true,
+      decision_type: "closure_exception_resolution",
+    };
+  }
+
+  if (session.decision_status === "revise") {
+    return {
+      go_no_go: "incomplete",
+      blocker: "revision_requested",
+      founder_decision_required: false,
+      decision_type: null,
+    };
+  }
+
+  return null;
+}
+
+function buildSellReadyGate(): FounderDecisionGate {
+  return {
+    decision_type: "sell_ready_signoff",
+    blocker: "founder_sell_ready_signoff_required",
+    why_it_cannot_be_skipped:
+      "Sell-ready cannot be declared from chat alone. Worker-backed state has reached the commercial_packaging boundary with the required sell-ready artifacts, so the founder must explicitly approve or hold the sell-ready posture.",
+    option_a: "Approve sell-ready and continue from the current commercial packaging posture.",
+    option_b: "Hold sell-ready and collect more evidence or revise the commercial packaging posture.",
+    recommended_option:
+      "Approve sell-ready and continue from the current commercial packaging posture.",
+  };
+}
+
+function buildProductionClosureGate(): FounderDecisionGate {
+  return {
+    decision_type: "production_closure_signoff",
+    blocker: "founder_production_closure_signoff_required",
+    why_it_cannot_be_skipped:
+      "Production closure cannot be declared from chat alone. Worker-backed state is already at release_decision, but a founder closure sign-off is still required before production can be treated as closed.",
+    option_a: "Approve production closure and save a ReleaseDecision artifact.",
+    option_b:
+      "Keep production open and collect any remaining closure evidence before closing.",
+    recommended_option:
+      "Approve production closure and save a ReleaseDecision artifact.",
+  };
+}
+
+function buildClosureExceptionGate(session: Session): FounderDecisionGate | null {
+  const blocker = getWorkerBlockerProjection(session);
+  if (!blocker?.founder_decision_required || blocker.decision_type !== "closure_exception_resolution") {
+    return null;
+  }
+
+  return {
+    decision_type: "closure_exception_resolution",
+    blocker: blocker.blocker,
+    why_it_cannot_be_skipped:
+      `Worker-backed state reports ${blocker.blocker}. Closure cannot proceed until the founder explicitly resolves this exception boundary.`,
+    option_a:
+      "Resolve the exception and re-check canonical closure state before proceeding.",
+    option_b:
+      "Keep the project paused or blocked until the Worker-reported blocker is intentionally cleared.",
+    recommended_option:
+      blocker.go_no_go === "no_go"
+        ? "Keep the project paused or blocked until the Worker-reported blocker is intentionally cleared."
+        : "Resolve the exception and re-check canonical closure state before proceeding.",
+  };
+}
+
+async function listProjectArtifactTypes(
+  db: Env["DECISIONS_DB"],
+  project_id: string
+): Promise<Set<string>> {
+  const canonicalRows = await db
+    .prepare(`SELECT DISTINCT artifact_type FROM artifacts WHERE session_id = ?`)
+    .bind(project_id)
+    .all<{ artifact_type: string | null }>();
+  const founderRows = await db
+    .prepare(`SELECT DISTINCT artifact_type FROM founder_artifacts WHERE project_id = ?`)
+    .bind(project_id)
+    .all<{ artifact_type: string | null }>();
+
+  return buildArtifactSet(
+    [...canonicalRows.results, ...founderRows.results]
+      .map((row) => row.artifact_type)
+      .filter((artifactType): artifactType is string => typeof artifactType === "string")
+  );
 }
 
 function buildFounderArtifactSaveBlock(
@@ -220,6 +397,214 @@ export function buildFounderNextAction(session: Session): FounderNextAction {
   };
 }
 
+export function buildFounderSellReadyStatus(
+  session: Session,
+  artifactTypes: Iterable<string>
+): FounderSellReadyStatus {
+  const artifacts = buildArtifactSet(artifactTypes);
+  const confirmed: string[] = [];
+  const missing: string[] = [];
+  const workerBlocker = getWorkerBlockerProjection(session);
+  const reachedCommercialPackaging = hasReachedState(
+    session.pipeline_state,
+    "commercial_packaging"
+  );
+  const hasOfferDecision = hasArtifact(artifacts, "OfferDecision");
+  const hasCommercialSpec = hasArtifact(artifacts, "CommercialSpec");
+
+  if (reachedCommercialPackaging) {
+    confirmed.push("worker_state_reached_commercial_packaging");
+  }
+  if (hasOfferDecision) {
+    confirmed.push("OfferDecision");
+  }
+  if (hasCommercialSpec) {
+    confirmed.push("CommercialSpec");
+  }
+
+  pushIfMissing(missing, reachedCommercialPackaging, "commercial_packaging_state");
+  pushIfMissing(missing, hasOfferDecision, "OfferDecision");
+  pushIfMissing(missing, hasCommercialSpec, "CommercialSpec");
+
+  if (workerBlocker) {
+    return {
+      closure_type: "sell_ready",
+      go_no_go: workerBlocker.go_no_go,
+      confirmed,
+      missing,
+      biggest_blocker: workerBlocker.blocker,
+      founder_decision_required: workerBlocker.founder_decision_required,
+    };
+  }
+
+  if (missing.length > 0) {
+    return {
+      closure_type: "sell_ready",
+      go_no_go: "incomplete",
+      confirmed,
+      missing,
+      biggest_blocker: missing[0],
+      founder_decision_required: false,
+    };
+  }
+
+  if (session.pipeline_state === "commercial_packaging") {
+    const gate = buildSellReadyGate();
+    return {
+      closure_type: "sell_ready",
+      go_no_go: "incomplete",
+      confirmed,
+      missing,
+      biggest_blocker: gate.blocker,
+      founder_decision_required: true,
+    };
+  }
+
+  return {
+    closure_type: "sell_ready",
+    go_no_go: "go",
+    confirmed,
+    missing,
+    biggest_blocker: null,
+    founder_decision_required: false,
+  };
+}
+
+export function buildFounderProductionClosureStatus(
+  session: Session,
+  artifactTypes: Iterable<string>
+): FounderProductionClosureStatus {
+  const artifacts = buildArtifactSet(artifactTypes);
+  const confirmed: string[] = [];
+  const missing: string[] = [];
+  const workerBlocker = getWorkerBlockerProjection(session);
+  const reachedReleaseDecision = session.pipeline_state === "release_decision";
+  const hasClaimsDecision = hasArtifact(artifacts, "ClaimsDecision");
+  const hasReleaseDecision = hasArtifact(artifacts, "ReleaseDecision");
+
+  if (reachedReleaseDecision) {
+    confirmed.push("worker_state_reached_release_decision");
+  }
+  if (hasClaimsDecision) {
+    confirmed.push("ClaimsDecision");
+  }
+  if (hasReleaseDecision) {
+    confirmed.push("ReleaseDecision");
+  }
+
+  pushIfMissing(missing, reachedReleaseDecision, "release_decision_state");
+  pushIfMissing(missing, hasClaimsDecision, "ClaimsDecision");
+  pushIfMissing(missing, hasReleaseDecision, "ReleaseDecision");
+
+  if (workerBlocker) {
+    return {
+      closure_type: "production_closure",
+      go_no_go: workerBlocker.go_no_go,
+      confirmed,
+      missing,
+      biggest_blocker: workerBlocker.blocker,
+      founder_decision_required: workerBlocker.founder_decision_required,
+      decision_type: workerBlocker.decision_type,
+    };
+  }
+
+  if (missing.length > 0) {
+    const founderDecisionRequired =
+      reachedReleaseDecision && hasClaimsDecision && !hasReleaseDecision;
+    const decision_type = founderDecisionRequired
+      ? buildProductionClosureGate().decision_type
+      : null;
+    const biggest_blocker = founderDecisionRequired
+      ? buildProductionClosureGate().blocker
+      : missing[0];
+
+    return {
+      closure_type: "production_closure",
+      go_no_go: "incomplete",
+      confirmed,
+      missing,
+      biggest_blocker,
+      founder_decision_required: founderDecisionRequired,
+      decision_type,
+    };
+  }
+
+  return {
+    closure_type: "production_closure",
+    go_no_go: "go",
+    confirmed,
+    missing,
+    biggest_blocker: null,
+    founder_decision_required: false,
+    decision_type: null,
+  };
+}
+
+export function buildFounderDecisionResponse(
+  session: Session,
+  artifactTypes: Iterable<string>,
+  request: FounderDecisionRequest
+): FounderDecisionResponse {
+  const decisionType = request.decision_type.trim();
+  const sellReady = buildFounderSellReadyStatus(session, artifactTypes);
+  const productionClosure = buildFounderProductionClosureStatus(session, artifactTypes);
+  const exceptionGate = buildClosureExceptionGate(session);
+
+  if (
+    decisionType === "sell_ready_signoff" &&
+    sellReady.founder_decision_required &&
+    sellReady.biggest_blocker === buildSellReadyGate().blocker
+  ) {
+    const gate = buildSellReadyGate();
+    return {
+      decision_needed: true,
+      why_it_cannot_be_skipped: gate.why_it_cannot_be_skipped,
+      option_a: gate.option_a,
+      option_b: gate.option_b,
+      recommended_option: gate.recommended_option,
+      founder_response_required: true,
+    };
+  }
+
+  if (
+    decisionType === "production_closure_signoff" &&
+    productionClosure.founder_decision_required &&
+    productionClosure.decision_type === "production_closure_signoff"
+  ) {
+    const gate = buildProductionClosureGate();
+    return {
+      decision_needed: true,
+      why_it_cannot_be_skipped: gate.why_it_cannot_be_skipped,
+      option_a: gate.option_a,
+      option_b: gate.option_b,
+      recommended_option: gate.recommended_option,
+      founder_response_required: true,
+    };
+  }
+
+  if (decisionType === "closure_exception_resolution" && exceptionGate) {
+    return {
+      decision_needed: true,
+      why_it_cannot_be_skipped: exceptionGate.why_it_cannot_be_skipped,
+      option_a: exceptionGate.option_a,
+      option_b: exceptionGate.option_b,
+      recommended_option: exceptionGate.recommended_option,
+      founder_response_required: true,
+    };
+  }
+
+  return {
+    decision_needed: false,
+    why_it_cannot_be_skipped:
+      "No active founder decision gate is justified from current Worker-backed state.",
+    option_a: "Continue collecting Worker-backed evidence.",
+    option_b: "Re-run the relevant closure check after canonical state changes.",
+    recommended_option:
+      "Re-run the relevant closure check after canonical state changes.",
+    founder_response_required: false,
+  };
+}
+
 export async function getProjectSession(
   db: Env["DECISIONS_DB"],
   project_id: string
@@ -243,4 +628,44 @@ export async function getNextAction(
 ): Promise<FounderNextAction | null> {
   const session = await getProjectSession(db, project_id);
   return session ? buildFounderNextAction(session) : null;
+}
+
+export async function checkSellReady(
+  db: Env["DECISIONS_DB"],
+  project_id: string
+): Promise<FounderSellReadyStatus | null> {
+  const session = await getProjectSession(db, project_id);
+  if (!session) {
+    return null;
+  }
+
+  const artifactTypes = await listProjectArtifactTypes(db, project_id);
+  return buildFounderSellReadyStatus(session, artifactTypes);
+}
+
+export async function checkProductionClosure(
+  db: Env["DECISIONS_DB"],
+  project_id: string
+): Promise<FounderProductionClosureStatus | null> {
+  const session = await getProjectSession(db, project_id);
+  if (!session) {
+    return null;
+  }
+
+  const artifactTypes = await listProjectArtifactTypes(db, project_id);
+  return buildFounderProductionClosureStatus(session, artifactTypes);
+}
+
+export async function requestFounderDecision(
+  db: Env["DECISIONS_DB"],
+  project_id: string,
+  request: FounderDecisionRequest
+): Promise<FounderDecisionResponse | null> {
+  const session = await getProjectSession(db, project_id);
+  if (!session) {
+    return null;
+  }
+
+  const artifactTypes = await listProjectArtifactTypes(db, project_id);
+  return buildFounderDecisionResponse(session, artifactTypes, request);
 }
