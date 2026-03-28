@@ -36,20 +36,20 @@ popsaného v `release/deployment_target.yaml`.
 
 ## Founder console action usage
 
-Founder-facing akce používají stejný `X-API-Key` model jako ostatní GPT action
-sloty. Founder console je pouze tenká UI/orchestration vrstva nad Worker
-kernelem a smí:
+Founder console akce používají stejný model `X-API-Key` jako ostatní GPT action
+sloty. Founder console je pouze tenká prezentační a orchestration vrstva nad
+Worker kernelem a smí:
 
 - číst kanonický stav pouze přes Worker-backed action endpointy
 - ukládat artefakty a model output pouze přes backend write endpointy
 - žádat founder rozhodnutí pouze přes explicitní founder action contract
 
-Founder console ani GPT vrstva nesmí tvrdit, že jsou source of truth. Source of
-truth zůstává ve Worker + D1 + R2 a founder action odpovědi musí být chápány
-jako autorizované backendové čtení/zápis tohoto stavu.
+Founder console ani GPT vrstva nesmí tvrdit, že jsou zdrojem pravdy. Zdrojem
+pravdy zůstává Worker + D1 + R2 a founder action odpovědi musí být chápány jako
+autorizované backendové čtení a zápis tohoto stavu.
 
-Pro founder-level akce platí stejné auth expectation jako pro ostatní action
-endpointy:
+Pro founder-level akce platí stejná autentizační očekávání jako pro ostatní
+action endpointy:
 
 - každý deployment slot má vlastní API klíč
 - klíč opravňuje pouze k definovanému action surface pro daný slot

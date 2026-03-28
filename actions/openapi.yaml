@@ -330,10 +330,10 @@ components:
           description: Current canonical project step from Worker-backed state.
         closed:
           type: boolean
-          description: Whether the project is canonically closed in Worker-backed state.
+          description: Canonical closure flag returned by Worker-backed state. Callers must not infer it from the open flag.
         open:
           type: boolean
-          description: Whether the project remains open in Worker-backed state.
+          description: Canonical open-work flag returned by Worker-backed state. Callers must not infer it from the closed flag.
         main_blocker:
           type: string
           nullable: true
@@ -543,7 +543,6 @@ components:
           type: string
         recommended_option:
           type: string
-          nullable: true
         founder_response_required:
           type: boolean
 
