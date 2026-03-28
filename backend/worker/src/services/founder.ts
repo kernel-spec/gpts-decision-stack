@@ -211,11 +211,20 @@ export function buildFounderNextAction(session: Session): FounderNextAction {
   };
 }
 
+async function getProjectSession(
+  db: Env["DECISIONS_DB"],
+  project_id: string
+): Promise<Session | null> {
+  // Temporary PR-3 normalization: founder project_id resolves directly to the
+  // existing Worker session_id until a distinct project identity is introduced.
+  return stateService.getSession(db, project_id);
+}
+
 export async function getProjectStatus(
   db: Env["DECISIONS_DB"],
   project_id: string
 ): Promise<FounderProjectStatus | null> {
-  const session = await stateService.getSession(db, project_id);
+  const session = await getProjectSession(db, project_id);
   return session ? buildFounderProjectStatus(session) : null;
 }
 
@@ -223,6 +232,6 @@ export async function getNextAction(
   db: Env["DECISIONS_DB"],
   project_id: string
 ): Promise<FounderNextAction | null> {
-  const session = await stateService.getSession(db, project_id);
+  const session = await getProjectSession(db, project_id);
   return session ? buildFounderNextAction(session) : null;
 }
