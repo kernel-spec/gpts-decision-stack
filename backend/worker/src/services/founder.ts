@@ -511,12 +511,11 @@ export function buildFounderProductionClosureStatus(
   if (missing.length > 0) {
     const founderDecisionRequired =
       reachedReleaseDecision && hasClaimsDecision && !hasReleaseDecision;
-    const decision_type = founderDecisionRequired
-      ? buildProductionClosureGate().decision_type
+    const productionClosureGate = founderDecisionRequired
+      ? buildProductionClosureGate()
       : null;
-    const biggest_blocker = founderDecisionRequired
-      ? buildProductionClosureGate().blocker
-      : missing[0];
+    const decision_type = productionClosureGate?.decision_type ?? null;
+    const biggest_blocker = productionClosureGate?.blocker ?? missing[0];
 
     return {
       closure_type: "production_closure",
