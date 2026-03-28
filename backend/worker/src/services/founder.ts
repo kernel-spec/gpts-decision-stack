@@ -211,7 +211,7 @@ export function buildFounderNextAction(session: Session): FounderNextAction {
   };
 }
 
-async function getProjectSession(
+export async function getProjectSession(
   db: Env["DECISIONS_DB"],
   project_id: string
 ): Promise<Session | null> {

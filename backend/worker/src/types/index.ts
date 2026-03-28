@@ -178,6 +178,59 @@ export interface FounderNextAction {
   founder_decision_required: boolean;
 }
 
+export interface FounderArtifactMetadataInput {
+  run_id: string;
+  source_surface?: string | null;
+  source_role?: string | null;
+  status?: string | null;
+}
+
+export interface FounderArtifactSaveRequest {
+  artifact_type: string;
+  metadata: FounderArtifactMetadataInput;
+  content: unknown;
+  submitted_by: string;
+  linked_decision_id?: string | null;
+}
+
+export interface FounderArtifactSaveResult {
+  artifact_id: string;
+  status: string;
+  version: number;
+  storage_path: string;
+  linked_decision_id: string | null;
+}
+
+export interface FounderArtifactRecord {
+  artifact_id: string;
+  project_id: string;
+  run_id: string;
+  artifact_type: string;
+  source_surface: string;
+  source_role: string;
+  status: string;
+  version: number;
+  created_at: string;
+  storage_path: string;
+  linked_decision_id: string | null;
+}
+
+export interface FounderModelOutputRecordRequest {
+  run_id: string;
+  role_name: string;
+  output_type: string;
+  raw_output: unknown;
+  operator_notes?: string | null;
+}
+
+export interface FounderModelOutputRecordResult {
+  record_id: string;
+  status: string;
+  linked_run_id: string | null;
+  suggested_artifact_update: string | null;
+  founder_decision_required: boolean;
+}
+
 // ---------- API responses ----------
 
 export interface ApiSuccess<T> {
