@@ -3,11 +3,13 @@ info:
   title: gpts-decision-stack Actions API
   version: "1.0.0"
   description: >
-    Backend-facing action contract for the gpts-decision-stack decision pipeline.
-    GPT agents call these endpoints to persist pipeline state, enforce governance
-    gates, and coordinate pipeline transitions. The model is not the system of
-    record. All persistent state, veto enforcement, and release authority reside
-    exclusively in the Cloudflare Workers backend service.
+    Founder-facing action contract for the gpts-decision-stack decision pipeline.
+    GPT agents call these endpoints to persist pipeline state, inspect
+    governance state, and coordinate pipeline transitions. The model is not the
+    system of record. All persistent state, veto enforcement, and release
+    authority reside exclusively in the Cloudflare Workers backend service.
+    Privileged governance mutations and service-health operations remain
+    backend-internal and are intentionally excluded from this founder contract.
 
 servers:
   - url: https://gpts-decision-stack.victorain92.workers.dev
@@ -328,20 +330,6 @@ components:
           nullable: true
 
 paths:
-  /health:
-    get:
-      operationId: getHealth
-      summary: Service health check
-      tags: [system]
-      security: []
-      responses:
-        "200":
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthEnvelope"
-
   /session:
     post:
       operationId: createSession
@@ -540,88 +528,6 @@ paths:
         "401":
           description: Unauthorized.
 
-  /veto/{session_id}/activate:
-    post:
-      operationId: activateVeto
-      summary: Activate an operational veto on a pipeline session
-      description: >
-        Only risk_governance_authority or governance_review_authority may
-        activate a veto. Once activated, the pipeline is hard-blocked until
-        explicit veto_release from the originating authority. No other
-        authority or artifact can bypass an active veto.
-      tags: [governance]
-      parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/VetoActivateRequest"
-      responses:
-        "200":
-          description: Veto activated. Pipeline is now blocked.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/VetoStatus"
-        "400":
-          description: Invalid veto request.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "403":
-          description: Insufficient authority to activate veto.
-        "401":
-          description: Unauthorized.
-
-  /veto/{session_id}/release:
-    post:
-      operationId: releaseVeto
-      summary: Release an active veto on a pipeline session
-      description: >
-        Veto may only be released by the originating veto authority.
-        A veto_release_authority mismatch returns 403. Release requires
-        explicit veto_release_reason and original_veto_reference.
-        Silent veto release is never permitted.
-      tags: [governance]
-      parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/VetoReleaseRequest"
-      responses:
-        "200":
-          description: Veto released. Pipeline unblocked.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/VetoStatus"
-        "400":
-          description: Invalid release request (missing required fields).
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "403":
-          description: >
-            Authority mismatch — only the originating veto authority
-            may release this veto.
-        "401":
-          description: Unauthorized.
-
   /approval/{session_id}:
     get:
       operationId: getApprovals
@@ -645,50 +551,7 @@ paths:
         "401":
           description: Unauthorized.
 
-  /approval/{session_id}/submit:
-    post:
-      operationId: submitApproval
-      summary: Submit a manual approval decision
-      description: >
-        Records a granted or denied approval from the appropriate authority.
-        The authority must correspond to the required authority for the
-        approval_type. Mismatched authority returns 403.
-        In regulated contexts, mandatory approval is required before the
-        pipeline may transition to release_decision.
-      tags: [governance]
-      parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ApprovalSubmitRequest"
-      responses:
-        "200":
-          description: Approval recorded.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApprovalRecord"
-        "400":
-          description: Invalid approval submission.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "403":
-          description: Insufficient authority for this approval type.
-        "401":
-          description: Unauthorized.
-
 tags:
-  - name: system
-    description: Service health and metadata.
   - name: pipeline
     description: Pipeline session management and artifact submission.
   - name: governance
