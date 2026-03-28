@@ -34,6 +34,28 @@ popsaného v `release/deployment_target.yaml`.
 - Neplatný nebo chybějící API klíč vrátí `401 Unauthorized`.
 - Přístup k endpointu bez odpovídající autority vrátí `403 Forbidden`.
 
+## Founder console action usage
+
+Founder-facing akce používají stejný `X-API-Key` model jako ostatní GPT action
+sloty. Founder console je pouze tenká UI/orchestration vrstva nad Worker
+kernelem a smí:
+
+- číst kanonický stav pouze přes Worker-backed action endpointy
+- ukládat artefakty a model output pouze přes backend write endpointy
+- žádat founder rozhodnutí pouze přes explicitní founder action contract
+
+Founder console ani GPT vrstva nesmí tvrdit, že jsou source of truth. Source of
+truth zůstává ve Worker + D1 + R2 a founder action odpovědi musí být chápány
+jako autorizované backendové čtení/zápis tohoto stavu.
+
+Pro founder-level akce platí stejné auth expectation jako pro ostatní action
+endpointy:
+
+- každý deployment slot má vlastní API klíč
+- klíč opravňuje pouze k definovanému action surface pro daný slot
+- pokud lze stav získat founder action endpointem, GPT jej nesmí nahrazovat
+  odhadem z konverzace
+
 ## Failure policy
 
 | Chyba | HTTP status | Akce |
