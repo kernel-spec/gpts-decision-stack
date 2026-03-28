@@ -67,7 +67,7 @@ type StateDecisionPacketPayload = {
 
 const FOUNDER_DUAL_WRITE_CANONICAL_ARTIFACT_TYPES = new Set<
   SubmitArtifactRequest["artifact_type"]
->(["ProblemBrief"]);
+>(["ProblemBrief", "StateDecisionPacket"]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
