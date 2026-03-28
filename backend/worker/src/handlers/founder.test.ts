@@ -268,6 +268,68 @@ describe("founder artifact handler", () => {
     });
   });
 
+  it("dual-writes StateDecisionPacket into founder and canonical stores and advances state", async () => {
+    const { env, founderArtifacts, artifacts, decisionLog, sessions, writes } = createEnv({
+      pipeline_state: "problem_framing",
+      decision_status: "proceed",
+    });
+
+    const response = await handleSaveArtifact(
+      new Request("https://example.com/founder/project/project-123/artifact", {
+        method: "POST",
+        body: JSON.stringify({
+          artifact_type: "StateDecisionPacket",
+          metadata: { run_id: "run-002" },
+          content: {
+            state_id: "problem_framing",
+            outcome: "proceed",
+          },
+          submitted_by: "founder-console",
+        }),
+        headers: { "content-type": "application/json" },
+      }),
+      "project-123",
+      env
+    );
+
+    expect(response.status).toBe(200);
+    expect(founderArtifacts).toHaveLength(1);
+    expect(artifacts).toHaveLength(1);
+    expect(writes).toHaveLength(2);
+    expect(founderArtifacts[0]).toMatchObject({
+      project_id: "project-123",
+      artifact_type: "StateDecisionPacket",
+      run_id: "run-002",
+    });
+    expect(artifacts[0]).toMatchObject({
+      session_id: "project-123",
+      artifact_type: "StateDecisionPacket",
+    });
+    expect(sessions.get("project-123")).toMatchObject({
+      pipeline_state: "primitive_selection",
+      decision_status: "proceed",
+    });
+    expect(decisionLog.map((entry) => entry.action)).toEqual([
+      "founder.artifact.saved",
+      "artifact.submitted",
+      "pipeline.transition",
+    ]);
+
+    const status = await founderService.getProjectStatus(env.DECISIONS_DB, "project-123");
+    const nextAction = await founderService.getNextAction(env.DECISIONS_DB, "project-123");
+
+    expect(status).toMatchObject({
+      current_phase: "primitive_selection",
+      current_step: "await_primitive_selection_decision",
+      next_action: "save_state_decision_packet",
+    });
+    expect(nextAction).toMatchObject({
+      next_action: "save_state_decision_packet",
+      next_surface: "founder_console",
+    });
+    expect(nextAction?.copy_paste_block).toContain('"state_id": "primitive_selection"');
+  });
+
   it("fails closed when ProblemBrief is not legal for the current state", async () => {
     const { env, founderArtifacts, artifacts, decisionLog, sessions } = createEnv({
       pipeline_state: "problem_framing",
@@ -298,5 +360,44 @@ describe("founder artifact handler", () => {
     expect(artifacts).toHaveLength(0);
     expect(decisionLog).toHaveLength(0);
     expect(sessions.get("project-123")?.pipeline_state).toBe("problem_framing");
+  });
+
+  it("fails closed when StateDecisionPacket is not legal for the current state", async () => {
+    const { env, founderArtifacts, artifacts, decisionLog, sessions } = createEnv({
+      pipeline_state: "problem_framing",
+      decision_status: "proceed",
+    });
+
+    const response = await handleSaveArtifact(
+      new Request("https://example.com/founder/project/project-123/artifact", {
+        method: "POST",
+        body: JSON.stringify({
+          artifact_type: "StateDecisionPacket",
+          metadata: { run_id: "run-003" },
+          content: {
+            state_id: "primitive_selection",
+            outcome: "proceed",
+          },
+          submitted_by: "founder-console",
+        }),
+        headers: { "content-type": "application/json" },
+      }),
+      "project-123",
+      env
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+      code: "ILLEGAL_ARTIFACT_STATE",
+      error: expect.stringContaining("StateDecisionPacket cannot be submitted canonically"),
+    });
+    expect(founderArtifacts).toHaveLength(0);
+    expect(artifacts).toHaveLength(0);
+    expect(decisionLog).toHaveLength(0);
+    expect(sessions.get("project-123")).toMatchObject({
+      pipeline_state: "problem_framing",
+      decision_status: "proceed",
+    });
   });
 });
