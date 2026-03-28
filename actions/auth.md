@@ -16,22 +16,6 @@ prostřednictvím Google Secret Manager.
 | Rotace | každých 90 dní |
 | Scope | jeden klíč per GPT deployment slot |
 
-## Founder action contract
-
-Founder-facing contract v `actions/openapi.yaml` obsahuje přesně těchto 7
-action operací:
-
-1. `createSession`
-2. `getSessionState`
-3. `submitArtifact`
-4. `triggerReentry`
-5. `getDecisionLog`
-6. `getVetoStatus`
-7. `getApprovals`
-
-Privilegované governance mutace a service health endpoint zůstávají
-backend-interní a nejsou součástí founder contractu.
-
 ## Injektování klíče do GPT slotu
 
 API klíč je injektován do GPT deployment slotu jako service secret v okamžiku
@@ -47,7 +31,6 @@ popsaného v `release/deployment_target.yaml`.
 - API klíč nesmí být součástí systémového promptu ani uživatelských zpráv.
 - Veškerá komunikace mezi GPT agentem a backend službou probíhá přes
   autentizovaný HTTPS endpoint.
-- Každý founder action request v kontraktu vyžaduje hlavičku `X-API-Key`.
 - Neplatný nebo chybějící API klíč vrátí `401 Unauthorized`.
 - Přístup k endpointu bez odpovídající autority vrátí `403 Forbidden`.
 
