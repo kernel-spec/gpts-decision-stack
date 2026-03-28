@@ -6,6 +6,7 @@ import type {
 } from "../types/index.js";
 import * as founderService from "../services/founder.js";
 import * as founderWriteService from "../services/founder-write.js";
+import * as artifactService from "../services/artifact.js";
 import * as decisionlogService from "../services/decisionlog.js";
 import { errorResponse, requireJson } from "../router.js";
 
@@ -133,6 +134,19 @@ export async function handleSaveArtifact(
     );
   }
 
+  const canonicalArtifactType = artifactService.getFounderCanonicalArtifactType(
+    body.artifact_type
+  );
+  if (canonicalArtifactType) {
+    const canonicalError = artifactService.getFounderCanonicalArtifactError(session, {
+      artifact_type: canonicalArtifactType,
+      payload: body.content,
+    });
+    if (canonicalError) {
+      return errorResponse(canonicalError, "ILLEGAL_ARTIFACT_STATE", 409);
+    }
+  }
+
   const result = await founderWriteService.saveArtifact(
     env.DECISIONS_DB,
     env.ARTIFACTS_BUCKET,
@@ -147,6 +161,19 @@ export async function handleSaveArtifact(
     decision_status: session.decision_status,
     notes: `Founder artifact ${body.artifact_type} saved (artifact_id=${result.artifact_id}, run_id=${body.metadata.run_id})`,
   });
+
+  if (canonicalArtifactType) {
+    await artifactService.submitArtifactWithLifecycle(
+      env.DECISIONS_DB,
+      env.ARTIFACTS_BUCKET,
+      session,
+      {
+        artifact_type: canonicalArtifactType,
+        payload: body.content,
+        agent_id: body.submitted_by,
+      }
+    );
+  }
 
   return Response.json({ ok: true, data: result });
 }
