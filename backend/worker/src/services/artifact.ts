@@ -70,24 +70,24 @@ export async function getArtifacts(
       submitted_at: string;
     }>();
 
-  const artifacts: Artifact[] = [];
-  for (const row of rows.results) {
-    let payload: unknown = null;
-    try {
-      const obj = await bucket.get(row.r2_key);
-      if (obj) {
-        payload = await obj.json();
+  return Promise.all(
+    rows.results.map(async (row) => {
+      let payload: unknown = null;
+      try {
+        const obj = await bucket.get(row.r2_key);
+        if (obj) {
+          payload = await obj.json();
+        }
+      } catch {
+        // artifact payload missing from R2 — return null payload
       }
-    } catch {
-      // artifact payload missing from R2 — return null payload
-    }
-    artifacts.push({
-      id: row.id,
-      session_id: row.session_id,
-      artifact_type: row.artifact_type as Artifact["artifact_type"],
-      payload,
-      submitted_at: row.submitted_at,
-    });
-  }
-  return artifacts;
+      return {
+        id: row.id,
+        session_id: row.session_id,
+        artifact_type: row.artifact_type as Artifact["artifact_type"],
+        payload,
+        submitted_at: row.submitted_at,
+      };
+    })
+  );
 }
