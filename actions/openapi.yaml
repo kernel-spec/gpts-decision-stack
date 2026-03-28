@@ -429,8 +429,8 @@ components:
             storage. When sending structured JSON such as StateDecisionPacket,
             pass content as a JSON object instead of a stringified blob. The
             Worker runtime also tolerates stringified JSON for canonical
-            founder dual-write artifact types to preserve fail-closed behavior
-            during Builder contract rollouts.
+            founder dual-write artifact types as a compatibility path for legacy
+            Builder calls while preserving fail-closed legality checks.
           example:
             state_id: primitive_selection
             outcome: proceed
