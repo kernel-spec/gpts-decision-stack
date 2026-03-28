@@ -16,6 +16,10 @@ import {
   handleGetApprovals,
   handleSubmitApproval,
 } from "./handlers/approval.js";
+import {
+  handleGetProjectStatus,
+  handleGetNextAction,
+} from "./handlers/founder.js";
 
 // ---------- Helpers ----------
 
@@ -127,6 +131,24 @@ export async function route(request: Request, env: Env): Promise<Response> {
   if (approvalSubmitMatch) {
     const session_id = approvalSubmitMatch[1];
     if (method === "POST") return handleSubmitApproval(request, session_id, env);
+    return methodNotAllowed();
+  }
+
+  // /founder/project/{project_id}/status
+  const founderStatusMatch = path.match(/^\/founder\/project\/([^/]+)\/status$/);
+  if (founderStatusMatch) {
+    const project_id = founderStatusMatch[1];
+    if (method === "GET") return handleGetProjectStatus(project_id, env);
+    return methodNotAllowed();
+  }
+
+  // /founder/project/{project_id}/next-action
+  const founderNextActionMatch = path.match(
+    /^\/founder\/project\/([^/]+)\/next-action$/
+  );
+  if (founderNextActionMatch) {
+    const project_id = founderNextActionMatch[1];
+    if (method === "GET") return handleGetNextAction(project_id, env);
     return methodNotAllowed();
   }
 

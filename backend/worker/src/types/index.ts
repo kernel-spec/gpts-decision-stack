@@ -153,6 +153,31 @@ export interface SubmitApprovalRequest {
   notes?: string;
 }
 
+// ---------- Founder surface ----------
+
+export interface FounderProjectStatus {
+  project_id: string;
+  current_phase: string;
+  current_step: string;
+  closed: boolean;
+  open: boolean;
+  main_blocker: string | null;
+  next_surface: string;
+  next_action: string;
+  founder_decision_required: boolean;
+}
+
+export interface FounderNextAction {
+  why_now: string;
+  next_surface: string;
+  next_action: string;
+  where_to_do_it: string;
+  copy_paste_block: string | null;
+  evidence_to_save: string[];
+  fail_signal: string | null;
+  founder_decision_required: boolean;
+}
+
 // ---------- API responses ----------
 
 export interface ApiSuccess<T> {
