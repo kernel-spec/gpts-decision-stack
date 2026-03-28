@@ -139,6 +139,115 @@ components:
         - target_state
         - reentry_reason
 
+    FounderSellReadyStatus:
+      type: object
+      properties:
+        closure_type:
+          type: string
+          enum:
+            - sell_ready
+        go_no_go:
+          type: string
+          enum:
+            - go
+            - no_go
+            - incomplete
+        confirmed:
+          type: array
+          items:
+            type: string
+        missing:
+          type: array
+          items:
+            type: string
+        biggest_blocker:
+          type: string
+          nullable: true
+        founder_decision_required:
+          type: boolean
+      required:
+        - closure_type
+        - go_no_go
+        - confirmed
+        - missing
+        - biggest_blocker
+        - founder_decision_required
+
+    FounderProductionClosureStatus:
+      type: object
+      properties:
+        closure_type:
+          type: string
+          enum:
+            - production_closure
+        go_no_go:
+          type: string
+          enum:
+            - go
+            - no_go
+            - incomplete
+        confirmed:
+          type: array
+          items:
+            type: string
+        missing:
+          type: array
+          items:
+            type: string
+        biggest_blocker:
+          type: string
+          nullable: true
+        founder_decision_required:
+          type: boolean
+        decision_type:
+          type: string
+          nullable: true
+      required:
+        - closure_type
+        - go_no_go
+        - confirmed
+        - missing
+        - biggest_blocker
+        - founder_decision_required
+        - decision_type
+
+    FounderDecisionRequest:
+      type: object
+      properties:
+        decision_type:
+          type: string
+        decision_context:
+          type: string
+          nullable: true
+        requested_by:
+          type: string
+          nullable: true
+      required:
+        - decision_type
+
+    FounderDecisionResponse:
+      type: object
+      properties:
+        decision_needed:
+          type: boolean
+        why_it_cannot_be_skipped:
+          type: string
+        option_a:
+          type: string
+        option_b:
+          type: string
+        recommended_option:
+          type: string
+        founder_response_required:
+          type: boolean
+      required:
+        - decision_needed
+        - why_it_cannot_be_skipped
+        - option_a
+        - option_b
+        - recommended_option
+        - founder_response_required
+
     ErrorResponse:
       type: object
       properties:
@@ -333,6 +442,114 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /founder/project/{project_id}/sell-ready:
+    get:
+      operationId: check_sell_ready
+      summary: Check canonical sell-ready status
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Canonical sell-ready evaluation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FounderSellReadyStatus"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /founder/project/{project_id}/production-closure:
+    get:
+      operationId: check_production_closure
+      summary: Check canonical production-closure status
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Canonical production-closure evaluation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FounderProductionClosureStatus"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /founder/project/{project_id}/decision-request:
+    post:
+      operationId: request_founder_decision
+      summary: Request an explicit founder decision payload
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FounderDecisionRequest"
+      responses:
+        "200":
+          description: Canonical founder decision request payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FounderDecisionResponse"
+        "400":
+          description: Invalid founder decision request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Project not found
           content:
             application/json:
               schema:

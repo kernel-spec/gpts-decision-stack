@@ -231,6 +231,42 @@ export interface FounderModelOutputRecordResult {
   founder_decision_required: boolean;
 }
 
+export type FounderClosureGoNoGo = "go" | "no_go" | "incomplete";
+
+export interface FounderSellReadyStatus {
+  closure_type: "sell_ready";
+  go_no_go: FounderClosureGoNoGo;
+  confirmed: string[];
+  missing: string[];
+  biggest_blocker: string | null;
+  founder_decision_required: boolean;
+}
+
+export interface FounderProductionClosureStatus {
+  closure_type: "production_closure";
+  go_no_go: FounderClosureGoNoGo;
+  confirmed: string[];
+  missing: string[];
+  biggest_blocker: string | null;
+  founder_decision_required: boolean;
+  decision_type: string | null;
+}
+
+export interface FounderDecisionRequest {
+  decision_type: string;
+  decision_context?: string | null;
+  requested_by?: string | null;
+}
+
+export interface FounderDecisionResponse {
+  decision_needed: boolean;
+  why_it_cannot_be_skipped: string;
+  option_a: string;
+  option_b: string;
+  recommended_option: string;
+  founder_response_required: boolean;
+}
+
 // ---------- API responses ----------
 
 export interface ApiSuccess<T> {

@@ -17,9 +17,12 @@ import {
   handleSubmitApproval,
 } from "./handlers/approval.js";
 import {
+  handleCheckProductionClosure,
+  handleCheckSellReady,
   handleGetProjectStatus,
   handleGetNextAction,
   handleRecordModelOutput,
+  handleRequestFounderDecision,
   handleSaveArtifact,
 } from "./handlers/founder.js";
 
@@ -169,6 +172,36 @@ export async function route(request: Request, env: Env): Promise<Response> {
   if (founderModelOutputMatch) {
     const project_id = founderModelOutputMatch[1];
     if (method === "POST") return handleRecordModelOutput(request, project_id, env);
+    return methodNotAllowed();
+  }
+
+  // /founder/project/{project_id}/sell-ready
+  const founderSellReadyMatch = path.match(
+    /^\/founder\/project\/([^/]+)\/sell-ready$/
+  );
+  if (founderSellReadyMatch) {
+    const project_id = founderSellReadyMatch[1];
+    if (method === "GET") return handleCheckSellReady(project_id, env);
+    return methodNotAllowed();
+  }
+
+  // /founder/project/{project_id}/production-closure
+  const founderProductionClosureMatch = path.match(
+    /^\/founder\/project\/([^/]+)\/production-closure$/
+  );
+  if (founderProductionClosureMatch) {
+    const project_id = founderProductionClosureMatch[1];
+    if (method === "GET") return handleCheckProductionClosure(project_id, env);
+    return methodNotAllowed();
+  }
+
+  // /founder/project/{project_id}/decision-request
+  const founderDecisionRequestMatch = path.match(
+    /^\/founder\/project\/([^/]+)\/decision-request$/
+  );
+  if (founderDecisionRequestMatch) {
+    const project_id = founderDecisionRequestMatch[1];
+    if (method === "POST") return handleRequestFounderDecision(request, project_id, env);
     return methodNotAllowed();
   }
 

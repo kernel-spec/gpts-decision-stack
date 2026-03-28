@@ -1,4 +1,5 @@
 import type {
+  FounderDecisionRequest,
   Env,
   FounderArtifactSaveRequest,
   FounderModelOutputRecordRequest,
@@ -36,6 +37,68 @@ export async function handleGetNextAction(
   }
 
   return Response.json({ ok: true, data: nextAction });
+}
+
+export async function handleCheckSellReady(
+  project_id: string,
+  env: Env
+): Promise<Response> {
+  const status = await founderService.checkSellReady(env.DECISIONS_DB, project_id);
+  if (!status) {
+    return errorResponse("Project not found", "NOT_FOUND", 404);
+  }
+
+  return Response.json({ ok: true, data: status });
+}
+
+export async function handleCheckProductionClosure(
+  project_id: string,
+  env: Env
+): Promise<Response> {
+  const status = await founderService.checkProductionClosure(
+    env.DECISIONS_DB,
+    project_id
+  );
+  if (!status) {
+    return errorResponse("Project not found", "NOT_FOUND", 404);
+  }
+
+  return Response.json({ ok: true, data: status });
+}
+
+export async function handleRequestFounderDecision(
+  request: Request,
+  project_id: string,
+  env: Env
+): Promise<Response> {
+  const session = await founderService.getProjectSession(env.DECISIONS_DB, project_id);
+  if (!session) {
+    return errorResponse("Project not found", "NOT_FOUND", 404);
+  }
+
+  const body = await requireJson<FounderDecisionRequest>(request);
+  if (typeof body.decision_type !== "string" || body.decision_type.trim().length === 0) {
+    return errorResponse("decision_type is required", "INVALID_REQUEST", 400);
+  }
+
+  const result = await founderService.requestFounderDecision(
+    env.DECISIONS_DB,
+    project_id,
+    body
+  );
+  if (!result) {
+    return errorResponse("Project not found", "NOT_FOUND", 404);
+  }
+
+  await decisionlogService.appendDecisionLog(env.DECISIONS_DB, session.session_id, {
+    agent_id: body.requested_by?.trim() || "founder-console",
+    action: "founder.decision.requested",
+    pipeline_state: session.pipeline_state,
+    decision_status: session.decision_status,
+    notes: `Founder decision payload requested (decision_type=${body.decision_type.trim()}, decision_needed=${result.decision_needed})`,
+  });
+
+  return Response.json({ ok: true, data: result });
 }
 
 export async function handleSaveArtifact(
