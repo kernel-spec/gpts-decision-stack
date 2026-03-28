@@ -19,6 +19,8 @@ import {
 import {
   handleGetProjectStatus,
   handleGetNextAction,
+  handleRecordModelOutput,
+  handleSaveArtifact,
 } from "./handlers/founder.js";
 
 // ---------- Helpers ----------
@@ -149,6 +151,24 @@ export async function route(request: Request, env: Env): Promise<Response> {
   if (founderNextActionMatch) {
     const project_id = founderNextActionMatch[1];
     if (method === "GET") return handleGetNextAction(project_id, env);
+    return methodNotAllowed();
+  }
+
+  // /founder/project/{project_id}/artifact
+  const founderArtifactMatch = path.match(/^\/founder\/project\/([^/]+)\/artifact$/);
+  if (founderArtifactMatch) {
+    const project_id = founderArtifactMatch[1];
+    if (method === "POST") return handleSaveArtifact(request, project_id, env);
+    return methodNotAllowed();
+  }
+
+  // /founder/project/{project_id}/model-output
+  const founderModelOutputMatch = path.match(
+    /^\/founder\/project\/([^/]+)\/model-output$/
+  );
+  if (founderModelOutputMatch) {
+    const project_id = founderModelOutputMatch[1];
+    if (method === "POST") return handleRecordModelOutput(request, project_id, env);
     return methodNotAllowed();
   }
 
