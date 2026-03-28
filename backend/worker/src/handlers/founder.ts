@@ -137,11 +137,17 @@ export async function handleSaveArtifact(
   const canonicalArtifactType = artifactService.getFounderCanonicalArtifactType(
     body.artifact_type
   );
-  if (canonicalArtifactType) {
-    const canonicalError = artifactService.getFounderCanonicalArtifactError(session, {
-      artifact_type: canonicalArtifactType,
-      payload: body.content,
-    });
+  const canonicalRequest = canonicalArtifactType
+    ? {
+        artifact_type: canonicalArtifactType,
+        payload: body.content,
+      }
+    : null;
+  if (canonicalRequest) {
+    const canonicalError = artifactService.getFounderCanonicalArtifactError(
+      session,
+      canonicalRequest
+    );
     if (canonicalError) {
       return errorResponse(canonicalError, "ILLEGAL_ARTIFACT_STATE", 409);
     }
@@ -162,14 +168,13 @@ export async function handleSaveArtifact(
     notes: `Founder artifact ${body.artifact_type} saved (artifact_id=${result.artifact_id}, run_id=${body.metadata.run_id})`,
   });
 
-  if (canonicalArtifactType) {
+  if (canonicalRequest) {
     await artifactService.submitArtifactWithLifecycle(
       env.DECISIONS_DB,
       env.ARTIFACTS_BUCKET,
       session,
       {
-        artifact_type: canonicalArtifactType,
-        payload: body.content,
+        ...canonicalRequest,
         agent_id: body.submitted_by,
       }
     );

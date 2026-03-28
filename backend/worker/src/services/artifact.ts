@@ -60,10 +60,40 @@ type ArtifactTransition = {
   notes: string;
 } | null;
 
+type StateDecisionPacketPayload = {
+  state_id?: string;
+  outcome?: string;
+};
+
+const FOUNDER_DUAL_WRITE_CANONICAL_ARTIFACT_TYPES = new Set<
+  SubmitArtifactRequest["artifact_type"]
+>(["ProblemBrief"]);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function asStateDecisionPacketPayload(
+  payload: unknown
+): StateDecisionPacketPayload | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  return {
+    state_id: typeof payload.state_id === "string" ? payload.state_id : undefined,
+    outcome: typeof payload.outcome === "string" ? payload.outcome : undefined,
+  };
+}
+
 export function getFounderCanonicalArtifactType(
   artifact_type: string
 ): SubmitArtifactRequest["artifact_type"] | null {
-  return artifact_type === "ProblemBrief" ? "ProblemBrief" : null;
+  return FOUNDER_DUAL_WRITE_CANONICAL_ARTIFACT_TYPES.has(
+    artifact_type as SubmitArtifactRequest["artifact_type"]
+  )
+    ? (artifact_type as SubmitArtifactRequest["artifact_type"])
+    : null;
 }
 
 export function getArtifactTransition(
@@ -82,7 +112,7 @@ export function getArtifactTransition(
     return null;
   }
 
-  const pkt = req.payload as { state_id?: string; outcome?: string } | null;
+  const pkt = asStateDecisionPacketPayload(req.payload);
   if (pkt?.outcome !== "proceed") {
     return null;
   }
