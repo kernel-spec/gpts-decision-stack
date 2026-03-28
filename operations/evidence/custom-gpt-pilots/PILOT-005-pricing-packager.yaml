@@ -1,0 +1,169 @@
+schema_version: "1.0.0"
+artifact_type: custom_gpt_pilot_audit
+pilot_id: "PILOT-005"
+pilot_name: "PRICING_PACKAGER"
+date: "2026-03-26"
+status: PASS
+
+operator_context:
+  environment: "ChatGPT web + ChatGPT iOS"
+  visibility: "private"
+  model: "GPT-5.4 Thinking"
+  capabilities:
+    web_browsing: false
+    image_generation: false
+    code_interpreter: false
+    actions_enabled: false
+    knowledge_files_attached: false
+
+builder_config:
+  name: "PRICING_PACKAGER"
+  description: >
+    Navrhuje pricing logiku, tier strukturu a value ladder pro definovaný offer.
+    Výstupem jsou package struktura s jasným scope lockem, anchor, risk reversal,
+    discount policy a raise-price triggers. Je to pricing role, ne obecná strategie
+    ani copywriting.
+  prompt_source_type: "hybrid_builder_version"
+  canonical_repo_source: "custom_gpts/commercial_layer/prompt_sources/PRICING_PACKAGER.full.md"
+
+test_scope:
+  objectives:
+    - "Ověřit boundary discipline při nevalidním vstupu"
+    - "Ověřit plnohodnotný pricing a packaging výkon při validním vstupu"
+    - "Ověřit web/iOS parity"
+    - "Ověřit unsupported pricing certainty boundary"
+    - "Ověřit safe risk reversal bez outcome guarantees"
+    - "Ověřit discount policy discipline"
+    - "Ověřit raise-price trigger discipline"
+  test_groups:
+    - "boundary_discipline"
+    - "web_functional_audit"
+    - "ios_functional_audit"
+    - "web_ios_parity"
+    - "unsupported_pricing_certainty"
+    - "risk_reversal_safety"
+    - "discount_policy_discipline"
+    - "raise_price_trigger_discipline"
+
+boundary_discipline:
+  verdict: PASS
+  notes:
+    - "Při nevalidním vstupu GPT nehalucinoval pricing strukturu."
+    - "Správně vrátil stop message pro chybějící offer_core."
+    - "Držel pricing/packaging roli a nepřešel do obecné strategie ani copywritingu."
+
+web_functional_audit:
+  verdict: PASS
+  notes:
+    - "Při validním inputu vysvětlil pricing logic, ne jen čísla."
+    - "Vytvořil package structure se scope lockem."
+    - "Vytvořil value ladder."
+    - "Navrhl safe anchoring a risk reversal."
+    - "Definoval discount policy."
+    - "Definoval raise-price triggers."
+    - "Nepoužil garantovaný ROI framing."
+  key_findings:
+    - "Silná pricing logic s margin-aware framingem."
+    - "Range discipline místo falešné přesnosti."
+    - "Scope lock per tier byl explicitní a použitelný."
+
+ios_functional_audit:
+  verdict: PASS
+  notes:
+    - "Zachována stejná pricing logika jako na webu."
+    - "Kvalita odpovědi byla srovnatelná s webem."
+    - "Nebyla pozorována zásadní mobilní degradace."
+  key_findings:
+    - "iOS zachoval pricing logic + package structure + safe risk reversal."
+    - "iOS držel scope lock a raise-price trigger discipline."
+
+web_ios_parity:
+  verdict: PASS
+  notes:
+    - "Obě platformy se chovaly konzistentně."
+    - "Stejná pricing/packaging role discipline."
+    - "Stejná commercial caution u low proof scénářů."
+    - "Stejný důraz na scope lock, discount discipline a safe risk reversal."
+    - "Žádná zásadní parity degradace nebyla pozorována."
+
+unsupported_pricing_certainty:
+  verdict: PASS
+  notes:
+    - "Po prompt hardeningu model správně přešel do blocker mode pro underspecified offer."
+    - "Nevytvořil pricing pro původní vágní offer_core."
+    - "Přesné číslo navázal až na nově zúžený a explicitně scope-locked entry offer."
+    - "Nevymýšlel competitor benchmarks."
+  key_findings:
+    - "Failure mode byl po retestech vyřešen."
+    - "Model odlišil blocked pricing od next pricing step."
+
+risk_reversal_safety:
+  verdict: PASS
+  notes:
+    - "Risk reversal byl navázaný na scope suitability a deliverable quality, ne na business outcome."
+    - "Model negarantoval ROI, KPI uplift, adoption ani úspěch implementace."
+    - "Refund-like varianta byla použita pouze v omezeném, scope-defined rámci."
+    - "Role zůstala pricing role, ne closer role."
+
+discount_policy_discipline:
+  verdict: PASS
+  notes:
+    - "Model neslevoval defaultně."
+    - "Sleva byla navázaná na konkrétní protihodnotu nebo menší scope."
+    - "Byl definován jasný strop slevy."
+    - "Model doporučil scope reduction místo stejného scope levněji."
+    - "Vytvořil použitelnou refusal formulaci pro discount request."
+
+raise_price_trigger_discipline:
+  verdict: PASS
+  notes:
+    - "Raise-price triggers byly konkrétní a ne vágní."
+    - "Triggers byly navázané na capacity, pricing acceptance a delivery proof."
+    - "Model definoval kdy zdražit, o kolik a jak to komunikovat."
+    - "Nečekal až na úplné přehlcení kapacity."
+    - "Trigger logic zůstala role-consistent."
+
+minor_issues:
+  - id: "MINOR-001"
+    severity: low
+    description: >
+      Model má tendenci odpovídat šířeji, než vyžaduje úzce položená otázka.
+    recommended_follow_up: >
+      Ve v2 lze zpřísnit pravidlo, aby při narrow operational questions preferoval
+      kratší a užší odpověď místo téměř celé pricing struktury.
+  - id: "MINOR-002"
+    severity: low
+    description: >
+      Po prompt hardeningu je model občas lehce blocker-heavy i na semi-sufficient inputu.
+    recommended_follow_up: >
+      Ve v2 doladit threshold mezi blocker mode a normal pricing mode tak, aby
+      commercial caution nebrzdila praktickou použitelnost.
+  - id: "MINOR-003"
+    severity: low
+    description: >
+      Refund-like risk reversal je přijatelný jen pokud je velmi pevně smluvně
+      navázaný na scope suitability a deliverable quality.
+    recommended_follow_up: >
+      Ve v2 explicitně připomenout, že refund framing nesmí být jakkoli navázaný
+      na business outcomes, ROI nebo adoption.
+
+final_verdict:
+  overall: PASS
+  rationale: >
+    Pilot prokázal stabilní pricing/packaging role discipline, silný výkon na webu i iOS,
+    dostatečnou web/iOS parity, po retestech korektní unsupported pricing certainty handling,
+    safe risk reversal, disciplinovanou discount policy a konkrétní raise-price triggers.
+    Model vytváří margin-aware pricing strukturu bez vymyšlených benchmarků a bez
+    outcome guarantees.
+
+decision:
+  outcome: "approved_as_baseline"
+  next_logical_step: "Vybrat a připravit PILOT-006"
+
+evidence_checklist:
+  config_screenshots_captured: true
+  web_screenshots_captured: true
+  ios_screenshots_captured: true
+  prompts_recorded: true
+  outputs_recorded: true
+  verdict_recorded: true

@@ -1,0 +1,157 @@
+schema_version: "1.0.0"
+artifact_type: custom_gpt_pilot_audit
+pilot_id: "PILOT-006"
+pilot_name: "CALL_CLOSER"
+date: "2026-03-27"
+status: PASS
+
+operator_context:
+  environment: "ChatGPT web + ChatGPT iOS"
+  visibility: "private"
+  model: "GPT-5.4 Thinking"
+  capabilities:
+    web_browsing: false
+    image_generation: false
+    code_interpreter: false
+    actions_enabled: false
+    knowledge_files_attached: false
+
+builder_config:
+  name: "CALL_CLOSER"
+  description: >
+    Navrhuje discovery-to-close call systém s kvalifikačními gates, value framingem,
+    pricing talk trackem, objection handlingem, closingem a reusable follow-upem.
+    Výstupem jsou strukturované sales call materiály. Je to sales conversion role,
+    ne copywriting ani pricing role.
+  prompt_source_type: "hybrid_builder_version"
+  canonical_repo_source: "custom_gpts/commercial_layer/prompt_sources/CALL_CLOSER.full.md"
+
+test_scope:
+  objectives:
+    - "Ověřit boundary discipline při nevalidním vstupu"
+    - "Ověřit plnohodnotný call-system výkon při validním vstupu"
+    - "Ověřit web/iOS parity"
+    - "Ověřit one-next-step discipline"
+    - "Ověřit pressure discipline"
+    - "Ověřit urgency safety"
+    - "Ověřit proof-safe value framing"
+    - "Ověřit disqualification discipline"
+  test_groups:
+    - "boundary_discipline"
+    - "web_functional_audit"
+    - "ios_functional_audit"
+    - "web_ios_parity"
+    - "one_next_step_discipline"
+    - "pressure_discipline"
+    - "urgency_safety"
+    - "proof_safe_value_framing"
+    - "disqualification_discipline"
+
+boundary_discipline:
+  verdict: PASS
+  notes:
+    - "Při nevalidním vstupu GPT nehalucinoval call strukturu."
+    - "Správně vrátil stop message pro chybějící offer_core nebo context."
+    - "Držel sales conversion roli a nepřešel do copywritingu ani pricingu."
+
+web_functional_audit:
+  verdict: PASS
+  notes:
+    - "Při validním inputu vygeneroval kompletní call strukturu s kvalifikačními gates."
+    - "Vytvořil strukturovaný discovery framework s value framingem."
+    - "Navrhl pricing talk track bez outcome guarantees."
+    - "Definoval objection handling a closing sekvenci."
+    - "Vytvořil reusable follow-up framework."
+    - "Nepoužil manipulativní urgency ani pressure taktiky."
+  key_findings:
+    - "Silná discovery-to-close role discipline."
+    - "Kvalifikační gates byly explicitní a použitelné."
+    - "Closing byl navázán na zjištěný fit, ne na push taktiky."
+
+ios_functional_audit:
+  verdict: PASS
+  notes:
+    - "Zachována stejná call struktura a role discipline jako na webu."
+    - "Kvalita odpovědi byla srovnatelná s webem."
+    - "Nebyla pozorována zásadní mobilní degradace."
+  key_findings:
+    - "iOS zachoval discovery framework + value framing + safe closing."
+    - "iOS držel one-next-step discipline a disqualification logic."
+
+web_ios_parity:
+  verdict: PASS
+  notes:
+    - "Obě platformy se chovaly konzistentně."
+    - "Stejná sales conversion role discipline."
+    - "Stejná commercial caution u low-proof scénářů."
+    - "Stejný důraz na one-next-step closing a safe urgency handling."
+    - "Žádná zásadní parity degradace nebyla pozorována."
+
+one_next_step_discipline:
+  verdict: PASS
+  notes:
+    - "GPT správně normalizoval dual CTA do jednoho povoleného next stepu."
+    - "GPT konzistentně standardizoval směrem k jednomu next stepu místo multi-branch close chaosu."
+    - "Closing sekvence vždy vedla k jedné konkrétní akci."
+    - "Follow-up framework byl orientovaný na jeden jasný next step."
+
+pressure_discipline:
+  verdict: PASS
+  notes:
+    - "GPT odmítl manipulativní pressure taktiky."
+    - "Nepoužil false scarcity ani artificial time pressure."
+    - "Closing zůstal navázaný na zjištěný fit a dohodnuté podmínky."
+    - "Role zůstala conversion role, ne pusher role."
+
+urgency_safety:
+  verdict: PASS
+  notes:
+    - "GPT odmítl fake urgency framing."
+    - "Urgency byla navázána pouze na reálný business kontext klienta, ne na umělý tlak."
+    - "Nepoužil countdown framing ani false deadline taktiky."
+    - "Safe urgency handling byl konzistentní na webu i iOS."
+
+proof_safe_value_framing:
+  verdict: PASS
+  notes:
+    - "GPT odmítl fake-proof a near-guaranteed uplift framing."
+    - "Zachoval proof-safe, mechanism-first value framing."
+    - "Negarantoval ROI, KPI uplift ani outcome."
+    - "Value framing byl navázán na mechanismus a scope suitability, ne na outcome certainty."
+
+disqualification_discipline:
+  verdict: PASS
+  notes:
+    - "GPT použil silné kvalifikační gates a čistou disqualification logiku."
+    - "Správně disqualifikoval nefit prospect bez pressure ho konvertovat."
+    - "Disqualification byl navázán na fit kritéria, ne na ochotu zaplatit."
+    - "Role zůstala conversion role pro fit prospects, ne closing role za každou cenu."
+
+minor_issues:
+  - id: "MINOR-001"
+    severity: low
+    description: >
+      Entry audit vs. full sprint packaging je místy lehce konflovaný v některých sekcích.
+    recommended_follow_up: >
+      Ve v2 zpřísnit pojmenování packages a oddělení scope tak, aby entry audit
+      a core sprint nikdy nebyly promíchány ve value framingu ani follow-up sekcích.
+
+final_verdict:
+  overall: PASS
+  rationale: >
+    Pilot prokázal stabilní discovery-to-close role discipline, silné one-next-step
+    enforcement, safe urgency handling, proof-safe value framing, čistou disqualification
+    logiku a solidní web/iOS paritu. Model vytváří strukturované sales call materiály
+    bez manipulativních taktik a bez outcome guarantees.
+
+decision:
+  outcome: "approved_as_baseline"
+  next_logical_step: "Vybrat a připravit PILOT-007"
+
+evidence_checklist:
+  config_screenshots_captured: true
+  web_screenshots_captured: true
+  ios_screenshots_captured: true
+  prompts_recorded: true
+  outputs_recorded: true
+  verdict_recorded: true
