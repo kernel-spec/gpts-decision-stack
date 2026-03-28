@@ -268,7 +268,7 @@ describe("founder artifact handler", () => {
     });
   });
 
-  it("dual-writes structured StateDecisionPacket content and advances primitive_selection to architecture_validation", async () => {
+  it("advances from primitive_selection to architecture_validation with structured StateDecisionPacket", async () => {
     const { env, founderArtifacts, artifacts, decisionLog, sessions, writes } = createEnv({
       pipeline_state: "primitive_selection",
       decision_status: "proceed",

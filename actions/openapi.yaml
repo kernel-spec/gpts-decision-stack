@@ -432,8 +432,8 @@ components:
             founder dual-write artifact types to preserve fail-closed behavior
             during Builder contract rollouts.
           examples:
-            - state_id: primitive_selection
-              outcome: proceed
+            state_id: primitive_selection
+            outcome: proceed
         submitted_by:
           type: string
           description: Founder-surface or operator identity submitting the artifact.
