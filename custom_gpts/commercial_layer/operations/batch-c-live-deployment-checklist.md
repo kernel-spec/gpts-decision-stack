@@ -2,7 +2,7 @@
 
 ## Účel
 
-Tento soubor definuje manuální deployment postup pro Batch C commercial GPT rolí do prostředí ChatGPT Builder. Slouží jako single-source-of-truth pro operátora při nasazení a verifikaci finálních dvou rolí Top 10 commercial rollout.
+Tento soubor definuje manuální deployment postup pro Batch C commercial GPT rolí do prostředí ChatGPT Builder. Slouží jako operátorský deployment checklist, ne jako canonical source role.
 
 ## Rozsah
 
@@ -16,8 +16,12 @@ Tento soubor definuje manuální deployment postup pro Batch C commercial GPT ro
 | Soubor | Účel |
 |--------|------|
 | `custom_gpts/commercial_layer/deployment/builder-deployment-sheet.yaml` | Kanonická deployment konfigurace |
+| `custom_gpts/commercial_layer/builder_convention_hardening_brief.md` | Governance baseline pro canonical source, naming a artifact separation |
 | `custom_gpts/commercial_layer/builder_compact/CALL_CLOSER.builder.md` | Instructions pro Builder |
 | `custom_gpts/commercial_layer/builder_compact/DELIVERY_SOP_ENGINE.builder.md` | Instructions pro Builder |
+
+Canonical source pro význam role, hard rules a scope zůstává v odpovídajícím
+`prompt_sources/*.full.md` souboru.
 
 ---
 

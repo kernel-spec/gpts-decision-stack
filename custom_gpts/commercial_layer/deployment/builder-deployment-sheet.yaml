@@ -24,6 +24,8 @@ governance_note: >
   Tento deployment sheet patří do commercial layer. Nepřepisuje governed truth
   current execution engine, neovlivňuje Operator/Auditor verdicty a nesmí být
   interpretován jako deployment readiness artifact pro gpts-decision-stack.
+  Canonical role truth zůstává v prompt_sources/*.full.md; builder_compact/*.builder.md
+  je pouze Builder deployment forma stejné role.
 
 batches:
   batch_1:
@@ -379,6 +381,8 @@ builder_release_checks:
 
 usage_rules:
   - Use this sheet after domain-to-role-mapping.yaml and top10-role-overlays.yaml are defined.
+  - Treat prompt_source_file as canonical role source and builder_compact_file as deployment form only.
   - Do not mark deployment_readiness as PASS unless the Builder prompt has been manually reviewed.
+  - Do not change role semantics in builder_compact without first changing the paired prompt_sources/*.full.md file.
   - If char_risk is high, create a builder-safe compact version before deployment.
   - Web ON roles must be checked for source citation behavior before live use.
