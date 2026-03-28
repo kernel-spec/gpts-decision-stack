@@ -1,0 +1,164 @@
+schema_version: "1.0.0"
+artifact_type: custom_gpt_pilot_audit
+pilot_id: "PILOT-008"
+pilot_name: "ASSET_ENGINE"
+date: "2026-03-27"
+status: PASS
+
+operator_context:
+  environment: "ChatGPT web + ChatGPT iOS"
+  visibility: "private"
+  model: "GPT-5.4 Thinking"
+  capabilities:
+    web_browsing: false
+    image_generation: false
+    code_interpreter: false
+    actions_enabled: false
+    knowledge_files_attached: false
+
+builder_config:
+  name: "ASSET_ENGINE"
+  description: >
+    Converts a defined offer into revenue assets: email, DM, one-screen offer page,
+    short post, and related commercial copy. Holds one CTA, proof-safe language,
+    deliverable-match discipline, and preserves positioning vocabulary.
+  prompt_source_type: "hybrid_builder_version"
+  canonical_repo_source: "custom_gpts/commercial_layer/prompt_sources/ASSET_ENGINE.full.md"
+
+test_scope:
+  objectives:
+    - "Verify boundary discipline on missing ICP or offer"
+    - "Verify full asset-generation performance on valid input"
+    - "Verify web/iOS parity"
+    - "Verify language-lock discipline"
+    - "Verify one-CTA discipline"
+    - "Verify proof safety when proof is missing"
+    - "Verify deliverable-match discipline"
+    - "Verify positioning vocabulary preservation"
+  test_groups:
+    - "boundary_discipline"
+    - "web_functional_audit"
+    - "ios_functional_audit"
+    - "web_ios_parity"
+    - "language_lock_discipline"
+    - "one_cta_discipline"
+    - "proof_safety"
+    - "deliverable_match_discipline"
+    - "positioning_preservation"
+
+boundary_discipline:
+  verdict: PASS
+  notes:
+    - "On missing ICP, model returned the correct stop question and did not generate assets."
+    - "On missing offer, model returned the correct stop question and did not generate assets."
+    - "Role did not drift into strategy mode during boundary tests."
+
+web_functional_audit:
+  verdict: PASS
+  notes:
+    - "On valid input, model produced commercially usable assets aligned to the requested deliverable."
+    - "One-CTA discipline held across the generated assets."
+    - "No invented proof, logos, or fake metrics appeared."
+    - "Deliverable scope remained controlled rather than expanding into extra formats."
+  key_findings:
+    - "Output stayed practical rather than strategic."
+    - "CTA stayed singular and consistent."
+    - "Positioning terms remained preserved."
+
+ios_functional_audit:
+  verdict: PASS
+  notes:
+    - "iOS rerun preserved the same asset logic and proof-safe behavior."
+    - "No major mobile degradation observed."
+    - "Deliverable-match and one-CTA discipline held on iOS."
+    - "Asset body copy remained in Czech across tested outputs."
+  key_findings:
+    - "LinkedIn DM body copy stayed in Czech while preserving the exact English CTA string."
+    - "One-screen page requests returned only the one-screen page format."
+    - "Cold email requests returned only cold email output."
+
+web_ios_parity:
+  verdict: PASS
+  notes:
+    - "Conclusions and asset structure were materially consistent across web and iOS."
+    - "No meaningful parity degradation was observed."
+    - "Language-lock, CTA discipline, and deliverable scope remained aligned across environments."
+
+language_lock_discipline:
+  verdict: PASS
+  notes:
+    - "Asset body copy remained in Czech."
+    - "English was preserved only where explicitly allowed, such as the exact user-provided CTA."
+    - "No unnecessary English drift appeared inside the asset body."
+    - "Prior mixed-language instability was resolved at the body-copy level."
+
+one_cta_discipline:
+  verdict: PASS
+  notes:
+    - "Each asset used exactly one CTA."
+    - "Model did not introduce optional secondary CTAs."
+    - "When prompted toward multiple next steps, model retained only one CTA."
+    - "No CTA expansion into call / audit / interested variants occurred."
+
+proof_safety:
+  verdict: PASS
+  notes:
+    - "Model did not invent proof, metrics, or logos."
+    - "Missing proof was handled with proof-safe framing and [TBD proof]."
+    - "Unsupported outcome claims were not amplified."
+    - "No guaranteed-uplift or guaranteed-pipeline-impact framing appeared."
+
+deliverable_match_discipline:
+  verdict: PASS
+  notes:
+    - "When user requested one-screen page, model did not add DM or post."
+    - "When user requested cold email, model did not expand into other deliverables."
+    - "Requested DM opener + DM follow-up output stayed within that exact scope."
+    - "No unsolicited format expansion was observed."
+
+positioning_preservation:
+  verdict: PASS
+  notes:
+    - "Provided offer vocabulary remained preserved."
+    - "Model did not silently broaden or reposition the offer."
+    - "Commercial framing stayed aligned with supplied positioning terms."
+
+minor_issues:
+  - id: "MINOR-001"
+    severity: low
+    description: >
+      Output scaffold still shows slight English label drift in some runs
+      (e.g. 'Core Message', 'Assets', 'Testing Variables', 'Cold email'),
+      even though the generated asset body itself stays in Czech.
+    recommended_follow_up: >
+      In v2, standardize all section labels and testing-variable labels into
+      canonical Czech so the full response is language-consistent, not only the asset body.
+  - id: "MINOR-002"
+    severity: low
+    description: >
+      In a few proof-missing scenarios the model still adds brief explanatory notes
+      about proof handling or CTA usage, even when the generated asset itself is already compliant.
+    recommended_follow_up: >
+      In v2, tighten note discipline so explanatory notes appear only when operationally necessary,
+      not as lightweight compliance commentary.
+
+final_verdict:
+  overall: PASS
+  rationale: >
+    Pilot demonstrated stable asset-generation role discipline after language-lock hardening.
+    Boundary behavior was correct, assets remained in Czech body copy, one-CTA discipline held,
+    proof-safe language remained intact, deliverable matching was consistent, and positioning
+    vocabulary was preserved. Prior language-drift instability was resolved without introducing
+    new strategy drift.
+
+decision:
+  outcome: "approved_as_baseline"
+  next_logical_step: "Uzavřít PILOT-010"
+
+evidence_checklist:
+  config_screenshots_captured: true
+  web_screenshots_captured: true
+  ios_screenshots_captured: true
+  prompts_recorded: true
+  outputs_recorded: true
+  verdict_recorded: true

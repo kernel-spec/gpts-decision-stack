@@ -1,0 +1,143 @@
+schema_version: "1.0.0"
+artifact_type: custom_gpt_pilot_audit
+pilot_id: "PILOT-004"
+pilot_name: "SUGGESTION_ENGINE"
+date: "2026-03-26"
+status: PASS
+
+operator_context:
+  environment: "ChatGPT web + ChatGPT iOS"
+  visibility: "private"
+  model: "GPT-5.4 Thinking"
+  capabilities:
+    web_browsing: false
+    image_generation: false
+    code_interpreter: false
+    actions_enabled: false
+    knowledge_files_attached: false
+
+builder_config:
+  name: "SUGGESTION_ENGINE"
+  description: >
+    Diagnostikuje tření v assetu nebo offeru bez přepisování.
+    Najde ranked friction points, strongest node, weakest node a dá
+    3 testovatelné změny.
+  prompt_source_type: "hybrid_builder_version"
+  canonical_repo_source: "custom_gpts/commercial_layer/prompt_sources/SUGGESTION_ENGINE.full.md"
+
+test_scope:
+  objectives:
+    - "Ověřit boundary discipline při nevalidním vstupu"
+    - "Ověřit plnohodnotný diagnostický výkon při validním vstupu"
+    - "Ověřit web/iOS parity"
+    - "Ověřit no-rewrite boundary i při explicitním pokusu přepnout roli"
+    - "Ověřit proof gap diagnostics bez fake-proof workaroundu"
+    - "Ověřit ranking discipline"
+  test_groups:
+    - "boundary_discipline"
+    - "web_functional_audit"
+    - "ios_functional_audit"
+    - "web_ios_parity"
+    - "no_rewrite_boundary"
+    - "proof_gap_diagnostics"
+    - "ranking_discipline"
+
+boundary_discipline:
+  verdict: PASS
+  notes:
+    - "Při nevalidním vstupu GPT nehalucinoval diagnostiku."
+    - "Správně vrátil stop message pro chybějící asset_text."
+    - "Držel diagnostickou roli a nepřešel do rewrite ani offer-build role."
+
+web_functional_audit:
+  verdict: PASS
+  notes:
+    - "Při validním inputu vytvořil ranked friction points."
+    - "Při validním inputu vytvořil explicitní ICP drift signals."
+    - "Pojmenoval strongest node a weakest node."
+    - "Vytvořil přesně 3 targeted improvements."
+    - "Doporučení byla formulována jako change -> expected effect -> how to test."
+    - "Nevytvořil rewrite."
+  key_findings:
+    - "Silná role discipline bez rewrite driftu."
+    - "Diagnostika byla konkrétní, ne vágní."
+    - "Weakest node byl explicitní a akčně použitelný."
+
+ios_functional_audit:
+  verdict: PASS
+  notes:
+    - "Zachována stejná diagnostická logika jako na webu."
+    - "Kvalita odpovědi byla srovnatelná s webem."
+    - "Nebyla pozorována zásadní mobilní degradace."
+  key_findings:
+    - "iOS zachoval ranked friction points a přesně 3 targeted improvements."
+    - "iOS držel anti-rewrite boundary a stejné diagnostické členění."
+
+web_ios_parity:
+  verdict: PASS
+  notes:
+    - "Obě platformy se chovaly konzistentně."
+    - "Stejná role discipline."
+    - "Stejná diagnostická hloubka."
+    - "Stejný důraz na ICP, scope, claims a CTA friction."
+    - "Žádná zásadní parity degradace nebyla pozorována."
+
+no_rewrite_boundary:
+  verdict: PASS
+  notes:
+    - "Ani při explicitním pokusu o přepnutí do rewrite role GPT asset nepřepsal."
+    - "Zůstal v diagnostickém módu."
+    - "Nevygeneroval alternativní headline ani novou verzi assetu."
+    - "Explicitně udržel boundary proti REWRITE mode."
+
+proof_gap_diagnostics:
+  verdict: PASS
+  notes:
+    - "Správně identifikoval proof / credibility gap."
+    - "Nevěrohodný claim byl označen jako hlavní friction point."
+    - "Model nezesiloval claim a nevymýšlel fake proof."
+    - "Doporučení zůstala testovatelná bez rewrite workaroundu."
+
+ranking_discipline:
+  verdict: PASS
+  notes:
+    - "Friction points byly ranked."
+    - "Strongest node a weakest node byly jasně odlišené."
+    - "Model nehalucinoval chaos tam, kde nebyl nutný."
+    - "Diagnostika zůstala přísná, ale stále obhajitelná."
+
+minor_issues:
+  - id: "MINOR-001"
+    severity: low
+    description: >
+      Model je někdy lehce severity-heavy i u relativně silnějších assetů.
+    recommended_follow_up: >
+      Ve v2 zpřesnit interní priorizační disciplínu, aby vysoká severity byla
+      používána jen tam, kde friction skutečně blokuje reakci nebo konverzi.
+  - id: "MINOR-002"
+    severity: low
+    description: >
+      Výstupy bývají husté a delší, i když zůstávají role-consistent.
+    recommended_follow_up: >
+      Ve v2 zvážit mírně kompaktnější diagnostický formát pro mobilní čitelnost,
+      bez ztráty ranked struktury.
+
+final_verdict:
+  overall: PASS
+  rationale: >
+    Pilot prokázal stabilní diagnostickou role discipline, silný výkon na webu i iOS,
+    dostatečnou web/iOS parity, korektní no-rewrite boundary, správnou proof-gap
+    diagnostiku a použitelnou ranking discipline. Model diagnostikuje tření bez
+    přepisování a vytváří přesně 3 testovatelné změny.
+
+decision:
+  outcome: "approved_as_baseline"
+  next_logical_step: "Vybrat a připravit PILOT-005"
+
+evidence_checklist:
+  config_screenshots_captured: true
+  web_screenshots_captured: true
+  ios_screenshots_captured: true
+  prompts_recorded: true
+  outputs_recorded: true
+  verdict_recorded: true

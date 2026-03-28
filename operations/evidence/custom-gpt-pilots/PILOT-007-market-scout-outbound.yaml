@@ -1,0 +1,178 @@
+schema_version: "1.0.0"
+artifact_type: custom_gpt_pilot_audit
+pilot_id: "PILOT-007"
+pilot_name: "MARKET_SCOUT_OUTBOUND"
+date: "2026-03-27"
+status: PASS
+
+operator_context:
+  environment: "ChatGPT web + ChatGPT iOS"
+  visibility: "private"
+  model: "GPT-5.4 Thinking"
+  capabilities:
+    web_browsing: true
+    image_generation: false
+    code_interpreter: false
+    actions_enabled: false
+    knowledge_files_attached: false
+
+builder_config:
+  name: "MARKET_SCOUT_OUTBOUND"
+  description: >
+    Web-based market research role. Finds real offers, pricing signals, ICP signals,
+    and outbound channel patterns. Outputs one best ICP, one best offer, and at most
+    two outbound channels. Produces a source-cited outbound-first recommendation with
+    a 14-day execution plan, numeric validation metrics, and explicit kill criteria.
+  prompt_source_type: "hybrid_builder_version"
+  canonical_repo_source: "custom_gpts/commercial_layer/prompt_sources/MARKET_SCOUT_OUTBOUND.full.md"
+
+test_scope:
+  objectives:
+    - "Verify boundary discipline on missing market_topic input"
+    - "Verify full web-research-based output on valid input"
+    - "Verify web/iOS parity"
+    - "Verify citation discipline on factual claims, pricing, and competitor references"
+    - "Verify market narrowing into one strongest ICP"
+    - "Verify offer selection discipline to one best offer"
+    - "Verify outbound channel discipline to at most two channels"
+    - "Verify presence of 14-day execution plan with numeric metrics and kill criteria"
+    - "Verify pricing claim safety with no fabricated or uncited pricing"
+  test_groups:
+    - "boundary_discipline"
+    - "web_functional_audit"
+    - "ios_functional_audit"
+    - "web_ios_parity"
+    - "citation_discipline"
+    - "market_narrowing_discipline"
+    - "offer_selection_discipline"
+    - "outbound_channel_discipline"
+    - "validation_plan_discipline"
+    - "pricing_claim_safety"
+
+boundary_discipline:
+  verdict: PASS
+  notes:
+    - "GPT asked for missing market_topic instead of hallucinating research output."
+    - "Respected minimum input rules and did not proceed without a defined market scope."
+    - "Stop rule was applied consistently before generating any research snapshot."
+
+web_functional_audit:
+  verdict: PASS
+  notes:
+    - "Valid input produced a complete output: research snapshot, offer map, ICP recommendation, offer recommendation, channel plan, asset direction, 14-day execution plan, validation metrics, and cited sources."
+    - "Output stayed concrete and commercially usable rather than abstract or generic."
+    - "Web browsing was used to ground recommendations in real market signals."
+    - "Competitor references and pricing signals were drawn from live or recent sources."
+  key_findings:
+    - "Strong market research role discipline maintained throughout."
+    - "Narrowing from broad market to one strongest ICP was explicit and well-reasoned."
+    - "Offer recommendation included outcome, deliverables, timeline, scope lock, and pricing logic."
+
+ios_functional_audit:
+  verdict: PASS
+  notes:
+    - "iOS preserved the same output structure and research role discipline as web."
+    - "No major mobile degradation observed in reasoning quality or citation behavior."
+    - "ICP selection, offer recommendation, and channel plan were consistent with web output."
+  key_findings:
+    - "iOS held citation discipline and market narrowing logic."
+    - "Validation plan and kill criteria were present on iOS as on web."
+
+web_ios_parity:
+  verdict: PASS
+  notes:
+    - "Conclusions and output structure were materially consistent across web and iOS."
+    - "No meaningful divergence in ICP selection, offer recommendation, or channel plan."
+    - "Citation behavior and pricing claim safety were consistent across platforms."
+    - "No major web/iOS parity degradation observed."
+
+citation_discipline:
+  verdict: PASS
+  notes:
+    - "Factual claims, competitor references, and pricing signals were source-cited."
+    - "No fabricated citations or uncited pricing claims appeared."
+    - "Where live sources were sparse, GPT noted inference explicitly rather than presenting it as a direct benchmark."
+    - "Source citations were included for offer examples, competitor positioning, and market size signals."
+
+market_narrowing_discipline:
+  verdict: PASS
+  notes:
+    - "Model narrowed broad market inputs into one strongest ICP instead of keeping recommendations broad."
+    - "Best segment reasoning was explicit, with supporting market signal rationale."
+    - "GPT did not produce an undifferentiated list of potential ICPs as the main conclusion."
+    - "ICP selection was tied to outbound channel fit and offer positioning."
+
+offer_selection_discipline:
+  verdict: PASS
+  notes:
+    - "Model recommended one best offer rather than presenting a vague menu of options."
+    - "Best offer included outcome framing, deliverable scope, timeline, scope lock, and pricing logic."
+    - "GPT avoided abstract commentary in place of a concrete offer recommendation."
+    - "Offer selection was tied to the selected ICP and available market proof."
+
+outbound_channel_discipline:
+  verdict: PASS
+  notes:
+    - "Model recommended at most two outbound channels per pilot run."
+    - "Channel plan remained outbound-first and avoided generic broad marketing advice."
+    - "Channel selection rationale was tied to ICP behavior patterns and market signals."
+    - "Asset direction for each channel was actionable and specific."
+
+validation_plan_discipline:
+  verdict: PASS
+  notes:
+    - "Model produced a practical 14-day execution plan with clear sequencing."
+    - "Validation metrics were numeric where market data supported quantification."
+    - "Kill criteria were explicit and actionable, not vague or aspirational."
+    - "Plan distinguished between early signal checkpoints and go/no-go thresholds."
+
+pricing_claim_safety:
+  verdict: PASS
+  notes:
+    - "Model did not fabricate pricing; used ranges or stated inference logic where market was unclear."
+    - "Direct benchmark signals were distinguished from inferred or comparable pricing where possible."
+    - "Where public proof was weak, GPT recommended proof substitutes rather than guarantees."
+    - "No near-guaranteed uplift framing or outcome certainty overclaims observed."
+    - "Pricing logic was grounded in cited market signals or explicitly marked as inferred."
+
+minor_issues:
+  - id: "MINOR-001"
+    severity: low
+    description: >
+      Pricing recommendations sometimes blend direct benchmark and inferred pricing logic
+      a bit tightly, making it harder to distinguish the confidence level at a glance.
+    recommended_follow_up: >
+      In v2, mark benchmark vs. inference more explicitly in the synthesis layer so
+      readers can immediately identify which pricing signals are directly sourced and
+      which are constructed from comparable-market reasoning.
+  - id: "MINOR-002"
+    severity: low
+    description: >
+      Some EU/UK conclusions are partially supported by global comparable offers due to
+      sparse local pricing transparency, which slightly reduces local-market precision.
+    recommended_follow_up: >
+      In v2, make local-vs-global evidence boundaries even more explicit so it is clear
+      when a recommendation is anchored in local data vs. extrapolated from global comps.
+
+final_verdict:
+  overall: PASS
+  rationale: >
+    Pilot demonstrated stable web-based market research role discipline, consistent
+    citation behavior, strong market narrowing from broad input to one strongest ICP,
+    clean offer selection and channel plan narrowing, practical 14-day execution plans
+    with numeric validation metrics and explicit kill criteria, proof-safe pricing claim
+    handling, and solid web/iOS parity. Two low-severity minor issues noted around
+    pricing inference signaling and geography confidence, neither blocking baseline
+    approval.
+
+decision:
+  outcome: "approved_as_baseline"
+  next_logical_step: "Vybrat a připravit PILOT-008"
+
+evidence_checklist:
+  config_screenshots_captured: true
+  web_screenshots_captured: true
+  ios_screenshots_captured: true
+  prompts_recorded: true
+  outputs_recorded: true
+  verdict_recorded: true

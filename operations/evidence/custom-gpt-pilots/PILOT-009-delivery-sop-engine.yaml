@@ -1,0 +1,200 @@
+schema_version: "1.0.0"
+artifact_type: custom_gpt_pilot_audit
+pilot_id: "PILOT-009"
+pilot_name: "DELIVERY_SOP_ENGINE"
+date: "2026-03-27"
+status: PASS
+
+operator_context:
+  environment: "ChatGPT web + ChatGPT iOS"
+  visibility: "private"
+  model: "GPT-5.4 Thinking"
+  capabilities:
+    web_browsing: false
+    image_generation: false
+    code_interpreter: false
+    actions_enabled: false
+    knowledge_files_attached: false
+
+builder_config:
+  name: "DELIVERY_SOP_ENGINE"
+  description: >
+    Převádí definovaný offer do standardizované delivery vrstvy: onboarding, intake,
+    interní checklist, client touchpoints, šablony, QA, acceptance criteria,
+    scope enforcement a definition of done. Je to delivery system role, ne market strategy role.
+  prompt_source_type: "hybrid_builder_version"
+  canonical_repo_source: "custom_gpts/commercial_layer/prompt_sources/DELIVERY_SOP_ENGINE.full.md"
+
+test_scope:
+  objectives:
+    - "Verify boundary discipline on missing output_contract or scope_lock input"
+    - "Verify full delivery-SOP generation on valid input"
+    - "Verify web/iOS parity"
+    - "Verify onboarding discipline"
+    - "Verify checklist operability"
+    - "Verify client touchpoint discipline"
+    - "Verify QA and acceptance discipline"
+    - "Verify scope enforcement discipline"
+    - "Verify definition of done discipline"
+    - "Verify no offer redesign discipline"
+    - "Verify no scope expansion discipline"
+  test_groups:
+    - "boundary_discipline"
+    - "web_functional_audit"
+    - "ios_functional_audit"
+    - "web_ios_parity"
+    - "onboarding_discipline"
+    - "checklist_operability"
+    - "client_touchpoint_discipline"
+    - "qa_acceptance_discipline"
+    - "scope_enforcement_discipline"
+    - "definition_of_done_discipline"
+    - "no_offer_redesign_discipline"
+    - "no_scope_expansion_discipline"
+
+boundary_discipline:
+  verdict: PASS
+  notes:
+    - "Stop-rule language fix applied: model now asks precisely for 'Output Contract' by that exact term before proceeding."
+    - "Stop-rule language fix applied: model now asks precisely for 'Scope Lock' by that exact term before proceeding."
+    - "Rerun confirmed: model halted and requested the exact required artifact names in all tested boundary scenarios."
+    - "Model did not hallucinate SOP output before minimum required input was present."
+    - "Stop rules were respected consistently; model did not drift into delivery output prematurely."
+    - "Boundary exactness is clean after the stop-rule language fix. No further rerun required."
+
+web_functional_audit:
+  verdict: PASS
+  notes:
+    - "Valid-run output included all 8 required sections."
+    - "Output was operational, margin-aware, and tied to output_contract/scope_lock."
+    - "QA was contract-bound rather than generic."
+    - "Definition of done and scope enforcement were explicit."
+  key_findings:
+    - "All 8 required SOP sections were present."
+    - "Output stayed delivery-system specific rather than drifting into strategy."
+    - "Timeline and margin protection language remained operationally usable."
+
+ios_functional_audit:
+  verdict: PASS
+  notes:
+    - "iOS preserved the same delivery-system logic and section completeness as web."
+    - "No major mobile degradation observed."
+    - "QA, scope enforcement, and definition of done remained present on iOS."
+  key_findings:
+    - "iOS retained operational checklist structure."
+    - "iOS preserved contract-bound QA and explicit scope enforcement."
+
+web_ios_parity:
+  verdict: PASS
+  notes:
+    - "Conclusions and output structure were materially consistent across web and iOS."
+    - "No meaningful divergence in section completeness or delivery logic."
+    - "No major web/iOS parity degradation observed."
+
+onboarding_discipline:
+  verdict: PASS
+  notes:
+    - "Onboarding intake was explicit and blocking where required inputs were missing."
+    - "Required client inputs and access were clearly enumerated."
+    - "Intake completion rule was present and operational."
+
+checklist_operability:
+  verdict: PASS
+  notes:
+    - "Internal checklist was step-by-step and operational."
+    - "Each step included owner, input needed, output produced, and done condition."
+    - "Checklist stayed practical rather than abstract."
+
+client_touchpoint_discipline:
+  verdict: PASS
+  notes:
+    - "Client touchpoints were timed and purpose-specific."
+    - "Kickoff, mid-sprint update, review, and handoff logic were explicit."
+    - "Escalation conditions were clearly defined."
+
+qa_acceptance_discipline:
+  verdict: PASS
+  notes:
+    - "QA checks were tied directly to output_contract."
+    - "Acceptance criteria were defined by deliverable."
+    - "Revision and rejection triggers were explicit rather than vague."
+
+scope_enforcement_discipline:
+  verdict: PASS
+  notes:
+    - "Included and excluded boundary language was explicit."
+    - "Out-of-scope request handling language was practical and reusable."
+    - "Timeline and margin protection remained explicit."
+
+definition_of_done_discipline:
+  verdict: PASS
+  notes:
+    - "Definition of done was clearly stated."
+    - "Done-state was tied to deliverables, feedback limits, and handoff."
+    - "Model did not leave completion criteria ambiguous."
+
+no_offer_redesign_discipline:
+  verdict: PASS
+  notes:
+    - "Offer structure, pricing, and positioning were accepted as provided inputs."
+    - "Model stayed in delivery-system role throughout all tested inputs."
+    - "No unsolicited offer restructuring or repositioning observed."
+    - "Follow-up pressure to add implementation services, CRM integrations, and team training was correctly rejected as out-of-scope offer expansion — model treated these as additions outside the current delivery contract."
+
+no_scope_expansion_discipline:
+  verdict: PASS
+  notes:
+    - "Output stayed within the boundaries of the given output_contract."
+    - "No enrichment beyond provided contract terms observed in any tested scenario."
+    - "Model flagged potential scope additions as out-of-scope rather than incorporating them."
+    - "Follow-up pressure to add more syncs, mini-deliverables, and multi-stakeholder review loops was correctly rejected as a delivery-model expansion outside the current sprint scope."
+    - "Margin and timeline protection language remained explicit in the rerun; no silent margin erosion from scope drift observed."
+
+minor_issues:
+  - id: "MINOR-001"
+    severity: low
+    description: >
+      Risk items can still read slightly advisory rather than fully contract-anchored.
+    recommended_follow_up: >
+      In v2, tighten risk-item format so each risk points to a specific contract clause,
+      scope boundary, or mitigation trigger.
+  - id: "MINOR-002"
+    severity: low
+    description: >
+      Low-severity language drift was observed in a few internal checklist labels across
+      runs, where naming varied slightly without changing operational meaning.
+    recommended_follow_up: >
+      In v2, add canonical internal label names to enforce consistent step naming.
+  - id: "MINOR-003"
+    severity: low
+    description: >
+      In some runs the SOP structure expanded slightly beyond the strict required format,
+      for example by adding optional structural sub-sections.
+    recommended_follow_up: >
+      In v2, explicitly cap the output structure to the canonical required sections only.
+
+final_verdict:
+  overall: PASS
+  rationale: >
+    Pilot demonstrated strong delivery-system role discipline across all test groups.
+    Stop-rule language fix was applied and boundary rerun passed: model now requests exact
+    artifact names (Output Contract, Scope Lock) before any SOP generation. All required
+    SOP sections were present and operationally specific on both web and iOS. Output was
+    operational, margin-aware, and tied to output_contract/scope_lock. QA was contract-bound,
+    definition of done was explicit, and scope enforcement was precise. Follow-up pressure
+    to add implementation services, CRM integrations, team training, additional syncs,
+    mini-deliverables, and multi-stakeholder review loops was correctly rejected as
+    out-of-scope expansion. Web/iOS parity held with no meaningful divergence. Three
+    low-severity minor issues were noted, but none block baseline approval.
+
+decision:
+  outcome: "approved_as_baseline"
+  next_logical_step: "Vybrat a připravit PILOT-010"
+
+evidence_checklist:
+  config_screenshots_captured: true
+  web_screenshots_captured: true
+  ios_screenshots_captured: true
+  prompts_recorded: true
+  outputs_recorded: true
+  verdict_recorded: true

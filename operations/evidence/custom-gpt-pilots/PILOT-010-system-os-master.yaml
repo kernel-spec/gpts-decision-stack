@@ -1,0 +1,174 @@
+schema_version: "1.0.0"
+artifact_type: custom_gpt_pilot_audit
+pilot_id: "PILOT-010"
+pilot_name: "SYSTEM_OS_MASTER"
+date: "2026-03-27"
+status: PASS
+
+operator_context:
+  environment: "ChatGPT web + ChatGPT iOS"
+  visibility: "private"
+  model: "GPT-5.4 Thinking"
+  capabilities:
+    web_browsing: false
+    image_generation: false
+    code_interpreter: false
+    actions_enabled: false
+    knowledge_files_attached: false
+
+builder_config:
+  name: "SYSTEM_OS_MASTER"
+  description: >
+    Deterministic router-only orchestrator for the commercial layer. Accepts vague or
+    semi-structured inputs, validates minimum, selects exactly one NEXT_GPT, and returns
+    a strict copy-paste pack for the next role. Does not solve the task.
+  prompt_source_type: "hybrid_builder_version"
+  canonical_repo_source: "custom_gpts/commercial_layer/prompt_sources/SYSTEM_OS_MASTER.full.md"
+
+test_scope:
+  objectives:
+    - "Verify boundary discipline on vague or underspecified requests"
+    - "Verify route-first behavior when one clear NEXT_GPT is already determinable"
+    - "Verify exactly-one-route discipline"
+    - "Verify question-mode discipline"
+    - "Verify meta-value normalization"
+    - "Verify schema-semantics discipline"
+    - "Verify multi-step collapse into one smallest correct next step"
+    - "Verify web/iOS parity"
+  test_groups:
+    - "boundary_discipline"
+    - "web_functional_audit"
+    - "ios_functional_audit"
+    - "web_ios_parity"
+    - "route_first_discipline"
+    - "single_route_discipline"
+    - "question_mode_discipline"
+    - "meta_value_normalization"
+    - "schema_semantics_discipline"
+    - "multi_step_collapse_discipline"
+
+boundary_discipline:
+  verdict: PASS
+  notes:
+    - "On vague request ('Pomoz mi s tím.'), model did not hallucinate a route."
+    - "Model correctly entered QUESTION MODE and asked one short gating question."
+    - "QUESTION MODE output stayed constrained to NEXT_GPT: NONE / INPUT: NONE."
+    - "Model did not solve the task directly."
+
+web_functional_audit:
+  verdict: PASS
+  notes:
+    - "Model selected exactly one NEXT_GPT per request."
+    - "Returned strict copy-paste packs with canonical schema keys only."
+    - "Did not merge multiple roles into one response."
+    - "Unknown or unpasted values were represented as [TBD]."
+    - "Routing stayed inside the installed commercial layer."
+  key_findings:
+    - "Clear asset-generation requests routed to ASSET_ENGINE."
+    - "Clear call-flow requests routed to CALL_CLOSER."
+    - "Delivery-SOP conversion requests routed to DELIVERY_SOP_ENGINE."
+    - "Market-scan and pricing-pattern research requests routed to MARKET_SCOUT_OUTBOUND."
+    - "Rewrite vs diagnostic distinction held between REWRITE_ENGINE and SUGGESTION_ENGINE."
+
+ios_functional_audit:
+  verdict: PASS
+  notes:
+    - "iOS preserved the same router-only behavior as web."
+    - "No major mobile degradation observed."
+    - "Exactly-one-route discipline held on iOS."
+    - "QUESTION MODE and ROUTE MODE formatting remained materially consistent."
+  key_findings:
+    - "iOS preserved [TBD] handling rather than forcing unnecessary questions."
+    - "iOS preserved route-first behavior on clearly routeable requests."
+    - "iOS preserved schema-key discipline across tested roles."
+
+web_ios_parity:
+  verdict: PASS
+  notes:
+    - "Conclusions and selected NEXT_GPT values were materially consistent across web and iOS."
+    - "No meaningful divergence in route selection was observed."
+    - "Formatting and schema discipline remained stable across platforms."
+    - "No major parity degradation observed."
+
+route_first_discipline:
+  verdict: PASS
+  notes:
+    - "After fix, model routed immediately when one clear NEXT_GPT was already determinable."
+    - "Requests such as 'Mám offer a chci discovery-to-close call flow.' no longer triggered an unnecessary ICP question."
+    - "Requests such as 'Mám ICP, offer a CTA. Potřebuji cold email a LinkedIn DM.' now route directly to ASSET_ENGINE."
+    - "Requests such as 'Tady je output contract a scope lock. Převeď to do delivery SOP.' now route directly to DELIVERY_SOP_ENGINE with [TBD] values where actual content is not pasted."
+
+single_route_discipline:
+  verdict: PASS
+  notes:
+    - "Model always selected exactly one NEXT_GPT."
+    - "No multi-route output or merged-role behavior was observed."
+    - "Even multi-component commercial asks were collapsed into one smallest correct next step."
+    - "Router did not attempt to solve downstream work itself."
+
+question_mode_discipline:
+  verdict: PASS
+  notes:
+    - "Model asked at most one short question total."
+    - "Questioning occurred only when request was not yet clearly routeable."
+    - "QUESTION MODE stayed in the exact required structure."
+    - "No follow-up question chains were observed."
+
+meta_value_normalization:
+  verdict: PASS
+  notes:
+    - "Meta-declarations such as 'mám ICP', 'mám offer', 'mám CTA', 'tady je output contract', and 'tady je scope lock' were not copied as field values."
+    - "When actual content was not pasted, schema fields were filled with [TBD]."
+    - "Model did not serialize meta-phrases into canonical schema keys."
+    - "Normalization fix resolved prior leakage of user shorthand into route payloads."
+
+schema_semantics_discipline:
+  verdict: PASS
+  notes:
+    - "Field values matched schema intent."
+    - "Task descriptions were not inserted into CTA fields."
+    - "For MARKET_SCOUT_OUTBOUND, business_model correctly defaulted to service when not explicitly provided."
+    - "For CALL_CLOSER and ASSET_ENGINE, missing actual values remained [TBD] rather than being inferred too aggressively."
+    - "For DELIVERY_SOP_ENGINE, referenced-but-unpasted output_contract and scope_lock remained [TBD]."
+
+multi_step_collapse_discipline:
+  verdict: PASS
+  notes:
+    - "Broad multi-step requests such as 'Najdi mi trh, udělej pricing, napiš outreach a delivery SOP.' were correctly collapsed into STRUCTURAL_ENGINE."
+    - "Router selected the smallest correct next step rather than emitting a multi-role plan."
+    - "No over-routing into sequential downstream roles was observed."
+    - "Commercial ambiguity was handled by convergence, not role sprawl."
+
+minor_issues:
+  - id: "MINOR-001"
+    severity: low
+    description: >
+      In some MARKET_SCOUT_OUTBOUND routing runs, the secondary research intent ('lepší trh',
+      'pricing patterns') is serialized inside constraints with slight stylistic variation.
+      Route and schema remain correct, but constraints normalization is not fully canonical.
+    recommended_follow_up: >
+      In v2, standardize MARKET_SCOUT_OUTBOUND constraints serialization to one fixed form,
+      e.g. 'lepší trh + pricing patterns'.
+
+final_verdict:
+  overall: PASS
+  rationale: >
+    Pilot demonstrated stable router-only behavior after route-first hardening and meta-value
+    normalization fixes. Boundary handling was correct, exactly-one-route discipline held,
+    question-mode discipline remained constrained, schema semantics were preserved, and
+    multi-step commercial requests were collapsed into one smallest correct next step.
+    Web and iOS behavior remained materially aligned. One low-severity normalization issue
+    remains around MARKET_SCOUT_OUTBOUND constraint phrasing, but it does not block baseline
+    approval.
+
+decision:
+  outcome: "approved_as_baseline"
+  next_logical_step: "Pilot chain closed — přejít do builder convention hardening a prvního real operator runu"
+
+evidence_checklist:
+  config_screenshots_captured: true
+  web_screenshots_captured: true
+  ios_screenshots_captured: true
+  prompts_recorded: true
+  outputs_recorded: true
+  verdict_recorded: true
