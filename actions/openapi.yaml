@@ -315,6 +315,243 @@ components:
           type: string
           nullable: true
 
+    FounderProjectStatus:
+      type: object
+      description: >
+        Canonical founder-surface project status returned by Worker-backed state.
+        The open and closed flags are returned explicitly by the backend and
+        must be rendered as-is because Worker may manage them independently
+        during transition or re-open flows.
+      required: [project_id, current_phase, current_step, closed, open, main_blocker, next_surface, next_action, founder_decision_required]
+      properties:
+        project_id:
+          type: string
+          description: Canonical Worker-owned project identifier.
+        current_phase:
+          type: string
+          description: Current canonical project phase from Worker-backed state.
+        current_step:
+          type: string
+          description: Current canonical project step from Worker-backed state.
+        closed:
+          type: boolean
+          description: Canonical closure flag returned by Worker-backed state.
+        open:
+          type: boolean
+          description: Canonical open-work flag returned by Worker-backed state.
+        main_blocker:
+          type: string
+          nullable: true
+          description: Primary Worker-backed blocker, if any.
+        next_surface:
+          type: string
+          description: Founder-facing surface where the next bounded action must be executed.
+        next_action:
+          type: string
+          description: Next bounded action from canonical Worker-backed state.
+        founder_decision_required:
+          type: boolean
+          description: True when progress must pause until request_founder_decision records an explicit founder decision.
+
+    FounderNextAction:
+      type: object
+      required: [why_now, next_surface, next_action, where_to_do_it, copy_paste_block, evidence_to_save, fail_signal, founder_decision_required]
+      properties:
+        why_now:
+          type: string
+          description: Worker-backed rationale for why this action is currently next.
+        next_surface:
+          type: string
+          description: Surface where the next action must be carried out.
+        next_action:
+          type: string
+          description: Canonical next bounded action.
+        where_to_do_it:
+          type: string
+          description: Canonical location or system in which the action must be completed.
+        copy_paste_block:
+          type: string
+          nullable: true
+          description: Optional ready-to-use block for the founder surface to render.
+        evidence_to_save:
+          type: array
+          items:
+            type: string
+          description: Canonical evidence items that should be persisted after the action is completed.
+        fail_signal:
+          type: string
+          nullable: true
+          description: Canonical fail-closed signal that indicates the next action should not proceed.
+        founder_decision_required:
+          type: boolean
+          description: True when the next action is blocked on request_founder_decision.
+
+    FounderArtifactSaveRequest:
+      type: object
+      required: [artifact_type, metadata, content, submitted_by]
+      properties:
+        artifact_type:
+          type: string
+          description: Canonical artifact type to persist.
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Artifact metadata to persist alongside the content.
+        content:
+          oneOf:
+            - type: object
+            - type: string
+          description: Artifact content to be persisted through Worker-backed validation and storage. Use an object for structured canonical payloads and a string for founder-authored notes or markdown blocks; the backend still applies artifact-type-specific validation for either shape.
+        submitted_by:
+          type: string
+          description: Founder-surface or operator identity submitting the artifact.
+        linked_decision_id:
+          type: string
+          nullable: true
+          description: Optional founder decision record that this artifact fulfills.
+
+    FounderArtifactSaveResult:
+      type: object
+      required: [artifact_id, status, version, storage_path, linked_decision_id]
+      properties:
+        artifact_id:
+          type: string
+        status:
+          type: string
+        version:
+          type: integer
+          minimum: 1
+        storage_path:
+          type: string
+        linked_decision_id:
+          type: string
+          nullable: true
+
+    FounderModelOutputRecordRequest:
+      type: object
+      required: [role_name, output_type, raw_output]
+      properties:
+        role_name:
+          type: string
+          description: Canonical model or role identifier that produced the output.
+        output_type:
+          type: string
+          description: Bounded output class being recorded.
+        raw_output:
+          oneOf:
+            - type: object
+            - type: string
+          description: Raw model-produced output stored as evidence, not canonical truth by itself. Use an object for structured outputs and a string for plain-text model traces; the backend still applies output-type-specific validation for either shape.
+        operator_notes:
+          type: string
+          nullable: true
+          description: Optional operator notes attached to the stored evidence record.
+
+    FounderModelOutputRecordResult:
+      type: object
+      required: [record_id, status, linked_run_id, suggested_artifact_update, founder_decision_required]
+      properties:
+        record_id:
+          type: string
+        status:
+          type: string
+        linked_run_id:
+          type: string
+          nullable: true
+        suggested_artifact_update:
+          type: string
+          nullable: true
+        founder_decision_required:
+          type: boolean
+          description: True when the recorded model output surfaces a founder gate that must be handled through request_founder_decision.
+
+    FounderSellReadyStatus:
+      type: object
+      required: [closure_type, go_no_go, confirmed, missing, biggest_blocker, founder_decision_required]
+      properties:
+        closure_type:
+          type: string
+          enum: [sell_ready]
+        go_no_go:
+          type: string
+          enum: [go, no_go, incomplete]
+        confirmed:
+          type: array
+          items:
+            type: string
+        missing:
+          type: array
+          items:
+            type: string
+        biggest_blocker:
+          type: string
+          nullable: true
+        founder_decision_required:
+          type: boolean
+
+    FounderProductionClosureStatus:
+      type: object
+      required: [closure_type, go_no_go, confirmed, missing, biggest_blocker, founder_decision_required, decision_type]
+      properties:
+        closure_type:
+          type: string
+          enum: [production_closure]
+        go_no_go:
+          type: string
+          enum: [go, no_go, incomplete]
+        confirmed:
+          type: array
+          items:
+            type: string
+        missing:
+          type: array
+          items:
+            type: string
+        biggest_blocker:
+          type: string
+          nullable: true
+        founder_decision_required:
+          type: boolean
+        decision_type:
+          type: string
+          nullable: true
+          description: Founder decision type required before production closure can proceed, when applicable.
+
+    FounderDecisionRequest:
+      type: object
+      required: [decision_type]
+      properties:
+        decision_type:
+          type: string
+          description: Canonical founder decision boundary to open or refresh.
+        decision_context:
+          type: string
+          nullable: true
+          description: Optional Worker-backed context that explains the active tradeoff.
+        requested_by:
+          type: string
+          nullable: true
+          description: Founder-surface identity requesting the decision payload.
+
+    FounderDecisionResponse:
+      type: object
+      required: [decision_needed, why_it_cannot_be_skipped, option_a, option_b, recommended_option, founder_response_required]
+      properties:
+        decision_needed:
+          type: boolean
+          description: True when the Worker kernel has an active founder decision gate for this project.
+        why_it_cannot_be_skipped:
+          type: string
+        option_a:
+          type: string
+        option_b:
+          type: string
+        recommended_option:
+          type: string
+        founder_response_required:
+          type: boolean
+          description: True when the founder console must collect a founder response now, even if a decision gate has already been opened or refreshed earlier.
+
     ErrorResponse:
       type: object
       required: [error_code, message]
@@ -686,6 +923,225 @@ paths:
         "401":
           description: Unauthorized.
 
+  /founder/project/{project_id}/status:
+    get:
+      operationId: get_project_status
+      summary: Get canonical founder-surface project status
+      description: >
+        Returns the canonical founder-facing project status from Worker-backed state.
+        The founder console and Custom GPT Actions are a UI layer only and must
+        not infer state from chat context when this action can provide it.
+      tags: [founder]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Canonical project status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FounderProjectStatus"
+        "404":
+          description: Project not found.
+        "401":
+          description: Unauthorized.
+
+  /founder/project/{project_id}/next-action:
+    get:
+      operationId: get_next_action
+      summary: Get the canonical next founder action
+      description: >
+        Returns the next bounded founder action from canonical Worker-backed
+        state. The founder console must render this response directly and must
+        not invent next steps when the backend can provide them.
+      tags: [founder]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Canonical next action for the founder surface.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FounderNextAction"
+        "404":
+          description: Project not found.
+        "401":
+          description: Unauthorized.
+
+  /founder/project/{project_id}/artifact:
+    post:
+      operationId: save_artifact
+      summary: Persist a founder-facing artifact
+      description: >
+        Persists founder-approved artifact metadata and content through the
+        Worker kernel. Worker, D1, and R2 remain the source of truth for the
+        stored artifact result.
+      tags: [founder]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FounderArtifactSaveRequest"
+      responses:
+        "200":
+          description: Artifact persisted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FounderArtifactSaveResult"
+        "400":
+          description: Invalid artifact metadata or content.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized.
+
+  /founder/project/{project_id}/model-output:
+    post:
+      operationId: record_model_output
+      summary: Record model-produced output as founder-surface evidence
+      description: >
+        Records model-produced output as Worker-backed evidence. Raw model
+        output is trace material only and does not become canonical business
+        truth unless the backend later links it to persisted state.
+      tags: [founder]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FounderModelOutputRecordRequest"
+      responses:
+        "200":
+          description: Model output recorded as evidence.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FounderModelOutputRecordResult"
+        "400":
+          description: Invalid model output record request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized.
+
+  /founder/project/{project_id}/sell-ready:
+    get:
+      operationId: check_sell_ready
+      summary: Check canonical sell-ready status
+      description: >
+        Evaluates sell-ready readiness from Worker-backed state and stored
+        artifacts. A project must not be declared sell-ready without calling
+        this action and using its canonical result.
+      tags: [founder]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Canonical sell-ready evaluation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FounderSellReadyStatus"
+        "404":
+          description: Project not found.
+        "401":
+          description: Unauthorized.
+
+  /founder/project/{project_id}/production-closure:
+    get:
+      operationId: check_production_closure
+      summary: Check canonical production-closure status
+      description: >
+        Evaluates production closure readiness from Worker-backed state and
+        stored artifacts. A project must not be declared production-closed
+        without calling this action and using its canonical result.
+      tags: [founder]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Canonical production-closure evaluation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FounderProductionClosureStatus"
+        "404":
+          description: Project not found.
+        "401":
+          description: Unauthorized.
+
+  /founder/project/{project_id}/decision-request:
+    post:
+      operationId: request_founder_decision
+      summary: Request an explicit founder decision payload
+      description: >
+        Opens or refreshes an explicit founder decision boundary from Worker-
+        backed state. Founder tradeoff decisions must use this action; chat-only
+        reasoning or informal founder intent is insufficient.
+      tags: [founder]
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FounderDecisionRequest"
+      responses:
+        "200":
+          description: Canonical founder decision request payload.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FounderDecisionResponse"
+        "400":
+          description: Invalid founder decision request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized.
+
 tags:
   - name: system
     description: Service health and metadata.
@@ -693,3 +1149,5 @@ tags:
     description: Pipeline session management and artifact submission.
   - name: governance
     description: Veto and manual approval governance operations.
+  - name: founder
+    description: Founder-console actions layered above Worker-backed canonical state.
