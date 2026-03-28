@@ -395,13 +395,36 @@ components:
           description: Canonical artifact type to persist.
         metadata:
           type: object
-          additionalProperties: true
-          description: Artifact metadata to persist alongside the content.
+          required: [run_id]
+          additionalProperties: false
+          description: Minimal artifact metadata persisted alongside the content.
+          properties:
+            run_id:
+              type: string
+              description: Canonical run identifier linked to the stored artifact.
+            source_surface:
+              type: string
+              nullable: true
+              description: Optional founder surface identifier for explicit provenance.
+            source_role:
+              type: string
+              nullable: true
+              description: Optional role identity attached to the artifact provenance.
+            status:
+              type: string
+              nullable: true
+              description: Optional artifact status label persisted in the metadata registry.
         content:
           oneOf:
             - type: object
+              additionalProperties: true
             - type: string
-          description: Artifact content to be persisted through Worker-backed validation and storage. Use an object for structured canonical payloads and a string for founder-authored notes or markdown blocks; the backend still applies artifact-type-specific validation for either shape.
+            - type: array
+              items: {}
+            - type: number
+            - type: boolean
+          nullable: true
+          description: Artifact content to be persisted through Worker-backed validation and storage. Supports structured objects, strings, and other JSON payloads accepted by the Worker runtime.
         submitted_by:
           type: string
           description: Founder-surface or operator identity submitting the artifact.
@@ -429,8 +452,11 @@ components:
 
     FounderModelOutputRecordRequest:
       type: object
-      required: [role_name, output_type, raw_output]
+      required: [run_id, role_name, output_type, raw_output]
       properties:
+        run_id:
+          type: string
+          description: Canonical run identifier linked to the stored model output evidence.
         role_name:
           type: string
           description: Canonical model or role identifier that produced the output.
@@ -440,8 +466,14 @@ components:
         raw_output:
           oneOf:
             - type: object
+              additionalProperties: true
             - type: string
-          description: Raw model-produced output stored as evidence, not canonical truth by itself. Use an object for structured outputs and a string for plain-text model traces; the backend still applies output-type-specific validation for either shape.
+            - type: array
+              items: {}
+            - type: number
+            - type: boolean
+          nullable: true
+          description: Raw model-produced output stored as evidence, not canonical truth by itself. Supports structured objects, strings, and other JSON payloads accepted by the Worker runtime.
         operator_notes:
           type: string
           nullable: true
