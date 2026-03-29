@@ -18,6 +18,7 @@ function createMockDb(session: MockSessionRow) {
   const founderArtifacts: Array<Record<string, unknown>> = [];
   const artifacts: Array<Record<string, unknown>> = [];
   const decisionLog: Array<Record<string, unknown>> = [];
+  const deliveryIntegrityEvents: Array<Record<string, unknown>> = [];
 
   const db = {
     prepare(sql: string) {
@@ -28,6 +29,15 @@ function createMockDb(session: MockSessionRow) {
               if (sql.includes("SELECT s.session_id")) {
                 const session_id = params[0] as string;
                 return (sessions.get(session_id) ?? null) as T | null;
+              }
+
+              if (sql.includes("FROM delivery_integrity_events")) {
+                const [session_id, pipeline_state] = params as [string, string];
+                const exists = deliveryIntegrityEvents.some(
+                  (event) =>
+                    event.session_id === session_id && event.pipeline_state === pipeline_state
+                );
+                return exists ? ({ has_prior: 1 } as T) : null;
               }
 
               if (sql.includes("SELECT COALESCE(MAX(version), 0) AS latest_version")) {
@@ -126,6 +136,37 @@ function createMockDb(session: MockSessionRow) {
                 });
               }
 
+              if (sql.includes("INSERT INTO delivery_integrity_events")) {
+                const [
+                  event_id,
+                  artifact_id,
+                  session_id,
+                  pipeline_state,
+                  attempt,
+                  supersedes_artifact_id,
+                  replacement_reason,
+                  handoff_status,
+                  handoff_failure_reason,
+                  stage_loop_detected,
+                  classified_by,
+                  classified_at,
+                ] = params;
+                deliveryIntegrityEvents.push({
+                  event_id,
+                  artifact_id,
+                  session_id,
+                  pipeline_state,
+                  attempt,
+                  supersedes_artifact_id,
+                  replacement_reason,
+                  handoff_status,
+                  handoff_failure_reason,
+                  stage_loop_detected,
+                  classified_by,
+                  classified_at,
+                });
+              }
+
               if (sql.includes("UPDATE sessions SET pipeline_state = ?, decision_status = ?, updated_at = ?")) {
                 const [pipeline_state, decision_status, updated_at, session_id] = params as [
                   Session["pipeline_state"],
@@ -157,6 +198,7 @@ function createMockDb(session: MockSessionRow) {
     founderArtifacts,
     artifacts,
     decisionLog,
+    deliveryIntegrityEvents,
     sessions,
   };
 }
@@ -398,6 +440,158 @@ describe("founder artifact handler", () => {
     expect(sessions.get("project-123")).toMatchObject({
       pipeline_state: "problem_framing",
       decision_status: "proceed",
+    });
+  });
+
+  it("rejects delivery metadata when attempt > 1 is missing supersedes", async () => {
+    const { env, founderArtifacts, artifacts, decisionLog, deliveryIntegrityEvents } = createEnv();
+
+    const response = await handleSaveArtifact(
+      new Request("https://example.com/founder/project/project-123/artifact", {
+        method: "POST",
+        body: JSON.stringify({
+          artifact_type: "ProblemBrief",
+          metadata: { run_id: "run-010", delivery: { attempt: 2, replacement_reason: "QUALITY_ISSUE" } },
+          content: { problem: "Repair attempt" },
+          submitted_by: "founder-console",
+        }),
+        headers: { "content-type": "application/json" },
+      }),
+      "project-123",
+      env
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+      code: "INVALID_DELIVERY_CLASSIFICATION",
+      error: "supersedes_artifact_id is required when attempt > 1",
+    });
+    expect(founderArtifacts).toHaveLength(0);
+    expect(artifacts).toHaveLength(0);
+    expect(decisionLog).toHaveLength(0);
+    expect(deliveryIntegrityEvents).toHaveLength(0);
+  });
+
+  it("rejects delivery metadata when attempt > 1 is missing replacement_reason", async () => {
+    const { env, founderArtifacts, artifacts, decisionLog, deliveryIntegrityEvents } = createEnv();
+
+    const response = await handleSaveArtifact(
+      new Request("https://example.com/founder/project/project-123/artifact", {
+        method: "POST",
+        body: JSON.stringify({
+          artifact_type: "ProblemBrief",
+          metadata: {
+            run_id: "run-012",
+            delivery: { attempt: 2, supersedes_artifact_id: "prev-artifact" },
+          },
+          content: { problem: "Repair attempt missing reason" },
+          submitted_by: "founder-console",
+        }),
+        headers: { "content-type": "application/json" },
+      }),
+      "project-123",
+      env
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+      code: "INVALID_DELIVERY_CLASSIFICATION",
+    });
+    expect(founderArtifacts).toHaveLength(0);
+    expect(artifacts).toHaveLength(0);
+    expect(decisionLog).toHaveLength(0);
+    expect(deliveryIntegrityEvents).toHaveLength(0);
+  });
+
+  it("rejects delivery metadata when handoff_status=failed is missing failure reason", async () => {
+    const { env, founderArtifacts, artifacts, decisionLog, deliveryIntegrityEvents } = createEnv();
+
+    const response = await handleSaveArtifact(
+      new Request("https://example.com/founder/project/project-123/artifact", {
+        method: "POST",
+        body: JSON.stringify({
+          artifact_type: "ProblemBrief",
+          metadata: { run_id: "run-011", delivery: { handoff_status: "failed" } },
+          content: { problem: "Handoff failed" },
+          submitted_by: "founder-console",
+        }),
+        headers: { "content-type": "application/json" },
+      }),
+      "project-123",
+      env
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+      code: "INVALID_DELIVERY_CLASSIFICATION",
+    });
+    expect(founderArtifacts).toHaveLength(0);
+    expect(artifacts).toHaveLength(0);
+    expect(decisionLog).toHaveLength(0);
+    expect(deliveryIntegrityEvents).toHaveLength(0);
+  });
+
+  it("accepts supersedes metadata on first attempt when provided explicitly", async () => {
+    const { env, deliveryIntegrityEvents } = createEnv();
+
+    const response = await handleSaveArtifact(
+      new Request("https://example.com/founder/project/project-123/artifact", {
+        method: "POST",
+        body: JSON.stringify({
+          artifact_type: "ProblemBrief",
+          metadata: {
+            run_id: "run-011a",
+            delivery: {
+              attempt: 1,
+              supersedes_artifact_id: "prev-artifact",
+              replacement_reason: "QUALITY_ISSUE",
+            },
+          },
+          content: { problem: "Supersede with attempt 1" },
+          submitted_by: "founder-console",
+        }),
+        headers: { "content-type": "application/json" },
+      }),
+      "project-123",
+      env
+    );
+
+    expect(response.status).toBe(200);
+    expect(deliveryIntegrityEvents).toHaveLength(1);
+    expect(deliveryIntegrityEvents[0]).toMatchObject({
+      supersedes_artifact_id: "prev-artifact",
+      attempt: 1,
+    });
+  });
+
+  it("records delivery integrity truth with orchestration classification", async () => {
+    const { env, deliveryIntegrityEvents } = createEnv();
+
+    const response = await handleSaveArtifact(
+      new Request("https://example.com/founder/project/project-123/artifact", {
+        method: "POST",
+        body: JSON.stringify({
+          artifact_type: "ProblemBrief",
+          metadata: { run_id: "run-012", delivery: { handoff_status: "completed" } },
+          content: { problem: "Founder problem brief" },
+          submitted_by: "founder-console",
+        }),
+        headers: { "content-type": "application/json" },
+      }),
+      "project-123",
+      env
+    );
+
+    expect(response.status).toBe(200);
+    expect(deliveryIntegrityEvents).toHaveLength(1);
+    expect(deliveryIntegrityEvents[0]).toMatchObject({
+      classified_by: "orchestration",
+      handoff_status: "completed",
+      attempt: 1,
+      stage_loop_detected: 0,
     });
   });
 });

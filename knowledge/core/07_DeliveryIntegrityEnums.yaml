@@ -1,105 +1,55 @@
 schema_version: "1.0.0"
-document_type: delivery_integrity_enums
-owner: orchestration
-status: draft_v1
+knowledge_id: "07_DeliveryIntegrityEnums"
+status: INVARIANT
+description: >
+  Canonical enums for delivery integrity instrumentation. These values are
+  orchestration-owned and must remain stable for persistence, auditing, and
+  UI/read-model consumers.
 
 replacement_reason:
-  - QUALITY_ISSUE
-  - MISSING_REQUIRED_SECTION
-  - INVALID_SCHEMA
-  - HANDOFF_REJECTED
-  - REVIEW_BLOCK
-  - SCOPE_CHANGE
-  - STAGE_MISMATCH
-  - UNKNOWN
-
-replacement_reason_definitions:
-  QUALITY_ISSUE: >
-    Artifact matches stage and scope boundary closely enough to remain in the same stage,
-    but requires another attempt due to weak execution quality, insufficient clarity,
-    weak structure, or non-fatal content weakness.
-  MISSING_REQUIRED_SECTION: >
-    Artifact is missing one or more required sections from the stage contract or artifact schema.
-  INVALID_SCHEMA: >
-    Artifact failed schema validation and cannot be accepted as a valid output for the current stage.
-  HANDOFF_REJECTED: >
-    Artifact may exist and may even pass partial checks, but it cannot be accepted as a valid input
-    for the next stage transition.
-  REVIEW_BLOCK: >
-    Required review or governance gate explicitly blocked progression and returned the artifact for repair.
-  SCOPE_CHANGE: >
-    Artifact replacement is materially driven by a changed decision question, owner, or expected output contract.
-    This is allowed as a classification value, but it should be interpreted alongside separate scope-integrity logic.
-  STAGE_MISMATCH: >
-    Artifact content or identity does not match the expected current stage contract.
-  UNKNOWN: >
-    Emergency fallback value. Intended only for legacy records, partial migration states,
-    or manual overrides where a reliable classification cannot be determined.
+  INVALID_SCHEMA:
+    description: Submitted artifact failed schema validation.
+  MISSING_REQUIRED_SECTION:
+    description: Required sections or fields are missing.
+  STAGE_MISMATCH:
+    description: Artifact does not match the current pipeline stage.
+  REVIEW_BLOCK:
+    description: Review feedback blocks acceptance of the prior artifact.
+  HANDOFF_REJECTED:
+    description: Downstream handoff rejected the artifact.
+  SCOPE_CHANGE:
+    description: Scope changed and prior artifact no longer applies.
+  QUALITY_ISSUE:
+    description: Quality issues require a replacement artifact.
 
 handoff_failure_reason:
-  - INVALID_INPUT
-  - MISSING_FIELDS
-  - AMBIGUOUS_OWNER
-  - SCHEMA_MISMATCH
-  - REVIEW_REJECTED
-  - REENTRY_NOT_READY
-  - UNKNOWN
-
-handoff_failure_reason_definitions:
-  INVALID_INPUT: >
-    Generic fallback when downstream stage cannot accept the artifact as valid input
-    and no more specific failure reason applies.
-  MISSING_FIELDS: >
-    Required sections or fields are absent for handoff eligibility.
-  AMBIGUOUS_OWNER: >
-    Downstream progression is blocked because decision owner or execution owner resolution is unclear.
-  SCHEMA_MISMATCH: >
-    Artifact or payload shape does not satisfy expected schema constraints for transition.
-  REVIEW_REJECTED: >
-    Required reviewer or gate rejected progression.
-  REENTRY_NOT_READY: >
-    Re-entry conditions were not met, even if artifact generation itself completed.
-  UNKNOWN: >
-    Emergency fallback only.
+  SCHEMA_MISMATCH:
+    description: Handoff payload failed schema compatibility checks.
+  MISSING_FIELDS:
+    description: Required handoff fields were missing.
+  AMBIGUOUS_OWNER:
+    description: Handoff lacked a clear downstream owner.
+  REVIEW_REJECTED:
+    description: Downstream review rejected the handoff.
+  REENTRY_NOT_READY:
+    description: Re-entry prerequisites not satisfied.
+  INVALID_INPUT:
+    description: Handoff input was invalid or malformed.
 
 loop_type:
-  - SAME_STAGE_REPEAT
-  - TWO_NODE_LOOP
-
-loop_type_definitions:
-  SAME_STAGE_REPEAT: >
-    The same run entered the same stage more than once.
-  TWO_NODE_LOOP: >
-    The same run bounced in a simple A -> B -> A stage pattern.
+  stage_reentry:
+    description: Re-entry into the same pipeline stage after a prior completion.
+  repeated_attempt:
+    description: Multiple attempts within the same stage without advancing.
 
 next_action_code:
-  - REPAIR_SAME_STAGE
-  - RETURN_TO_PREVIOUS_STAGE
-  - REVIEW_REQUIRED
-  - MANUAL_OVERRIDE_REQUIRED
-  - READY_FOR_NEXT_STAGE
-
-next_action_code_definitions:
-  REPAIR_SAME_STAGE: >
-    A new attempt should be produced in the current stage.
-  RETURN_TO_PREVIOUS_STAGE: >
-    The current stage cannot proceed without upstream correction.
-  REVIEW_REQUIRED: >
-    Delivery cannot proceed until required review completes.
-  MANUAL_OVERRIDE_REQUIRED: >
-    Orchestration cannot resolve a legal next step without explicit human intervention.
-  READY_FOR_NEXT_STAGE: >
-    Delivery conditions are satisfied and the next legal stage may open.
-
-classification_policy:
-  source_of_truth: orchestration
-  parser_can_supply_inputs: true
-  worker_can_supply_inputs: false
-  ui_can_override_truth: false
-  unknown_is_allowed: true
-  unknown_target_usage: "<20% of superseding attempts"
-
-notes:
-  - Keep enums stable once adopted.
-  - Add new enum values only with explicit migration note.
-  - Do not let workers emit final replacement_reason or handoff_failure_reason.
+  save_problem_brief:
+    description: Submit a ProblemBrief artifact to advance from intake.
+  save_state_decision_packet:
+    description: Submit a StateDecisionPacket for the current pipeline state.
+  resolve_active_veto:
+    description: Clear the active veto/blocker before proceeding.
+  review_escalation_status:
+    description: Review the escalation status; no direct submission available.
+  no_supported_action_in_pr3:
+    description: Placeholder when no founder-facing action is supported in PR-3.

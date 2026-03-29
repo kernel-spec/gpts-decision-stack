@@ -1,18 +1,16 @@
-# gpts-decision-stack
+# Delivery Integrity Instrumentation Bundle v1
 
-Governed decision pipeline for GPT-backed workflows, implemented on Cloudflare Workers with D1, R2, KV, deployment evidence, and acceptance/runtime validation.
+This bundle contains repo-ready files generated from the provided content.
 
-## What this repository is
+## Included files
 
-`gpts-decision-stack` is a structured decision system for GPT-driven workflows.  
-It combines:
+- `docs/instrumentation/delivery_integrity_instrumentation_v1.md`
+- `docs/instrumentation/implementation_checklist_delivery_integrity_v1.md`
+- `knowledge/core/07_DeliveryIntegrityEnums.yaml`
+- `migrations/20260329_001_create_delivery_integrity_tables.sql`
+- `tests/acceptance/AC-DI-pack.yaml`
 
-- a governed state machine
-- explicit artifact schemas
-- acceptance fixtures and governed test scenarios
-- a Cloudflare Workers backend
-- deployment and evidence tracking
-- operational ownership / approval / veto mapping
+## Purpose
 
 The repository is designed so that runtime behavior, deployment state, and governance evidence are all traceable.
 

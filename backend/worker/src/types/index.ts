@@ -76,6 +76,58 @@ export type ArtifactType =
   | "StateDecisionPacket"
   | "ReleaseDecision";
 
+export type ReplacementReason =
+  | "INVALID_SCHEMA"
+  | "MISSING_REQUIRED_SECTION"
+  | "STAGE_MISMATCH"
+  | "REVIEW_BLOCK"
+  | "HANDOFF_REJECTED"
+  | "SCOPE_CHANGE"
+  | "QUALITY_ISSUE";
+
+export const REPLACEMENT_REASONS: readonly ReplacementReason[] = [
+  "INVALID_SCHEMA",
+  "MISSING_REQUIRED_SECTION",
+  "STAGE_MISMATCH",
+  "REVIEW_BLOCK",
+  "HANDOFF_REJECTED",
+  "SCOPE_CHANGE",
+  "QUALITY_ISSUE",
+];
+
+export type HandoffFailureReason =
+  | "SCHEMA_MISMATCH"
+  | "MISSING_FIELDS"
+  | "AMBIGUOUS_OWNER"
+  | "REVIEW_REJECTED"
+  | "REENTRY_NOT_READY"
+  | "INVALID_INPUT";
+
+export const HANDOFF_FAILURE_REASONS: readonly HandoffFailureReason[] = [
+  "SCHEMA_MISMATCH",
+  "MISSING_FIELDS",
+  "AMBIGUOUS_OWNER",
+  "REVIEW_REJECTED",
+  "REENTRY_NOT_READY",
+  "INVALID_INPUT",
+];
+
+export type DeliveryHandoffStatus = "pending" | "completed" | "failed";
+
+export const DELIVERY_HANDOFF_STATUSES: readonly DeliveryHandoffStatus[] = [
+  "pending",
+  "completed",
+  "failed",
+];
+
+export interface DeliveryIntegrityInput {
+  attempt?: number | null;
+  supersedes_artifact_id?: string | null;
+  replacement_reason?: ReplacementReason | null;
+  handoff_status?: DeliveryHandoffStatus | null;
+  handoff_failure_reason?: HandoffFailureReason | null;
+}
+
 export interface Artifact {
   id: string;
   session_id: string;
@@ -87,6 +139,7 @@ export interface Artifact {
 export interface SubmitArtifactRequest {
   artifact_type: ArtifactType;
   payload: unknown;
+  delivery?: DeliveryIntegrityInput | null;
 }
 
 // ---------- Decision Log ----------
@@ -183,6 +236,7 @@ export interface FounderArtifactMetadataInput {
   source_surface?: string | null;
   source_role?: string | null;
   status?: string | null;
+  delivery?: DeliveryIntegrityInput | null;
 }
 
 export interface FounderArtifactSaveRequest {
