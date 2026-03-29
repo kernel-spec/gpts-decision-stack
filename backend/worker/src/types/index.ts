@@ -83,7 +83,8 @@ export type ReplacementReason =
   | "REVIEW_BLOCK"
   | "HANDOFF_REJECTED"
   | "SCOPE_CHANGE"
-  | "QUALITY_ISSUE";
+  | "QUALITY_ISSUE"
+  | "UNKNOWN";
 
 export const REPLACEMENT_REASONS: readonly ReplacementReason[] = [
   "INVALID_SCHEMA",
@@ -93,6 +94,7 @@ export const REPLACEMENT_REASONS: readonly ReplacementReason[] = [
   "HANDOFF_REJECTED",
   "SCOPE_CHANGE",
   "QUALITY_ISSUE",
+  "UNKNOWN",
 ];
 
 export type HandoffFailureReason =
@@ -101,7 +103,8 @@ export type HandoffFailureReason =
   | "AMBIGUOUS_OWNER"
   | "REVIEW_REJECTED"
   | "REENTRY_NOT_READY"
-  | "INVALID_INPUT";
+  | "INVALID_INPUT"
+  | "UNKNOWN";
 
 export const HANDOFF_FAILURE_REASONS: readonly HandoffFailureReason[] = [
   "SCHEMA_MISMATCH",
@@ -110,6 +113,7 @@ export const HANDOFF_FAILURE_REASONS: readonly HandoffFailureReason[] = [
   "REVIEW_REJECTED",
   "REENTRY_NOT_READY",
   "INVALID_INPUT",
+  "UNKNOWN",
 ];
 
 export type DeliveryHandoffStatus = "pending" | "completed" | "failed";
@@ -120,10 +124,11 @@ export const DELIVERY_HANDOFF_STATUSES: readonly DeliveryHandoffStatus[] = [
   "failed",
 ];
 
+// replacement_reason is NOT accepted from callers — it is classified by orchestration.
+// Callers may supply attempt, supersedes_artifact_id, handoff_status, and handoff_failure_reason.
 export interface DeliveryIntegrityInput {
   attempt?: number | null;
   supersedes_artifact_id?: string | null;
-  replacement_reason?: ReplacementReason | null;
   handoff_status?: DeliveryHandoffStatus | null;
   handoff_failure_reason?: HandoffFailureReason | null;
 }

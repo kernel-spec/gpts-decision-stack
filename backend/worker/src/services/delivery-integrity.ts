@@ -53,6 +53,12 @@ export function validateDeliveryInput(input: DeliveryIntegrityInput | null | und
     return null;
   }
 
+  // replacement_reason is orchestration-owned; callers must not supply it
+  const raw = input as Record<string, unknown>;
+  if (raw.replacement_reason !== undefined && raw.replacement_reason !== null) {
+    return "replacement_reason is classified by orchestration and must not be provided by callers";
+  }
+
   const attempt = input.attempt ?? DEFAULT_ATTEMPT_VALUE;
   if (attempt < 1 || !Number.isInteger(attempt)) {
     return "attempt must be an integer >= 1";
@@ -62,13 +68,6 @@ export function validateDeliveryInput(input: DeliveryIntegrityInput | null | und
     if (!input.supersedes_artifact_id) {
       return "supersedes_artifact_id is required when attempt > 1";
     }
-    if (!input.replacement_reason) {
-      return "replacement_reason is required when attempt > 1";
-    }
-  }
-
-  if (input.replacement_reason && !REPLACEMENT_REASONS.includes(input.replacement_reason)) {
-    return "replacement_reason is not recognized";
   }
 
   const handoffStatus = input.handoff_status ?? DEFAULT_HANDOFF_STATUS_VALUE;
@@ -101,7 +100,9 @@ export async function appendDeliveryIntegrityEvent(
 
   const attempt = input?.attempt ?? DEFAULT_ATTEMPT_VALUE;
   const supersedes_artifact_id = input?.supersedes_artifact_id ?? null;
-  const replacement_reason = input?.replacement_reason ?? null;
+  // replacement_reason is always null here — it is orchestration-classified in artifact_lineage,
+  // not stored from caller input in delivery_integrity_events.
+  const replacement_reason = null;
   const handoff_status = input?.handoff_status ?? DEFAULT_HANDOFF_STATUS_VALUE;
   const handoff_failure_reason = input?.handoff_failure_reason ?? null;
 

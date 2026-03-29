@@ -217,21 +217,27 @@ export async function submitArtifactWithLifecycle(
   // Persist delivery truth before emitting events
   await appendDeliveryIntegrityEvent(db, session, artifact.id, req.delivery);
 
-  // Record orchestration-owned artifact attempt lineage when parser_verdict is supplied
-  if (req.parser_verdict) {
-    await recordArtifactAttempt(db, {
-      run_id: session.session_id,
-      stage: session.pipeline_state,
-      artifact_id: artifact.id,
-      artifact_type: req.artifact_type,
-      created_by_role: req.agent_id ?? "unknown",
-      parser_verdict: req.parser_verdict,
-      review_verdict: req.review_verdict ?? { status: "NOT_REQUIRED" },
-      scope_fingerprint_changed: req.scope_fingerprint_changed ?? false,
-      transition_context: req.transition_context ?? {},
-      override_flag: false,
-    });
-  }
+  // Record orchestration-owned artifact attempt lineage — always, not only when parser_verdict is
+  // supplied. When no parser_verdict is present the default all-passing verdict causes QUALITY_ISSUE
+  // to be assigned as the fallback reason for any repair attempt.
+  const defaultParserVerdict = {
+    schema_valid: true,
+    required_sections_present: true,
+    stage_matches_expected: true,
+    reentry_ready: true,
+  };
+  await recordArtifactAttempt(db, {
+    run_id: session.session_id,
+    stage: session.pipeline_state,
+    artifact_id: artifact.id,
+    artifact_type: req.artifact_type,
+    created_by_role: req.agent_id ?? "unknown",
+    parser_verdict: req.parser_verdict ?? defaultParserVerdict,
+    review_verdict: req.review_verdict ?? { status: "NOT_REQUIRED" },
+    scope_fingerprint_changed: req.scope_fingerprint_changed ?? false,
+    transition_context: req.transition_context ?? {},
+    override_flag: false,
+  });
 
   await decisionlogService.appendDecisionLog(db, session.session_id, {
     agent_id: req.agent_id ?? "unknown",
