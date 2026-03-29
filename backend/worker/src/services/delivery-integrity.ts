@@ -149,35 +149,6 @@ export async function appendDeliveryIntegrityEvent(
     )
     .run();
 
-  try {
-    console.log(
-      JSON.stringify({
-        event: attempt > 1 ? "delivery_repair_attempt_classified" : "delivery_integrity_classified",
-        event_id,
-        artifact_id,
-        session_id: session.session_id,
-        pipeline_state: session.pipeline_state,
-        attempt,
-        supersedes_artifact_id,
-        replacement_reason,
-        handoff_status,
-        handoff_failure_reason,
-        stage_loop_detected,
-        classified_at,
-      })
-    );
-  } catch (emitError) {
-    await db
-      .prepare(`DELETE FROM delivery_integrity_events WHERE event_id = ?`)
-      .bind(event_id)
-      .run();
-    const reason =
-      emitError instanceof Error ? emitError.message : String(emitError);
-    throw new Error(
-      `delivery integrity event emission failed after rollback: ${reason}`
-    );
-  }
-
   return {
     event_id,
     artifact_id,
