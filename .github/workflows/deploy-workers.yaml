@@ -34,12 +34,30 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
           cache-dependency-path: backend/worker/package-lock.json
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Preflight Cloudflare auth (dev)
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "::error::Missing secret CLOUDFLARE_API_TOKEN for deploy-dev."
+            exit 1
+          fi
+          if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "::error::Missing secret CLOUDFLARE_ACCOUNT_ID for deploy-dev."
+            exit 1
+          fi
+          if ! npx wrangler whoami; then
+            echo "::error::Cloudflare auth preflight failed in deploy-dev. Verify CLOUDFLARE_API_TOKEN permissions and CLOUDFLARE_ACCOUNT_ID."
+            exit 1
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Type-check
         run: npm run build
@@ -51,7 +69,7 @@ jobs:
   deploy-dev:
     name: Deploy to Dev
     needs: validate
-    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.environment == 'dev')
     runs-on: ubuntu-latest
     environment: dev
     permissions:
@@ -66,12 +84,30 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
           cache-dependency-path: backend/worker/package-lock.json
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Preflight Cloudflare auth (prod)
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "::error::Missing secret CLOUDFLARE_API_TOKEN for deploy-prod."
+            exit 1
+          fi
+          if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "::error::Missing secret CLOUDFLARE_ACCOUNT_ID for deploy-prod."
+            exit 1
+          fi
+          if ! npx wrangler whoami; then
+            echo "::error::Cloudflare auth preflight failed in deploy-prod. Verify CLOUDFLARE_API_TOKEN permissions and CLOUDFLARE_ACCOUNT_ID."
+            exit 1
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Apply D1 migrations (dev)
         run: npx wrangler d1 migrations apply gpts-decision-stack-db-dev --env dev --remote
@@ -88,7 +124,7 @@ jobs:
   deploy-prod:
     name: Deploy to Production
     needs: validate
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'prod'
     runs-on: ubuntu-latest
     environment: prod
     permissions:
@@ -103,7 +139,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
           cache-dependency-path: backend/worker/package-lock.json
 

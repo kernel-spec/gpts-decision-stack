@@ -1,11 +1,14 @@
 import type {
+  FounderDecisionRequest,
   Env,
   FounderArtifactSaveRequest,
   FounderModelOutputRecordRequest,
 } from "../types/index.js";
 import * as founderService from "../services/founder.js";
 import * as founderWriteService from "../services/founder-write.js";
+import * as artifactService from "../services/artifact.js";
 import * as decisionlogService from "../services/decisionlog.js";
+import { validateDeliveryInput } from "../services/delivery-integrity.js";
 import { errorResponse, requireJson } from "../router.js";
 
 export async function handleGetProjectStatus(
@@ -36,6 +39,68 @@ export async function handleGetNextAction(
   }
 
   return Response.json({ ok: true, data: nextAction });
+}
+
+export async function handleCheckSellReady(
+  project_id: string,
+  env: Env
+): Promise<Response> {
+  const status = await founderService.checkSellReady(env.DECISIONS_DB, project_id);
+  if (!status) {
+    return errorResponse("Project not found", "NOT_FOUND", 404);
+  }
+
+  return Response.json({ ok: true, data: status });
+}
+
+export async function handleCheckProductionClosure(
+  project_id: string,
+  env: Env
+): Promise<Response> {
+  const status = await founderService.checkProductionClosure(
+    env.DECISIONS_DB,
+    project_id
+  );
+  if (!status) {
+    return errorResponse("Project not found", "NOT_FOUND", 404);
+  }
+
+  return Response.json({ ok: true, data: status });
+}
+
+export async function handleRequestFounderDecision(
+  request: Request,
+  project_id: string,
+  env: Env
+): Promise<Response> {
+  const session = await founderService.getProjectSession(env.DECISIONS_DB, project_id);
+  if (!session) {
+    return errorResponse("Project not found", "NOT_FOUND", 404);
+  }
+
+  const body = await requireJson<FounderDecisionRequest>(request);
+  if (typeof body.decision_type !== "string" || body.decision_type.trim().length === 0) {
+    return errorResponse("decision_type is required", "INVALID_REQUEST", 400);
+  }
+
+  const result = await founderService.requestFounderDecision(
+    env.DECISIONS_DB,
+    project_id,
+    body
+  );
+  if (!result) {
+    return errorResponse("Project not found", "NOT_FOUND", 404);
+  }
+
+  await decisionlogService.appendDecisionLog(env.DECISIONS_DB, session.session_id, {
+    agent_id: body.requested_by?.trim() || "founder-console",
+    action: "founder.decision.requested",
+    pipeline_state: session.pipeline_state,
+    decision_status: session.decision_status,
+    notes: `Founder decision payload requested (decision_type=${body.decision_type.trim()}, decision_needed=${result.decision_needed})`,
+  });
+
+  return Response.json({ ok: true, data: result });
 }
 
 export async function handleSaveArtifact(
@@ -70,6 +135,33 @@ export async function handleSaveArtifact(
     );
   }
 
+  const canonicalArtifactType = artifactService.getFounderCanonicalArtifactType(
+    body.artifact_type
+  );
+  const deliveryInput = body.metadata?.delivery;
+
+  const deliveryError = validateDeliveryInput(deliveryInput);
+  if (deliveryError) {
+    return errorResponse(deliveryError, "INVALID_DELIVERY_CLASSIFICATION", 400);
+  }
+
+  const canonicalRequest = canonicalArtifactType
+    ? {
+        artifact_type: canonicalArtifactType,
+        payload: body.content,
+        delivery: deliveryInput,
+      }
+    : null;
+  if (canonicalRequest) {
+    const canonicalError = artifactService.getFounderCanonicalArtifactError(
+      session,
+      canonicalRequest
+    );
+    if (canonicalError) {
+      return errorResponse(canonicalError, "ILLEGAL_ARTIFACT_STATE", 409);
+    }
+  }
+
   const result = await founderWriteService.saveArtifact(
     env.DECISIONS_DB,
     env.ARTIFACTS_BUCKET,
@@ -84,6 +176,25 @@ export async function handleSaveArtifact(
     decision_status: session.decision_status,
     notes: `Founder artifact ${body.artifact_type} saved (artifact_id=${result.artifact_id}, run_id=${body.metadata.run_id})`,
   });
+
+  if (canonicalRequest) {
+    try {
+      await artifactService.submitArtifactWithLifecycle(
+        env.DECISIONS_DB,
+        env.ARTIFACTS_BUCKET,
+        session,
+        {
+          ...canonicalRequest,
+          agent_id: body.submitted_by,
+        }
+      );
+    } catch (err) {
+      if (err instanceof TypeError) {
+        return errorResponse(err.message, "INVALID_DELIVERY_CLASSIFICATION", 400);
+      }
+      throw err;
+    }
+  }
 
   return Response.json({ ok: true, data: result });
 }

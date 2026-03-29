@@ -139,69 +139,62 @@ components:
         - target_state
         - reentry_reason
 
-    FounderProjectStatusData:
+    FounderSellReadyStatus:
       type: object
       properties:
-        project_id:
+        closure_type:
           type: string
-        current_phase:
+          enum:
+            - sell_ready
+        go_no_go:
           type: string
-        current_step:
-          type: string
-        closed:
-          type: boolean
-        open:
-          type: boolean
-        main_blocker:
-          type: string
-          nullable: true
-        next_surface:
-          type: string
-        next_action:
-          type: string
-        founder_decision_required:
-          type: boolean
-      required:
-        - project_id
-        - current_phase
-        - current_step
-        - closed
-        - open
-        - main_blocker
-        - next_surface
-        - next_action
-        - founder_decision_required
-
-    FounderProjectStatusResponse:
-      type: object
-      properties:
-        ok:
-          type: boolean
-        data:
-          $ref: "#/components/schemas/FounderProjectStatusData"
-      required:
-        - ok
-        - data
-
-    FounderNextActionData:
-      type: object
-      properties:
-        why_now:
-          type: string
-        next_surface:
-          type: string
-        next_action:
-          type: string
-        where_to_do_it:
-          type: string
-        copy_paste_block:
-          type: string
-          nullable: true
-        evidence_to_save:
+          enum:
+            - go
+            - no_go
+            - incomplete
+        confirmed:
           type: array
           items:
             type: string
-        fail_signal:
+        missing:
+          type: array
+          items:
+            type: string
+        biggest_blocker:
+          type: string
+          nullable: true
+        founder_decision_required:
+          type: boolean
+      required:
+        - closure_type
+        - go_no_go
+        - confirmed
+        - missing
+        - biggest_blocker
+        - founder_decision_required
+
+    FounderProductionClosureStatus:
+      type: object
+      properties:
+        closure_type:
+          type: string
+          enum:
+            - production_closure
+        go_no_go:
+          type: string
+          enum:
+            - go
+            - no_go
+            - incomplete
+        confirmed:
+          type: array
+          items:
+            type: string
+        missing:
+          type: array
+          items:
+            type: string
+        biggest_blocker:
           type: string
           nullable: true
         founder_decision_required:
@@ -564,6 +557,10 @@ paths:
     get:
       operationId: get_project_status
       summary: Get canonical founder project status
+  /founder/project/{project_id}/sell-ready:
+    get:
+      operationId: check_sell_ready
+      summary: Check canonical sell-ready status
       security:
         - ApiKeyAuth: []
       parameters:
@@ -592,10 +589,10 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /founder/project/{project_id}/next-action:
+  /founder/project/{project_id}/production-closure:
     get:
-      operationId: get_next_action
-      summary: Get canonical founder next action
+      operationId: check_production_closure
+      summary: Check canonical production-closure status
       security:
         - ApiKeyAuth: []
       parameters:
@@ -695,6 +692,16 @@ paths:
                 $ref: "#/components/schemas/FounderModelOutputRecordResponse"
         "400":
           description: Invalid model output request
+              $ref: "#/components/schemas/FounderDecisionRequest"
+      responses:
+        "200":
+          description: Canonical founder decision request payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FounderDecisionResponse"
+        "400":
+          description: Invalid founder decision request
           content:
             application/json:
               schema:

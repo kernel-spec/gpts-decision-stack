@@ -76,6 +76,131 @@ export type ArtifactType =
   | "StateDecisionPacket"
   | "ReleaseDecision";
 
+export type ReplacementReason =
+  | "INVALID_SCHEMA"
+  | "MISSING_REQUIRED_SECTION"
+  | "STAGE_MISMATCH"
+  | "REVIEW_BLOCK"
+  | "HANDOFF_REJECTED"
+  | "SCOPE_CHANGE"
+  | "QUALITY_ISSUE"
+  | "UNKNOWN";
+
+export const REPLACEMENT_REASONS: readonly ReplacementReason[] = [
+  "INVALID_SCHEMA",
+  "MISSING_REQUIRED_SECTION",
+  "STAGE_MISMATCH",
+  "REVIEW_BLOCK",
+  "HANDOFF_REJECTED",
+  "SCOPE_CHANGE",
+  "QUALITY_ISSUE",
+  "UNKNOWN",
+];
+
+export type HandoffFailureReason =
+  | "SCHEMA_MISMATCH"
+  | "MISSING_FIELDS"
+  | "AMBIGUOUS_OWNER"
+  | "REVIEW_REJECTED"
+  | "REENTRY_NOT_READY"
+  | "INVALID_INPUT"
+  | "UNKNOWN";
+
+export const HANDOFF_FAILURE_REASONS: readonly HandoffFailureReason[] = [
+  "SCHEMA_MISMATCH",
+  "MISSING_FIELDS",
+  "AMBIGUOUS_OWNER",
+  "REVIEW_REJECTED",
+  "REENTRY_NOT_READY",
+  "INVALID_INPUT",
+  "UNKNOWN",
+];
+
+export type DeliveryHandoffStatus = "pending" | "completed" | "failed";
+
+export const DELIVERY_HANDOFF_STATUSES: readonly DeliveryHandoffStatus[] = [
+  "pending",
+  "completed",
+  "failed",
+];
+
+// replacement_reason is NOT accepted from callers — it is classified by orchestration.
+// Callers may supply attempt, supersedes_artifact_id, handoff_status, and handoff_failure_reason.
+export interface DeliveryIntegrityInput {
+  attempt?: number | null;
+  supersedes_artifact_id?: string | null;
+  handoff_status?: DeliveryHandoffStatus | null;
+  handoff_failure_reason?: HandoffFailureReason | null;
+}
+
+// ---------- Delivery Integrity — Artifact Attempt ----------
+
+export interface ParserVerdict {
+  schema_valid: boolean;
+  required_sections_present: boolean;
+  stage_matches_expected: boolean;
+  reentry_ready: boolean;
+}
+
+export interface ReviewVerdict {
+  status: "APPROVED" | "REJECTED" | "NOT_REQUIRED" | "PENDING";
+  blocking?: boolean | null;
+}
+
+export interface TransitionContext {
+  handoff_rejected?: boolean | null;
+}
+
+export interface ArtifactAttemptInput {
+  run_id: string;
+  stage: string;
+  artifact_id: string;
+  artifact_type: string;
+  created_by_role: string;
+  parser_verdict: ParserVerdict;
+  review_verdict: ReviewVerdict;
+  scope_fingerprint_changed?: boolean | null;
+  transition_context?: TransitionContext | null;
+  override_flag?: boolean | null;
+}
+
+export interface ArtifactLineageRecord {
+  lineage_id: string;
+  run_id: string;
+  artifact_id: string;
+  artifact_type: string;
+  stage: string;
+  attempt: number;
+  supersedes_artifact_id: string | null;
+  created_at: string;
+  created_by_role: string;
+  classified_by: "orchestration";
+  replacement_reason: ReplacementReason | null;
+  replacement_reason_source: string | null;
+  is_repair_attempt: boolean;
+  is_first_attempt_in_stage: boolean;
+  override_flag: boolean;
+}
+
+export type DeliveryEvent =
+  | {
+      type: "artifact_attempt_created";
+      lineage_id: string;
+      artifact_id: string;
+      run_id: string;
+      stage: string;
+      attempt: number;
+    }
+  | {
+      type: "artifact_superseded";
+      lineage_id: string;
+      artifact_id: string;
+      supersedes_artifact_id: string;
+      replacement_reason: ReplacementReason;
+      run_id: string;
+      stage: string;
+    };
+
 export interface Artifact {
   id: string;
   session_id: string;
@@ -87,6 +212,11 @@ export interface Artifact {
 export interface SubmitArtifactRequest {
   artifact_type: ArtifactType;
   payload: unknown;
+  delivery?: DeliveryIntegrityInput | null;
+  parser_verdict?: ParserVerdict | null;
+  review_verdict?: ReviewVerdict | null;
+  scope_fingerprint_changed?: boolean | null;
+  transition_context?: TransitionContext | null;
 }
 
 // ---------- Decision Log ----------
@@ -183,6 +313,7 @@ export interface FounderArtifactMetadataInput {
   source_surface?: string | null;
   source_role?: string | null;
   status?: string | null;
+  delivery?: DeliveryIntegrityInput | null;
 }
 
 export interface FounderArtifactSaveRequest {
@@ -229,6 +360,42 @@ export interface FounderModelOutputRecordResult {
   linked_run_id: string | null;
   suggested_artifact_update: string | null;
   founder_decision_required: boolean;
+}
+
+export type FounderClosureGoNoGo = "go" | "no_go" | "incomplete";
+
+export interface FounderSellReadyStatus {
+  closure_type: "sell_ready";
+  go_no_go: FounderClosureGoNoGo;
+  confirmed: string[];
+  missing: string[];
+  biggest_blocker: string | null;
+  founder_decision_required: boolean;
+}
+
+export interface FounderProductionClosureStatus {
+  closure_type: "production_closure";
+  go_no_go: FounderClosureGoNoGo;
+  confirmed: string[];
+  missing: string[];
+  biggest_blocker: string | null;
+  founder_decision_required: boolean;
+  decision_type: string | null;
+}
+
+export interface FounderDecisionRequest {
+  decision_type: string;
+  decision_context?: string | null;
+  requested_by?: string | null;
+}
+
+export interface FounderDecisionResponse {
+  decision_needed: boolean;
+  why_it_cannot_be_skipped: string;
+  option_a: string;
+  option_b: string;
+  recommended_option: string;
+  founder_response_required: boolean;
 }
 
 // ---------- API responses ----------

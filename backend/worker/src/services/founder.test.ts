@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { Session } from "../types/index.js";
 import {
+  buildFounderDecisionResponse,
   buildFounderNextAction,
+  buildFounderProductionClosureStatus,
   buildFounderProjectStatus,
+  buildFounderSellReadyStatus,
 } from "./founder.js";
 
 function makeSession(overrides: Partial<Session> = {}): Session {
@@ -155,5 +158,147 @@ describe("founder service projections", () => {
     expect(action.fail_signal).toBe("RELEASE_DECISION_HANDLER_NOT_IMPLEMENTED");
     expect(action.next_action).toBe("no_supported_action_in_pr3");
     expect(action.copy_paste_block).toBeNull();
+  });
+
+  it("returns incomplete sell-ready status until commercial packaging evidence exists", () => {
+    const status = buildFounderSellReadyStatus(makeSession(), []);
+
+    expect(status).toEqual({
+      closure_type: "sell_ready",
+      go_no_go: "incomplete",
+      confirmed: [],
+      missing: ["commercial_packaging_state", "OfferDecision", "CommercialSpec"],
+      biggest_blocker: "commercial_packaging_state",
+      founder_decision_required: false,
+    });
+  });
+
+  it("raises a bounded founder sell-ready gate at commercial_packaging", () => {
+    const status = buildFounderSellReadyStatus(
+      makeSession({
+        pipeline_state: "commercial_packaging",
+        decision_status: "proceed",
+      }),
+      ["OfferDecision", "CommercialSpec"]
+    );
+
+    expect(status).toEqual({
+      closure_type: "sell_ready",
+      go_no_go: "incomplete",
+      confirmed: [
+        "worker_state_reached_commercial_packaging",
+        "OfferDecision",
+        "CommercialSpec",
+      ],
+      missing: [],
+      biggest_blocker: "founder_sell_ready_signoff_required",
+      founder_decision_required: true,
+    });
+  });
+
+  it("returns go for sell-ready once worker state has advanced beyond the signoff boundary", () => {
+    const status = buildFounderSellReadyStatus(
+      makeSession({
+        pipeline_state: "claims_validation",
+        decision_status: "proceed",
+      }),
+      ["OfferDecision", "CommercialSpec"]
+    );
+
+    expect(status).toEqual({
+      closure_type: "sell_ready",
+      go_no_go: "go",
+      confirmed: [
+        "worker_state_reached_commercial_packaging",
+        "OfferDecision",
+        "CommercialSpec",
+      ],
+      missing: [],
+      biggest_blocker: null,
+      founder_decision_required: false,
+    });
+  });
+
+  it("returns a bounded production closure gate at release_decision until ReleaseDecision is saved", () => {
+    const status = buildFounderProductionClosureStatus(
+      makeSession({
+        pipeline_state: "release_decision",
+        decision_status: "proceed",
+      }),
+      ["ClaimsDecision"]
+    );
+
+    expect(status).toEqual({
+      closure_type: "production_closure",
+      go_no_go: "incomplete",
+      confirmed: ["worker_state_reached_release_decision", "ClaimsDecision"],
+      missing: ["ReleaseDecision"],
+      biggest_blocker: "founder_production_closure_signoff_required",
+      founder_decision_required: true,
+      decision_type: "production_closure_signoff",
+    });
+  });
+
+  it("returns go for production closure when release decision evidence is stored", () => {
+    const status = buildFounderProductionClosureStatus(
+      makeSession({
+        pipeline_state: "release_decision",
+        decision_status: "proceed",
+      }),
+      ["ClaimsDecision", "ReleaseDecision"]
+    );
+
+    expect(status).toEqual({
+      closure_type: "production_closure",
+      go_no_go: "go",
+      confirmed: [
+        "worker_state_reached_release_decision",
+        "ClaimsDecision",
+        "ReleaseDecision",
+      ],
+      missing: [],
+      biggest_blocker: null,
+      founder_decision_required: false,
+      decision_type: null,
+    });
+  });
+
+  it("returns a bounded founder decision payload only for an active closure gate", () => {
+    const sellReadyDecision = buildFounderDecisionResponse(
+      makeSession({
+        pipeline_state: "commercial_packaging",
+        decision_status: "proceed",
+      }),
+      ["OfferDecision", "CommercialSpec"],
+      {
+        decision_type: "sell_ready_signoff",
+      }
+    );
+    const nonDecision = buildFounderDecisionResponse(makeSession(), [], {
+      decision_type: "production_closure_signoff",
+    });
+
+    expect(sellReadyDecision).toEqual({
+      decision_needed: true,
+      why_it_cannot_be_skipped:
+        "Sell-ready cannot be declared from chat alone. Worker-backed state has reached the commercial_packaging boundary with the required sell-ready artifacts, so the founder must explicitly approve or hold the sell-ready posture.",
+      option_a:
+        "Approve sell-ready and continue from the current commercial packaging posture.",
+      option_b:
+        "Hold sell-ready and collect more evidence or revise the commercial packaging posture.",
+      recommended_option:
+        "Approve sell-ready and continue from the current commercial packaging posture.",
+      founder_response_required: true,
+    });
+    expect(nonDecision).toEqual({
+      decision_needed: false,
+      why_it_cannot_be_skipped:
+        "No active founder decision gate is justified from current Worker-backed state.",
+      option_a: "Continue collecting Worker-backed evidence.",
+      option_b: "Re-run the relevant closure check after canonical state changes.",
+      recommended_option:
+        "Re-run the relevant closure check after canonical state changes.",
+      founder_response_required: false,
+    });
   });
 });

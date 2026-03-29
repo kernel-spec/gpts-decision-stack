@@ -1,0 +1,181 @@
+schema_version: "1.0.0"
+suite_id: AC-DI-pack
+suite_name: delivery_integrity_instrumentation_v1
+owner: orchestration
+status: draft_v1
+
+tests:
+
+  - id: AC-DI-001
+    name: first_attempt_in_stage
+    given:
+      run_id: RUN_TEST_001
+      stage: problem_framing
+      existing_lineage_records: []
+    when:
+      action: recordArtifactAttempt
+      input:
+        artifact_id: ART_001
+        artifact_type: FramingAssessment
+        created_by_role: AE-Framing
+        parser_verdict:
+          schema_valid: true
+          required_sections_present: true
+          stage_matches_expected: true
+          reentry_ready: true
+        review_verdict:
+          status: NOT_REQUIRED
+        scope_fingerprint_changed: false
+        transition_context: {}
+        override_flag: false
+    then:
+      lineage:
+        attempt: 1
+        supersedes_artifact_id: null
+        is_first_attempt_in_stage: true
+        is_repair_attempt: false
+        replacement_reason: null
+      emitted_events:
+        includes:
+          - artifact_attempt_created
+        excludes:
+          - artifact_superseded
+
+  - id: AC-DI-002
+    name: second_attempt_missing_required_section
+    given:
+      run_id: RUN_TEST_002
+      stage: problem_framing
+      existing_lineage_records:
+        - lineage_id: LIN_001
+          artifact_id: ART_001
+          artifact_type: FramingAssessment
+          attempt: 1
+    when:
+      action: recordArtifactAttempt
+      input:
+        artifact_id: ART_002
+        artifact_type: FramingAssessment
+        created_by_role: AE-Framing
+        parser_verdict:
+          schema_valid: true
+          required_sections_present: false
+          stage_matches_expected: true
+          reentry_ready: false
+        review_verdict:
+          status: NOT_REQUIRED
+        scope_fingerprint_changed: false
+        transition_context: {}
+        override_flag: false
+    then:
+      lineage:
+        attempt: 2
+        supersedes_artifact_id: ART_001
+        is_first_attempt_in_stage: false
+        is_repair_attempt: true
+        replacement_reason: MISSING_REQUIRED_SECTION
+      emitted_events:
+        includes:
+          - artifact_attempt_created
+          - artifact_superseded
+
+  - id: AC-DI-003
+    name: reject_superseding_attempt_without_reason
+    given:
+      run_id: RUN_TEST_003
+      stage: claims_validation
+      existing_lineage_records:
+        - lineage_id: LIN_010
+          artifact_id: ART_010
+          artifact_type: ClaimsDecision
+          attempt: 1
+    when:
+      action: persistArtifactLineageDirectly
+      input:
+        lineage_id: LIN_011
+        run_id: RUN_TEST_003
+        artifact_id: ART_011
+        artifact_type: ClaimsDecision
+        stage: claims_validation
+        attempt: 2
+        supersedes_artifact_id: ART_010
+        created_by_role: AE-Claims
+        classified_by: orchestration
+        replacement_reason: null
+        replacement_reason_source: null
+        is_repair_attempt: true
+        is_first_attempt_in_stage: false
+    then:
+      persist_result: REJECTED
+      error_code: replacement_reason_required
+
+  - id: AC-DI-004
+    name: handoff_failed_reentry_not_ready
+    given:
+      run_id: RUN_TEST_004
+      from_stage: problem_framing
+      to_stage: primitive_selection
+      from_artifact_id: ART_020
+    when:
+      action: recordHandoffOutcome
+      input:
+        to_artifact_id: null
+        parser_verdict:
+          schema_valid: true
+          required_sections_present: true
+          reentry_ready: false
+        review_verdict:
+          status: NOT_REQUIRED
+        legal_transition: true
+        owner_resolution_state:
+          resolved: true
+        override_flag: false
+    then:
+      handoff:
+        status: FAILED
+        failure_reason: REENTRY_NOT_READY
+      emitted_events:
+        includes:
+          - handoff_failed
+
+  - id: AC-DI-005
+    name: same_stage_repeat_emits_loop_signal
+    given:
+      run_id: RUN_TEST_005
+      existing_stage_entries:
+        - entry_id: ENT_001
+          stage: problem_framing
+    when:
+      action: recordStageEntry
+      input:
+        stage: problem_framing
+        entered_by: orchestration
+    then:
+      stage_entry_created: true
+      loop_signal:
+        emitted: true
+        loop_type: SAME_STAGE_REPEAT
+        entry_count: 2
+
+  - id: AC-DI-006
+    name: unknown_reason_threshold_alert
+    given:
+      artifact_lineage:
+        - attempt: 2
+          replacement_reason: UNKNOWN
+        - attempt: 2
+          replacement_reason: UNKNOWN
+        - attempt: 2
+          replacement_reason: QUALITY_ISSUE
+        - attempt: 2
+          replacement_reason: MISSING_REQUIRED_SECTION
+        - attempt: 2
+          replacement_reason: REVIEW_BLOCK
+    when:
+      action: evaluateOperationalAlerts
+    then:
+      alerts:
+        includes:
+          - DELIVERY_UNKNOWN_REASON_OVERUSE
+      thresholds:
+        unknown_ratio_gt: 0.20
