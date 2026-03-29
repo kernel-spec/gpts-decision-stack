@@ -1,0 +1,55 @@
+schema_version: "1.0.0"
+knowledge_id: "07_DeliveryIntegrityEnums"
+status: INVARIANT
+description: >
+  Canonical enums for delivery integrity instrumentation. These values are
+  orchestration-owned and must remain stable for persistence, auditing, and
+  UI/read-model consumers.
+
+replacement_reason:
+  INVALID_SCHEMA:
+    description: Submitted artifact failed schema validation.
+  MISSING_REQUIRED_SECTION:
+    description: Required sections or fields are missing.
+  STAGE_MISMATCH:
+    description: Artifact does not match the current pipeline stage.
+  REVIEW_BLOCK:
+    description: Review feedback blocks acceptance of the prior artifact.
+  HANDOFF_REJECTED:
+    description: Downstream handoff rejected the artifact.
+  SCOPE_CHANGE:
+    description: Scope changed and prior artifact no longer applies.
+  QUALITY_ISSUE:
+    description: Quality issues require a replacement artifact.
+
+handoff_failure_reason:
+  SCHEMA_MISMATCH:
+    description: Handoff payload failed schema compatibility checks.
+  MISSING_FIELDS:
+    description: Required handoff fields were missing.
+  AMBIGUOUS_OWNER:
+    description: Handoff lacked a clear downstream owner.
+  REVIEW_REJECTED:
+    description: Downstream review rejected the handoff.
+  REENTRY_NOT_READY:
+    description: Re-entry prerequisites not satisfied.
+  INVALID_INPUT:
+    description: Handoff input was invalid or malformed.
+
+loop_type:
+  stage_reentry:
+    description: Re-entry into the same pipeline stage after a prior completion.
+  repeated_attempt:
+    description: Multiple attempts within the same stage without advancing.
+
+next_action_code:
+  save_problem_brief:
+    description: Submit a ProblemBrief artifact to advance from intake.
+  save_state_decision_packet:
+    description: Submit a StateDecisionPacket for the current pipeline state.
+  resolve_active_veto:
+    description: Clear the active veto/blocker before proceeding.
+  review_escalation_status:
+    description: Review the escalation status; no direct submission available.
+  no_supported_action_in_pr3:
+    description: Placeholder when no founder-facing action is supported in PR-3.
