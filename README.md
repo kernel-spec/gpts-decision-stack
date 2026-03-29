@@ -122,6 +122,41 @@ This includes:
 ### Custom GPT layer
 - `custom_gpts/` — deployment-oriented GPT packaging and operational materials
 
+## iOS Operator Layer
+
+This repository contains one canonical operator-facing Custom GPT package:
+
+`custom_gpts/ios_operator_layer/`
+
+Deployment name:
+
+`GPTS_DECISION_STACK_IOS_OPERATOR_LAYER`
+
+This package is intended as the single deployed operator/iOS shell above Worker-backed truth.
+
+Builder wiring source files:
+
+- `custom_gpts/ios_operator_layer/builder/instructions.en.md`
+- `custom_gpts/ios_operator_layer/builder/conversation_starters.en.md`
+- `custom_gpts/ios_operator_layer/builder/knowledge_notes.en.md`
+
+Operator-facing usage files:
+
+- `custom_gpts/ios_operator_layer/operator/sop.cs.md`
+- `custom_gpts/ios_operator_layer/operator/quick_macros.cs.md`
+- `custom_gpts/ios_operator_layer/operator/fail_macros.cs.md`
+
+Canonical deployment spec:
+
+`operations/specs/ios-operator-layer-deployment.md`
+
+Rules:
+
+- Worker remains source of truth
+- the Custom GPT remains a thin orchestration shell
+- specialists remain internal protocol roles, not separate deployed GPTs
+- Builder is not the canonical authoring location; the repository is
+
 ## Core pipeline concepts
 
 The system operates as an explicit governed flow, not an opaque chatbot flow.
