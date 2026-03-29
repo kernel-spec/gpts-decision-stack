@@ -6,6 +6,7 @@ import type {
 } from "../types/index.js";
 import * as decisionlogService from "./decisionlog.js";
 import * as stateService from "./state.js";
+import { appendDeliveryIntegrityEvent } from "./delivery-integrity.js";
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -212,6 +213,9 @@ export async function submitArtifactWithLifecycle(
   req: SubmitArtifactRequest & { agent_id?: string }
 ): Promise<Artifact> {
   const artifact = await submitArtifact(db, bucket, session.session_id, req);
+
+  // Persist delivery truth before emitting events
+  await appendDeliveryIntegrityEvent(db, session, artifact.id, req.delivery);
 
   await decisionlogService.appendDecisionLog(db, session.session_id, {
     agent_id: req.agent_id ?? "unknown",
