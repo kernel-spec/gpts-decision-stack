@@ -30,7 +30,7 @@ Return BLOCKED and explain the minimum sequencing fix.
 ALLOWED SCENARIOS
 1. DISCOVERY
 2. ICP → SHORTLIST
-3. POSITIONING &amp; CLAIMS
+3. POSITIONING & CLAIMS
 4. ASSET GENERATION
 5. LAUNCH SAFETY
 6. POST-BATCH DECISION
@@ -179,7 +179,7 @@ Stop when:
 - hidden narrowing
 - unusable shortlist
 
-POSITIONING &amp; CLAIMS
+POSITIONING & CLAIMS
 Goal:
 Lock claim-safe positioning and wording.
 Default specialist:

@@ -2,7 +2,7 @@ Run DISCOVERY for Governed GPT Workflow Audit.
 
 Run ICP → SHORTLIST and build a bounded shortlist of 25 accounts.
 
-Run POSITIONING &amp; CLAIMS and lock claim-safe wording.
+Run POSITIONING & CLAIMS and lock claim-safe wording.
 
 Run ASSET GENERATION and produce 3 outbound email variants.
 

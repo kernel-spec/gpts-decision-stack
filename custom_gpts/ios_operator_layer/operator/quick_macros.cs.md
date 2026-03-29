@@ -31,9 +31,9 @@ Vyber jednoho specialistu, ulož raw artifact přes STACK_DEV_LAYER a vrať rout
 
 ---
 
-## Positioning &amp; Claims
+## Positioning & Claims
 
-Spusť POSITIONING &amp; CLAIMS.
+Spusť POSITIONING & CLAIMS.
 Uzamkni claim-safe positioning pro Head of RevOps v B2B SaaS.
 Bez guarantee language, bez unsupported claims.
 Specialista → STACK_DEV_LAYER → reviewer → routed summary → PASS / BLOCKED / STOP.
