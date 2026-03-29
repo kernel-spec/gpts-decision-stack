@@ -76,16 +76,7 @@ export type ArtifactType =
   | "StateDecisionPacket"
   | "ReleaseDecision";
 
-export type ReplacementReason =
-  | "INVALID_SCHEMA"
-  | "MISSING_REQUIRED_SECTION"
-  | "STAGE_MISMATCH"
-  | "REVIEW_BLOCK"
-  | "HANDOFF_REJECTED"
-  | "SCOPE_CHANGE"
-  | "QUALITY_ISSUE";
-
-export const REPLACEMENT_REASONS: readonly ReplacementReason[] = [
+export const REPLACEMENT_REASONS = [
   "INVALID_SCHEMA",
   "MISSING_REQUIRED_SECTION",
   "STAGE_MISMATCH",
@@ -93,32 +84,28 @@ export const REPLACEMENT_REASONS: readonly ReplacementReason[] = [
   "HANDOFF_REJECTED",
   "SCOPE_CHANGE",
   "QUALITY_ISSUE",
-];
+] as const;
 
-export type HandoffFailureReason =
-  | "SCHEMA_MISMATCH"
-  | "MISSING_FIELDS"
-  | "AMBIGUOUS_OWNER"
-  | "REVIEW_REJECTED"
-  | "REENTRY_NOT_READY"
-  | "INVALID_INPUT";
+export type ReplacementReason = (typeof REPLACEMENT_REASONS)[number];
 
-export const HANDOFF_FAILURE_REASONS: readonly HandoffFailureReason[] = [
+export const HANDOFF_FAILURE_REASONS = [
   "SCHEMA_MISMATCH",
   "MISSING_FIELDS",
   "AMBIGUOUS_OWNER",
   "REVIEW_REJECTED",
   "REENTRY_NOT_READY",
   "INVALID_INPUT",
-];
+] as const;
 
-export type DeliveryHandoffStatus = "pending" | "completed" | "failed";
+export type HandoffFailureReason = (typeof HANDOFF_FAILURE_REASONS)[number];
 
-export const DELIVERY_HANDOFF_STATUSES: readonly DeliveryHandoffStatus[] = [
+export const DELIVERY_HANDOFF_STATUSES = [
   "pending",
   "completed",
   "failed",
-];
+] as const;
+
+export type DeliveryHandoffStatus = (typeof DELIVERY_HANDOFF_STATUSES)[number];
 
 export interface DeliveryIntegrityInput {
   attempt?: number | null;
@@ -323,12 +310,12 @@ export interface FounderDecisionResponse {
 
 // ---------- Handoff outcome ----------
 
-export type HandoffOutcome = "COMPLETED" | "FAILED";
-
-export const HANDOFF_OUTCOMES: readonly HandoffOutcome[] = [
+export const HANDOFF_OUTCOMES = [
   "COMPLETED",
   "FAILED",
-];
+] as const;
+
+export type HandoffOutcome = (typeof HANDOFF_OUTCOMES)[number];
 
 export interface HandoffOutcomeInput {
   parser_verdict_ok: boolean;

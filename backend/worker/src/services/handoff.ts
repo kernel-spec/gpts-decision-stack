@@ -6,6 +6,10 @@ import type {
   HandoffOutcomeRecord,
   Session,
 } from "../types/index.js";
+import {
+  HANDOFF_FAILURE_REASONS,
+  HANDOFF_OUTCOMES,
+} from "../types/index.js";
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -14,6 +18,16 @@ function nowIso(): string {
 function newId(): string {
   return crypto.randomUUID();
 }
+
+const [HANDOFF_COMPLETED, HANDOFF_FAILED] = HANDOFF_OUTCOMES;
+const [
+  FAILURE_SCHEMA_MISMATCH,
+  FAILURE_MISSING_FIELDS,
+  FAILURE_AMBIGUOUS_OWNER,
+  FAILURE_REVIEW_REJECTED,
+  FAILURE_REENTRY_NOT_READY,
+  FAILURE_INVALID_INPUT,
+] = HANDOFF_FAILURE_REASONS;
 
 /**
  * Classify handoff as COMPLETED or FAILED.
@@ -30,24 +44,24 @@ export function classifyHandoffOutcome(input: HandoffOutcomeInput): {
   failure_reason: HandoffFailureReason | null;
 } {
   if (!input.schema_valid) {
-    return { outcome: "FAILED", failure_reason: "SCHEMA_MISMATCH" };
+    return { outcome: HANDOFF_FAILED, failure_reason: FAILURE_SCHEMA_MISMATCH };
   }
   if (!input.fields_present) {
-    return { outcome: "FAILED", failure_reason: "MISSING_FIELDS" };
+    return { outcome: HANDOFF_FAILED, failure_reason: FAILURE_MISSING_FIELDS };
   }
   if (!input.owner_resolved) {
-    return { outcome: "FAILED", failure_reason: "AMBIGUOUS_OWNER" };
+    return { outcome: HANDOFF_FAILED, failure_reason: FAILURE_AMBIGUOUS_OWNER };
   }
   if (!input.review_verdict_ok) {
-    return { outcome: "FAILED", failure_reason: "REVIEW_REJECTED" };
+    return { outcome: HANDOFF_FAILED, failure_reason: FAILURE_REVIEW_REJECTED };
   }
   if (!input.reentry_ready) {
-    return { outcome: "FAILED", failure_reason: "REENTRY_NOT_READY" };
+    return { outcome: HANDOFF_FAILED, failure_reason: FAILURE_REENTRY_NOT_READY };
   }
   if (!input.parser_verdict_ok || !input.legal_transition_ok) {
-    return { outcome: "FAILED", failure_reason: "INVALID_INPUT" };
+    return { outcome: HANDOFF_FAILED, failure_reason: FAILURE_INVALID_INPUT };
   }
-  return { outcome: "COMPLETED", failure_reason: null };
+  return { outcome: HANDOFF_COMPLETED, failure_reason: null };
 }
 
 /**
@@ -62,7 +76,7 @@ export async function recordHandoffOutcome(
 ): Promise<HandoffOutcomeRecord> {
   const { outcome, failure_reason } = classifyHandoffOutcome(input);
 
-  if (outcome === "FAILED" && failure_reason === null) {
+  if (outcome === HANDOFF_FAILED && failure_reason === null) {
     throw new Error("invariant violated: FAILED handoff must have failure_reason");
   }
 
@@ -95,7 +109,7 @@ export async function recordHandoffOutcome(
     .run();
 
   // Emit second
-  if (outcome === "COMPLETED") {
+  if (outcome === HANDOFF_COMPLETED) {
     console.log(
       JSON.stringify({
         event: "handoff_completed",
