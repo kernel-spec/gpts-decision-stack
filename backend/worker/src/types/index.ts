@@ -76,7 +76,16 @@ export type ArtifactType =
   | "StateDecisionPacket"
   | "ReleaseDecision";
 
-export const REPLACEMENT_REASONS = [
+export type ReplacementReason =
+  | "INVALID_SCHEMA"
+  | "MISSING_REQUIRED_SECTION"
+  | "STAGE_MISMATCH"
+  | "REVIEW_BLOCK"
+  | "HANDOFF_REJECTED"
+  | "SCOPE_CHANGE"
+  | "QUALITY_ISSUE";
+
+export const REPLACEMENT_REASONS: readonly ReplacementReason[] = [
   "INVALID_SCHEMA",
   "MISSING_REQUIRED_SECTION",
   "STAGE_MISMATCH",
@@ -84,28 +93,32 @@ export const REPLACEMENT_REASONS = [
   "HANDOFF_REJECTED",
   "SCOPE_CHANGE",
   "QUALITY_ISSUE",
-] as const;
+];
 
-export type ReplacementReason = (typeof REPLACEMENT_REASONS)[number];
+export type HandoffFailureReason =
+  | "SCHEMA_MISMATCH"
+  | "MISSING_FIELDS"
+  | "AMBIGUOUS_OWNER"
+  | "REVIEW_REJECTED"
+  | "REENTRY_NOT_READY"
+  | "INVALID_INPUT";
 
-export const HANDOFF_FAILURE_REASONS = [
+export const HANDOFF_FAILURE_REASONS: readonly HandoffFailureReason[] = [
   "SCHEMA_MISMATCH",
   "MISSING_FIELDS",
   "AMBIGUOUS_OWNER",
   "REVIEW_REJECTED",
   "REENTRY_NOT_READY",
   "INVALID_INPUT",
-] as const;
+];
 
-export type HandoffFailureReason = (typeof HANDOFF_FAILURE_REASONS)[number];
+export type DeliveryHandoffStatus = "pending" | "completed" | "failed";
 
-export const DELIVERY_HANDOFF_STATUSES = [
+export const DELIVERY_HANDOFF_STATUSES: readonly DeliveryHandoffStatus[] = [
   "pending",
   "completed",
   "failed",
-] as const;
-
-export type DeliveryHandoffStatus = (typeof DELIVERY_HANDOFF_STATUSES)[number];
+];
 
 export interface DeliveryIntegrityInput {
   attempt?: number | null;
@@ -306,35 +319,6 @@ export interface FounderDecisionResponse {
   option_b: string;
   recommended_option: string;
   founder_response_required: boolean;
-}
-
-// ---------- Handoff outcome ----------
-
-export const HANDOFF_OUTCOMES = [
-  "COMPLETED",
-  "FAILED",
-] as const;
-
-export type HandoffOutcome = (typeof HANDOFF_OUTCOMES)[number];
-
-export interface HandoffOutcomeInput {
-  parser_verdict_ok: boolean;
-  review_verdict_ok: boolean;
-  legal_transition_ok: boolean;
-  reentry_ready: boolean;
-  owner_resolved: boolean;
-  schema_valid: boolean;
-  fields_present: boolean;
-}
-
-export interface HandoffOutcomeRecord {
-  event_id: string;
-  session_id: string;
-  pipeline_state: Session["pipeline_state"];
-  outcome: HandoffOutcome;
-  failure_reason: HandoffFailureReason | null;
-  classified_by: string;
-  classified_at: string;
 }
 
 // ---------- API responses ----------
