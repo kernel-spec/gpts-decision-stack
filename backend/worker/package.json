@@ -18,5 +18,9 @@
     "typescript": "^5.9.3",
     "vitest": "^4.1.2",
     "wrangler": "^4.78.0"
+  },
+  "optionalDependencies": {
+    "@emnapi/core": "1.9.1",
+    "@emnapi/runtime": "1.9.1"
   }
 }
