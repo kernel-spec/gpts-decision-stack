@@ -321,6 +321,35 @@ export interface FounderDecisionResponse {
   founder_response_required: boolean;
 }
 
+// ---------- Handoff outcome ----------
+
+export type HandoffOutcome = "COMPLETED" | "FAILED";
+
+export const HANDOFF_OUTCOMES: readonly HandoffOutcome[] = [
+  "COMPLETED",
+  "FAILED",
+];
+
+export interface HandoffOutcomeInput {
+  parser_verdict_ok: boolean;
+  review_verdict_ok: boolean;
+  legal_transition_ok: boolean;
+  reentry_ready: boolean;
+  owner_resolved: boolean;
+  schema_valid: boolean;
+  fields_present: boolean;
+}
+
+export interface HandoffOutcomeRecord {
+  event_id: string;
+  session_id: string;
+  pipeline_state: Session["pipeline_state"];
+  outcome: HandoffOutcome;
+  failure_reason: HandoffFailureReason | null;
+  classified_by: string;
+  classified_at: string;
+}
+
 // ---------- API responses ----------
 
 export interface ApiSuccess<T> {
