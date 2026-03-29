@@ -51,7 +51,7 @@ jobs:
   deploy-dev:
     name: Deploy to Dev
     needs: validate
-    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
     runs-on: ubuntu-latest
     environment: dev
     permissions:
