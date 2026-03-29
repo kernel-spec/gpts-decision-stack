@@ -9,7 +9,7 @@
     "deploy:dev": "wrangler deploy --env dev",
     "deploy:prod": "wrangler deploy --env prod",
     "typecheck": "tsc --noEmit",
-    "build": "tsc --noEmit",
+    "build": "npm run typecheck",
     "test": "vitest run"
   },
   "devDependencies": {
