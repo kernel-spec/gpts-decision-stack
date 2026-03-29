@@ -35,6 +35,10 @@ export async function handleSubmitArtifact(
         payload: body.payload,
         delivery: body.delivery,
         agent_id: body.agent_id,
+        parser_verdict: body.parser_verdict,
+        review_verdict: body.review_verdict,
+        scope_fingerprint_changed: body.scope_fingerprint_changed,
+        transition_context: body.transition_context,
       }
     );
   } catch (err) {
