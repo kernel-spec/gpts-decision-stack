@@ -171,7 +171,11 @@ export async function appendDeliveryIntegrityEvent(
       .prepare(`DELETE FROM delivery_integrity_events WHERE event_id = ?`)
       .bind(event_id)
       .run();
-    throw emitError;
+    const reason =
+      emitError instanceof Error ? emitError.message : String(emitError);
+    throw new Error(
+      `delivery integrity event emission failed after rollback: ${reason}`
+    );
   }
 
   return {
