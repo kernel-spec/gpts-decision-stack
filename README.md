@@ -152,6 +152,32 @@ Representative artifact types include:
 - `StateDecisionPacket`
 - `ReleaseDecision`
 
+## GitHub Actions secrets
+
+The deployment workflow (`.github/workflows/deploy-workers.yaml`) requires two repository secrets:
+
+| Secret | Description |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Workers, D1, R2, and KV permissions |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID (matches the account owning the resources in `backend/worker/wrangler.toml`) |
+
+### Setting secrets
+
+Use the provided helper script. Export both values first, then run:
+
+```bash
+export CLOUDFLARE_API_TOKEN="<your-token>"
+export CLOUDFLARE_ACCOUNT_ID="<your-account-id>"
+bash scripts/setup-github-secrets.sh
+```
+
+The script will:
+1. Re-authenticate the GitHub CLI with `repo,workflow,read:org` scopes
+2. Verify access to the repository secrets API
+3. Set `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`
+
+Secrets are never committed to the repository. The Worker's `API_KEY_SECRET` is set separately via `wrangler secret put API_KEY_SECRET`.
+
 ## Local development
 
 ### Prerequisites
