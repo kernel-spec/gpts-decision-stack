@@ -87,6 +87,15 @@ wrangler secret put API_KEY_SECRET --env prod
 
 ## Lokální vývoj
 
+Před prvním spuštěním se přihlaste ke Cloudflare:
+
+```bash
+npx wrangler login
+npx wrangler whoami
+```
+
+Poté nainstalujte závislosti a spusťte lokální vývojový server:
+
 ```bash
 npm install
 npm run dev
