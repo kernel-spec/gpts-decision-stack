@@ -8,6 +8,7 @@ import * as founderService from "../services/founder.js";
 import * as founderWriteService from "../services/founder-write.js";
 import * as artifactService from "../services/artifact.js";
 import * as decisionlogService from "../services/decisionlog.js";
+import { validateDeliveryInput } from "../services/delivery-integrity.js";
 import { errorResponse, requireJson } from "../router.js";
 
 export async function handleGetProjectStatus(
@@ -137,10 +138,18 @@ export async function handleSaveArtifact(
   const canonicalArtifactType = artifactService.getFounderCanonicalArtifactType(
     body.artifact_type
   );
+  const deliveryInput = body.metadata?.delivery;
+
+  const deliveryError = validateDeliveryInput(deliveryInput);
+  if (deliveryError) {
+    return errorResponse(deliveryError, "INVALID_DELIVERY_CLASSIFICATION", 400);
+  }
+
   const canonicalRequest = canonicalArtifactType
     ? {
         artifact_type: canonicalArtifactType,
         payload: body.content,
+        delivery: deliveryInput,
       }
     : null;
   if (canonicalRequest) {
@@ -169,15 +178,22 @@ export async function handleSaveArtifact(
   });
 
   if (canonicalRequest) {
-    await artifactService.submitArtifactWithLifecycle(
-      env.DECISIONS_DB,
-      env.ARTIFACTS_BUCKET,
-      session,
-      {
-        ...canonicalRequest,
-        agent_id: body.submitted_by,
+    try {
+      await artifactService.submitArtifactWithLifecycle(
+        env.DECISIONS_DB,
+        env.ARTIFACTS_BUCKET,
+        session,
+        {
+          ...canonicalRequest,
+          agent_id: body.submitted_by,
+        }
+      );
+    } catch (err) {
+      if (err instanceof TypeError) {
+        return errorResponse(err.message, "INVALID_DELIVERY_CLASSIFICATION", 400);
       }
-    );
+      throw err;
+    }
   }
 
   return Response.json({ ok: true, data: result });
