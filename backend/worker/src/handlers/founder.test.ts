@@ -451,7 +451,7 @@ describe("founder artifact handler", () => {
         method: "POST",
         body: JSON.stringify({
           artifact_type: "ProblemBrief",
-          metadata: { run_id: "run-010", delivery: { attempt: 2, replacement_reason: "QUALITY_ISSUE" } },
+          metadata: { run_id: "run-010", delivery: { attempt: 2 } },
           content: { problem: "Repair attempt" },
           submitted_by: "founder-console",
         }),
@@ -473,7 +473,7 @@ describe("founder artifact handler", () => {
     expect(deliveryIntegrityEvents).toHaveLength(0);
   });
 
-  it("rejects delivery metadata when attempt > 1 is missing replacement_reason", async () => {
+  it("accepts delivery metadata when attempt > 1 has no caller-supplied replacement_reason (orchestration classifies)", async () => {
     const { env, founderArtifacts, artifacts, decisionLog, deliveryIntegrityEvents } = createEnv();
 
     const response = await handleSaveArtifact(
@@ -485,7 +485,39 @@ describe("founder artifact handler", () => {
             run_id: "run-012",
             delivery: { attempt: 2, supersedes_artifact_id: "prev-artifact" },
           },
-          content: { problem: "Repair attempt missing reason" },
+          content: { problem: "Repair attempt — reason is orchestration-classified" },
+          submitted_by: "founder-console",
+        }),
+        headers: { "content-type": "application/json" },
+      }),
+      "project-123",
+      env
+    );
+
+    expect(response.status).toBe(200);
+    expect(deliveryIntegrityEvents).toHaveLength(1);
+    // replacement_reason must be null in delivery_integrity_events — it is owned by artifact_lineage
+    expect(deliveryIntegrityEvents[0]).toMatchObject({
+      classified_by: "orchestration",
+      replacement_reason: null,
+      attempt: 2,
+      supersedes_artifact_id: "prev-artifact",
+    });
+  });
+
+  it("rejects delivery metadata when caller attempts to supply replacement_reason", async () => {
+    const { env, founderArtifacts, artifacts, decisionLog, deliveryIntegrityEvents } = createEnv();
+
+    const response = await handleSaveArtifact(
+      new Request("https://example.com/founder/project/project-123/artifact", {
+        method: "POST",
+        body: JSON.stringify({
+          artifact_type: "ProblemBrief",
+          metadata: {
+            run_id: "run-013",
+            delivery: { replacement_reason: "QUALITY_ISSUE" },
+          },
+          content: { problem: "Worker attempting to classify its own replacement reason" },
           submitted_by: "founder-console",
         }),
         headers: { "content-type": "application/json" },
@@ -498,6 +530,7 @@ describe("founder artifact handler", () => {
     await expect(response.json()).resolves.toMatchObject({
       ok: false,
       code: "INVALID_DELIVERY_CLASSIFICATION",
+      error: "replacement_reason is classified by orchestration and must not be provided by callers",
     });
     expect(founderArtifacts).toHaveLength(0);
     expect(artifacts).toHaveLength(0);
@@ -547,7 +580,6 @@ describe("founder artifact handler", () => {
             delivery: {
               attempt: 1,
               supersedes_artifact_id: "prev-artifact",
-              replacement_reason: "QUALITY_ISSUE",
             },
           },
           content: { problem: "Supersede with attempt 1" },
@@ -564,6 +596,8 @@ describe("founder artifact handler", () => {
     expect(deliveryIntegrityEvents[0]).toMatchObject({
       supersedes_artifact_id: "prev-artifact",
       attempt: 1,
+      // replacement_reason must NOT come from caller — always null in delivery_integrity_events
+      replacement_reason: null,
     });
   });
 

@@ -58,3 +58,31 @@ CREATE INDEX IF NOT EXISTS idx_handoff_events_status
 
 CREATE TABLE IF NOT EXISTS stage_entries (
   stage_entry_id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL REFERENCES sessions(session_id) ON DELETE RESTRICT,
+  artifact_id TEXT REFERENCES artifacts(id) ON DELETE RESTRICT,
+  pipeline_state TEXT NOT NULL,
+  entry_count INTEGER NOT NULL CHECK (entry_count >= 1),
+  classified_by TEXT NOT NULL DEFAULT 'orchestration',
+  classified_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (classified_by = 'orchestration')
+);
+
+CREATE INDEX IF NOT EXISTS idx_stage_entries_session_state
+  ON stage_entries (session_id, pipeline_state);
+
+CREATE INDEX IF NOT EXISTS idx_stage_entries_artifact
+  ON stage_entries (artifact_id);
+
+CREATE TABLE IF NOT EXISTS stage_loop_signals (
+  loop_signal_id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL REFERENCES sessions(session_id) ON DELETE RESTRICT,
+  pipeline_state TEXT NOT NULL,
+  entry_count INTEGER NOT NULL CHECK (entry_count >= 2),
+  loop_type TEXT NOT NULL,
+  classified_by TEXT NOT NULL DEFAULT 'orchestration',
+  classified_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (classified_by = 'orchestration')
+);
+
+CREATE INDEX IF NOT EXISTS idx_stage_loop_signals_session_state
+  ON stage_loop_signals (session_id, pipeline_state);
