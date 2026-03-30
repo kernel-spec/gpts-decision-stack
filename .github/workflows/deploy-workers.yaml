@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "backend/worker/**"
+      - "migrations/**"
       - ".github/workflows/deploy-workers.yaml"
   workflow_dispatch:
     inputs:
