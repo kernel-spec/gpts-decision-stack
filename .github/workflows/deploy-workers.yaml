@@ -1,4 +1,5 @@
 name: Deploy Cloudflare Worker
+
 on:
   push:
     branches:
@@ -16,6 +17,7 @@ on:
         options:
           - dev
           - prod
+
 jobs:
   validate:
     name: Validate & Build
@@ -25,6 +27,93 @@ jobs:
     defaults:
       run:
         working-directory: backend/worker
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: backend/worker/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Preflight Cloudflare auth (validate)
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "::error::Missing secret CLOUDFLARE_API_TOKEN."
+            exit 1
+          fi
+
+          if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "::error::Missing secret CLOUDFLARE_ACCOUNT_ID."
+            exit 1
+          fi
+
+          if ! npx wrangler whoami; then
+            echo "::error::Cloudflare auth preflight failed. Verify CLOUDFLARE_API_TOKEN permissions and CLOUDFLARE_ACCOUNT_ID."
+            exit 1
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Validate D1 migration scope
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          D1_DIR="backend/worker/migrations"
+
+          if [ ! -d "$D1_DIR" ]; then
+            echo "::error::D1 migration directory not found: $D1_DIR"
+            exit 1
+          fi
+
+          if find "$D1_DIR" -maxdepth 1 -type f -name '*_pg.sql' | grep -q .; then
+            echo "::error::Postgres-only migration file found in D1 scope:"
+            find "$D1_DIR" -maxdepth 1 -type f -name '*_pg.sql' -print
+            echo "::error::Move Postgres migrations to backend/worker/migrations/postgres/"
+            exit 1
+          fi
+
+          PG_MARKERS_REGEX='TIMESTAMPTZ|DEFAULT[[:space:]]+NOW\(|::|SERIAL|CREATE[[:space:]]+INDEX.*USING|ALTER[[:space:]]+TABLE.*TYPE|USING[[:space:]]+gin|USING[[:space:]]+btree|gen_random_uuid|jsonb|RETURNING'
+
+          offending_files="$(find "$D1_DIR" -maxdepth 1 -type f -name '*.sql' -print0 | xargs -0 -r grep -nE "$PG_MARKERS_REGEX" || true)"
+
+          if [ -n "$offending_files" ]; then
+            echo "::error::Postgres dialect markers detected in D1 migration scope:"
+            echo "$offending_files"
+            echo "::error::Only D1/SQLite-compatible SQL is allowed in backend/worker/migrations/"
+            echo "::error::Move Postgres-specific migrations to backend/worker/migrations/postgres/"
+            exit 1
+          fi
+
+      - name: Type-check
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+        continue-on-error: true
+
+  deploy-dev:
+    name: Deploy to Dev
+    needs: validate
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.environment == 'dev')
+    runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: backend/worker
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -41,14 +130,18 @@ jobs:
 
       - name: Preflight Cloudflare auth (dev)
         run: |
+          set -euo pipefail
+
           if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
             echo "::error::Missing secret CLOUDFLARE_API_TOKEN for deploy-dev."
             exit 1
           fi
+
           if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
             echo "::error::Missing secret CLOUDFLARE_ACCOUNT_ID for deploy-dev."
             exit 1
           fi
+
           if ! npx wrangler whoami; then
             echo "::error::Cloudflare auth preflight failed in deploy-dev. Verify CLOUDFLARE_API_TOKEN permissions and CLOUDFLARE_ACCOUNT_ID."
             exit 1
@@ -57,24 +150,65 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Type-check
-        run: npm run build
+      - name: Guard D1 migration scope (dev)
+        shell: bash
+        run: |
+          set -euo pipefail
 
-      - name: Run tests
-        run: npm test
-        continue-on-error: true   # tests are optional until test suite is add
-  
-  deploy-dev:
-    name: Deploy to Dev
+          D1_DIR="backend/worker/migrations"
+
+          if [ ! -d "$D1_DIR" ]; then
+            echo "::error::D1 migration directory not found: $D1_DIR"
+            exit 1
+          fi
+
+          if find "$D1_DIR" -maxdepth 1 -type f -name '*_pg.sql' | grep -q .; then
+            echo "::error::Postgres-only migration file found in D1 scope:"
+            find "$D1_DIR" -maxdepth 1 -type f -name '*_pg.sql' -print
+            echo "::error::Move Postgres migrations to backend/worker/migrations/postgres/"
+            exit 1
+          fi
+
+          PG_MARKERS_REGEX='TIMESTAMPTZ|DEFAULT[[:space:]]+NOW\(|::|SERIAL|CREATE[[:space:]]+INDEX.*USING|ALTER[[:space:]]+TABLE.*TYPE|USING[[:space:]]+gin|USING[[:space:]]+btree|gen_random_uuid|jsonb|RETURNING'
+
+          offending_files="$(find "$D1_DIR" -maxdepth 1 -type f -name '*.sql' -print0 | xargs -0 -r grep -nE "$PG_MARKERS_REGEX" || true)"
+
+          if [ -n "$offending_files" ]; then
+            echo "::error::Postgres dialect markers detected in D1 migration scope:"
+            echo "$offending_files"
+            echo "::error::Only D1/SQLite-compatible SQL is allowed in backend/worker/migrations/"
+            echo "::error::Move Postgres-specific migrations to backend/worker/migrations/postgres/"
+            exit 1
+          fi
+
+      - name: Apply D1 migrations (dev)
+        run: |
+          set -euo pipefail
+          npx wrangler d1 migrations apply gpts-decision-stack-db-dev --env dev --remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy to Dev
+        run: |
+          set -euo pipefail
+          npx wrangler deploy --env dev
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  deploy-prod:
+    name: Deploy to Production
     needs: validate
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.environment == 'dev')
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'prod'
     runs-on: ubuntu-latest
-    environment: dev
+    environment: prod
     permissions:
       contents: read
     defaults:
       run:
         working-directory: backend/worker
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -91,97 +225,69 @@ jobs:
 
       - name: Preflight Cloudflare auth (prod)
         run: |
+          set -euo pipefail
+
           if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
-            echo "::error::Missing secret CLOUDFLARE_API_TOKEN for         deploy-prod."
+            echo "::error::Missing secret CLOUDFLARE_API_TOKEN for deploy-prod."
             exit 1
           fi
+
           if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
             echo "::error::Missing secret CLOUDFLARE_ACCOUNT_ID for deploy-prod."
             exit 1
           fi
+
           if ! npx wrangler whoami; then
             echo "::error::Cloudflare auth preflight failed in deploy-prod. Verify CLOUDFLARE_API_TOKEN permissions and CLOUDFLARE_ACCOUNT_ID."
             exit 1
           fi
-          
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          
-          - name: Guard D1 migration scope (dev)
-          run: |
-           set -euo pipefail
-            D1_DIR="backend/worker/migrations"
+
+      - name: Guard D1 migration scope (prod)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          D1_DIR="backend/worker/migrations"
+
+          if [ ! -d "$D1_DIR" ]; then
+            echo "::error::D1 migration directory not found: $D1_DIR"
+            exit 1
+          fi
+
           if find "$D1_DIR" -maxdepth 1 -type f -name '*_pg.sql' | grep -q .; then
-        echo "ERROR: Postgres migration found in D1 scope"
+            echo "::error::Postgres-only migration file found in D1 scope:"
+            find "$D1_DIR" -maxdepth 1 -type f -name '*_pg.sql' -print
+            echo "::error::Move Postgres migrations to backend/worker/migrations/postgres/"
+            exit 1
+          fi
 
-     exit -
-     if grep -R -nE 'TIMESTAMPTZ|DEFAULT NOW\(|::|SERIAL|jsonb|RETURNING' "$D1_DIR"; then
-  
-  echo "ERROR: Postgres syntax detected in D1 migration scope"
-      exit 1
-    fi
-      - name: Apply D1 migrations (dev)
-        run: npx wrangler d1 migrations apply gpts-decision-stack-db-dev --env dev --remote
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-    
-      - name: Deploy to Dev
-      
-        run: npx wrangler deploy --env dev
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PG_MARKERS_REGEX='TIMESTAMPTZ|DEFAULT[[:space:]]+NOW\(|::|SERIAL|CREATE[[:space:]]+INDEX.*USING|ALTER[[:space:]]+TABLE.*TYPE|USING[[:space:]]+gin|USING[[:space:]]+btree|gen_random_uuid|jsonb|RETURNING'
 
-  deploy-prod:
-    name: Deploy to Production
-    needs: validate
-    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'prod'
-    runs-on: ubuntu-latest
-    environment: prod
-    permissions:
-      contents: read
-    defaults:
-      run:
-        working-directory: backend/worker
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+          offending_files="$(find "$D1_DIR" -maxdepth 1 -type f -name '*.sql' -print0 | xargs -0 -r grep -nE "$PG_MARKERS_REGEX" || true)"
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: "npm"
-          cache-dependency-path: backend/worker/package-lock.json
+          if [ -n "$offending_files" ]; then
+            echo "::error::Postgres dialect markers detected in D1 migration scope:"
+            echo "$offending_files"
+            echo "::error::Only D1/SQLite-compatible SQL is allowed in backend/worker/migrations/"
+            echo "::error::Move Postgres-specific migrations to backend/worker/migrations/postgres/"
+            exit 1
+          fi
 
-      - name: Install dependencies
-        run: npm ci 
-     - name: Guard D1 migration scope (prod)
-  run: |
-    set -euo pipefail
-
-    D1_DIR="backend/worker/migrations"
-
-    if find "$D1_DIR" -maxdepth 1 -type f -name '*_pg.sql' | grep -q .; then
-      echo "ERROR: Postgres migration found in D1 scope"
-      exit 1
-    fi
-
-    if grep -R -nE 'TIMESTAMPTZ|DEFAULT NOW\(|::|SERIAL|jsonb|RETURNING' "$D1_DIR"; then
-      echo "ERROR: Postgres syntax detected in D1 migration scope"
-      exit 1
-    fi
-    
       - name: Apply D1 migrations (prod)
-        run: npx wrangler d1 migrations apply gpts-decision-stack-db --env prod --remote
+        run: |
+          set -euo pipefail
+          npx wrangler d1 migrations apply gpts-decision-stack-db --env prod --remote
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy to Production
-        run: npx wrangler deploy --env prod
+        run: |
+          set -euo pipefail
+          npx wrangler deploy --env prod
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
