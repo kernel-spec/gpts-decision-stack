@@ -1,5 +1,4 @@
 name: Deploy Cloudflare Worker
-
 on:
   push:
     branches:
@@ -17,7 +16,6 @@ on:
         options:
           - dev
           - prod
-
 jobs:
   validate:
     name: Validate & Build
@@ -64,8 +62,8 @@ jobs:
 
       - name: Run tests
         run: npm test
-        continue-on-error: true   # tests are optional until test suite is added
-
+        continue-on-error: true   # tests are optional until test suite is add
+  
   deploy-dev:
     name: Deploy to Dev
     needs: validate
@@ -115,20 +113,21 @@ jobs:
             D1_DIR="backend/worker/migrations"
           if find "$D1_DIR" -maxdepth 1 -type f -name '*_pg.sql' | grep -q .; then
         echo "ERROR: Postgres migration found in D1 scope"
+
+     exit -
+     if grep -R -nE 'TIMESTAMPTZ|DEFAULT NOW\(|::|SERIAL|jsonb|RETURNING' "$D1_DIR"; then
+  
+  echo "ERROR: Postgres syntax detected in D1 migration scope"
       exit 1
     fi
-    if grep -R -nE 'TIMESTAMPTZ|DEFAULT NOW\(|::|SERIAL|jsonb|RETURNING' "$D1_DIR"; then
-      echo "ERROR: Postgres syntax detected in D1 migration scope"
-      exit 1
-    fi
-    
       - name: Apply D1 migrations (dev)
         run: npx wrangler d1 migrations apply gpts-decision-stack-db-dev --env dev --remote
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
+    
       - name: Deploy to Dev
+      
         run: npx wrangler deploy --env dev
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
