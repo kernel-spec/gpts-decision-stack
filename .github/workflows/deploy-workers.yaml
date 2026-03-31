@@ -250,6 +250,33 @@ jobs:
         run: |
           set -euo pipefail
 
+          WORKER_DIR="backend/worker"
+          D1_MIGRATIONS_DIR="$WORKER_DIR/migrations"
+
+          if [ ! -d "$D1_MIGRATIONS_DIR" ]; then
+            echo "::error::D1 migration path not found: $D1_MIGRATIONS_DIR"
+            exit 1
+          fi
+
+          if find "$D1_MIGRATIONS_DIR" -maxdepth 1 -type f -name '*_pg.sql' | grep -q .; then
+            echo "::error::Postgres-only migration file(s) detected inside D1 migration scope:"
+            find "$D1_MIGRATIONS_DIR" -maxdepth 1 -type f -name '*_pg.sql' -print
+            echo "::error::Move these files to backend/worker/migrations/postgres/"
+            exit 1
+          fi
+
+          PG_MARKERS_REGEX='TIMESTAMPTZ|DEFAULT[[:space:]]+NOW\(|::|SERIAL|CREATE[[:space:]]+INDEX.*USING|ALTER[[:space:]]+TABLE.*TYPE|USING[[:space:]]+gin|USING[[:space:]]+btree|gen_random_uuid|jsonb|RETURNING'
+
+          offending_files="$(find \"$D1_MIGRATIONS_DIR\" -maxdepth 1 -type f -name '*.sql' -print0 | xargs -0 -r grep -nE \"$PG_MARKERS_REGEX\" || true)"
+
+          if [ -n "$offending_files" ]; then
+            echo "::error::Postgres dialect markers detected inside D1 migration scope:"
+            echo "$offending_files"
+            echo "::error::Only D1/SQLite-compatible SQL is allowed in $D1_MIGRATIONS_DIR"
+            echo "::error::Move Postgres-specific migrations to backend/worker/migrations/postgres/"
+            exit 1
+          fi
+
           D1_DIR="backend/worker/migrations"
 
           if [ ! -d "$D1_DIR" ]; then
@@ -276,6 +303,37 @@ jobs:
             exit 1
           fi
 
+      - name: Guard D1 migration scope (prod)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          WORKER_DIR="backend/worker"
+          D1_MIGRATIONS_DIR="$WORKER_DIR/migrations"
+
+          if [ ! -d "$D1_MIGRATIONS_DIR" ]; then
+            echo "::error::D1 migration path not found: $D1_MIGRATIONS_DIR"
+            exit 1
+          fi
+
+          if find "$D1_MIGRATIONS_DIR" -maxdepth 1 -type f -name '*_pg.sql' | grep -q .; then
+            echo "::error::Postgres-only migration file(s) detected inside D1 migration scope:"
+            find "$D1_MIGRATIONS_DIR" -maxdepth 1 -type f -name '*_pg.sql' -print
+            echo "::error::Move these files to backend/worker/migrations/postgres/"
+            exit 1
+          fi
+
+          PG_MARKERS_REGEX='TIMESTAMPTZ|DEFAULT[[:space:]]+NOW\(|::|SERIAL|CREATE[[:space:]]+INDEX.*USING|ALTER[[:space:]]+TABLE.*TYPE|USING[[:space:]]+gin|USING[[:space:]]+btree|gen_random_uuid|jsonb|RETURNING'
+
+          offending_files="$(find \"$D1_MIGRATIONS_DIR\" -maxdepth 1 -type f -name '*.sql' -print0 | xargs -0 -r grep -nE \"$PG_MARKERS_REGEX\" || true)"
+
+          if [ -n "$offending_files" ]; then
+            echo "::error::Postgres dialect markers detected inside D1 migration scope:"
+            echo "$offending_files"
+            echo "::error::Only D1/SQLite-compatible SQL is allowed in $D1_MIGRATIONS_DIR"
+            echo "::error::Move Postgres-specific migrations to backend/worker/migrations/postgres/"
+            exit 1
+          fi
       - name: Apply D1 migrations (prod)
         run: |
           set -euo pipefail
