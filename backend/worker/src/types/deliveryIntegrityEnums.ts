@@ -10,22 +10,16 @@ export interface DeliveryIntegrityEnums {
   loop_type: Record<string, string>;
 }
 
-const enumsCache: DeliveryIntegrityEnums = (() => {
-  const file = fs.readFileSync(ENUMS_PATH, 'utf8');
-  const doc = yaml.load(file) as any;
-  return {
-    loop_type: doc.loop_type || {},
-  };
-})();
+let enumsCache: DeliveryIntegrityEnums | null = null;
 
-export function getDeliveryIntegrityEnums(): DeliveryIntegrityEnums {
-    };
+  if (enumsCache) {
     return enumsCache;
-  } catch (err) {
-    const originalMessage = err instanceof Error ? err.message : String(err);
-    throw new Error(
-      `Failed to load delivery integrity enums from "${ENUMS_PATH}": ${originalMessage}`,
-    );
+  }
+  try {
+    const file = fs.readFileSync(ENUMS_PATH, 'utf8');
+    const doc = yaml.load(file) as any;
+    enumsCache = {
+  return enumsCache;
   }
 }
 
