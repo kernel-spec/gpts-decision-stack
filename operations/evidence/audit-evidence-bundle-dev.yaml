@@ -1,7 +1,9 @@
 artifact_type: audit_evidence_bundle
 environment: dev
-date: "2026-03-16"
+date: "2026-03-31"
 worker_url: https://gpts-decision-stack-dev.victorain92.workers.dev
+runtime_evidence_source: ACTIONS
+runtime_evidence_level: STRONG_PARTIAL
 
 replaces:
   - operations/evidence/runtime-smoke-dev.md
@@ -18,12 +20,12 @@ governance_status:
   deploy_ready: false
   blocking_reasons: []
   governance_note: >
-    Runtime evidence in dev is strong. No blocking gaps remain in the repo layer
-    (all fixtures, knowledge files, and backend binding are PASS per QA gate report).
-    Governed deployment readiness remains FAIL because acceptance tests have not yet
-    been evaluated against the live backend (PROV-002) and production Cloudflare
-    infrastructure is not yet provisioned (PROV-001). Runtime success in dev does
-    not override fail-closed governed deployment readiness.
+    Dev runtime evidence is strong. Runtime success does not override fail-closed
+    governance. Governed deployment readiness remains FAIL because acceptance tests
+    have not yet been evaluated against the live backend (PROV-002) and production
+    Cloudflare infrastructure is not yet provisioned (PROV-001). Runtime success in
+    dev does not override fail-closed governed deployment readiness.
+    deploy_ready_stack remains false.
 
 actions_import:
   status: PASS
@@ -38,82 +40,59 @@ actions_import:
     - submitArtifact request aligned to payload field
     - authenticated calls confirmed in dev
 
-runtime_smoke:
-  status: PASS
-  evidence_basis: explicit_live_runtime_calls
+runtime_evidence:
+  evidence_source: ACTIONS
+  evidence_level: STRONG_PARTIAL
+  generated_at: "2026-03-31T02:01:43.497Z"
   health:
     status: PASS
-    service: gpts-decision-stack-worker
     endpoint: /health
-  session_creation:
+  create_session:
     status: PASS
     requestor_type: founder-led
     initial_pipeline_state: intake
-    initial_decision_status: unresolved
-
-live_response_vs_openapi_openai:
-  status: PASS
-  tested_operations:
-    - getHealth
-    - createSession
-    - submitArtifact
-    - getSessionState
-  compatibility_note: >
-    Live dev runtime responses matched the Builder-safe OpenAI import contract
-    sufficiently for successful Operator GPT execution.
-
-pipeline_progression:
-  session_id: aba9b1e1-2c48-42df-b602-778cca18c6cf
-  runtime_evidence_source: ACTIONS
-  runtime_evidence_level: STRONG_PARTIAL
-
-  transitions:
-    - from: intake
-      via_artifact: ProblemBrief
-      via_decision: none
-      to: problem_framing
-      status: PASS
-
-    - from: problem_framing
-      via_artifact: FramingAssessment
-      via_decision: StateDecisionPacket(proceed)
-      to: primitive_selection
-      status: PASS
-
-    - from: primitive_selection
-      via_artifact: OfferDecision
-      via_decision: StateDecisionPacket(proceed)
-      to: architecture_validation
-      status: PASS
-
-    - from: architecture_validation
-      via_artifact: ArchitectureSpec
-      via_decision: StateDecisionPacket(proceed)
-      to: risk_governance_validation
-      status: PASS
-
-    - from: risk_governance_validation
-      via_artifact: RiskDecision
-      via_decision: StateDecisionPacket(proceed)
-      to: commercial_packaging
-      status: PASS
-
-    - from: commercial_packaging
-      via_artifact: CommercialSpec
-      via_decision: StateDecisionPacket(proceed)
-      to: claims_validation
-      status: PASS
-
-    - from: claims_validation
-      via_artifact: ClaimsDecision
-      via_decision: StateDecisionPacket(proceed)
-      to: release_decision
-      status: PASS
+  pipeline_progression:
+    status: PASS
+    transitions:
+      - from: intake
+        via_artifact: ProblemBrief
+        to: problem_framing
+        status: PASS
+      - from: problem_framing
+        via_artifact: FramingAssessment
+        via_decision: StateDecisionPacket(proceed)
+        to: primitive_selection
+        status: PASS
+      - from: primitive_selection
+        via_artifact: OfferDecision
+        via_decision: StateDecisionPacket(proceed)
+        to: architecture_validation
+        status: PASS
+      - from: architecture_validation
+        via_artifact: ArchitectureSpec
+        via_decision: StateDecisionPacket(proceed)
+        to: risk_governance_validation
+        status: PASS
+      - from: risk_governance_validation
+        via_artifact: RiskDecision
+        via_decision: StateDecisionPacket(proceed)
+        to: commercial_packaging
+        status: PASS
+      - from: commercial_packaging
+        via_artifact: CommercialSpec
+        via_decision: StateDecisionPacket(proceed)
+        to: claims_validation
+        status: PASS
+      - from: claims_validation
+        via_artifact: ClaimsDecision
+        via_decision: StateDecisionPacket(proceed)
+        to: release_decision
+        status: PASS
 
 final_runtime_state:
-  session_id: aba9b1e1-2c48-42df-b602-778cca18c6cf
-  pipeline_state: release_decision
-  decision_status: proceed
+  session_id: "fe1143d6-bac1-43ce-bac0-624a81d8dc2e"
+  pipeline_state: "release_decision"
+  decision_status: "proceed"
   veto_active: false
 
 audit_interpretation:
@@ -124,11 +103,12 @@ audit_interpretation:
   end_to_end_pipeline_to_release_gate_in_dev: true
   deploy_ready_stack: false
   explanation: >
-    Dev runtime evidence proves working execution through the release gate,
-    but governed deployment readiness remains FAIL because acceptance tests
+    Dev runtime evidence proves working execution through the release gate.
+    Runtime success does not override fail-closed governance.
+    Governed deployment readiness remains FAIL because acceptance tests
     have not yet been evaluated against the live backend (PROV-002) and
     production Cloudflare infrastructure is not yet provisioned (PROV-001).
-    All repo-layer blocking gaps are resolved.
+    deploy_ready_stack remains false.
 
 limitations:
   - dev evidence is not production evidence
