@@ -1,34 +1,45 @@
-// DeliveryIntegrityEnums loader
-// This module loads canonical enums from the YAML source of truth.
-import fs from 'fs';
-import yaml from 'js-yaml';
-import path from 'path';
+export const replacementReasons = {
+  QUALITY_ISSUE: "QUALITY_ISSUE",
+  MISSING_REQUIRED_SECTION: "MISSING_REQUIRED_SECTION",
+  INVALID_SCHEMA: "INVALID_SCHEMA",
+  HANDOFF_REJECTED: "HANDOFF_REJECTED",
+  REVIEW_BLOCK: "REVIEW_BLOCK",
+  SCOPE_CHANGE: "SCOPE_CHANGE",
+  STAGE_MISMATCH: "STAGE_MISMATCH",
+  UNKNOWN: "UNKNOWN",
+} as const;
 
-const ENUMS_PATH = path.resolve(__dirname, '../../../knowledge/core/07_DeliveryIntegrityEnums.yaml');
+export type ReplacementReason =
+  (typeof replacementReasons)[keyof typeof replacementReasons];
 
-export interface DeliveryIntegrityEnums {
-  loop_type: Record<string, string>;
-}
+export const handoffFailureReasons = {
+  INVALID_INPUT: "INVALID_INPUT",
+  MISSING_FIELDS: "MISSING_FIELDS",
+  AMBIGUOUS_OWNER: "AMBIGUOUS_OWNER",
+  SCHEMA_MISMATCH: "SCHEMA_MISMATCH",
+  REVIEW_REJECTED: "REVIEW_REJECTED",
+  REENTRY_NOT_READY: "REENTRY_NOT_READY",
+  UNKNOWN: "UNKNOWN",
+} as const;
 
-let enumsCache: DeliveryIntegrityEnums | null = null;
+export type HandoffFailureReason =
+  (typeof handoffFailureReasons)[keyof typeof handoffFailureReasons];
 
-  if (enumsCache) {
-    return enumsCache;
-  }
-  try {
-    const file = fs.readFileSync(ENUMS_PATH, 'utf8');
-    const doc = yaml.load(file) as any;
-    enumsCache = {
-  return enumsCache;
-  }
-}
+export const loopTypes = {
+  SAME_STAGE_REPEAT: "SAME_STAGE_REPEAT",
+  TWO_NODE_LOOP: "TWO_NODE_LOOP",
+} as const;
 
-export function getLoopTypeKey(key: string): string {
-  const enums = getDeliveryIntegrityEnums();
-  return Object.keys(enums.loop_type).includes(key) ? key : '';
-}
+export type LoopType =
+  (typeof loopTypes)[keyof typeof loopTypes];
 
-export function getLoopTypeValue(key: string): string {
-  const enums = getDeliveryIntegrityEnums();
-  return enums.loop_type[key] || '';
-}
+export const nextActionCodes = {
+  REPAIR_SAME_STAGE: "REPAIR_SAME_STAGE",
+  RETURN_TO_PREVIOUS_STAGE: "RETURN_TO_PREVIOUS_STAGE",
+  REVIEW_REQUIRED: "REVIEW_REQUIRED",
+  MANUAL_OVERRIDE_REQUIRED: "MANUAL_OVERRIDE_REQUIRED",
+  READY_FOR_NEXT_STAGE: "READY_FOR_NEXT_STAGE",
+} as const;
+
+export type NextActionCode =
+  (typeof nextActionCodes)[keyof typeof nextActionCodes];
