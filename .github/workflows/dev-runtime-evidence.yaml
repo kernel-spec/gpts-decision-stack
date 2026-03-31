@@ -46,6 +46,7 @@ jobs:
 
       - name: Persist canonical evidence bundle via PR
         uses: peter-evans/create-pull-request@v7
+        continue-on-error: true
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           add-paths: operations/evidence/audit-evidence-bundle-dev.yaml
