@@ -9,6 +9,5 @@ export enum DeliveryEventType {
 
 // Thin event emission abstraction
 export function emitEvent(eventType: DeliveryEventType, payload: object): void {
-  // Replace with actual event infra if present, or log for now
-  console.log(`[EVENT] ${eventType}`, payload);
+  console.log(JSON.stringify({ event: eventType, data: payload }));
 }

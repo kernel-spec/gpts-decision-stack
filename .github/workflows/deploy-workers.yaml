@@ -1,12 +1,6 @@
 name: Deploy Cloudflare Worker
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "backend/worker/**"
-      - ".github/workflows/deploy-workers.yaml"
   workflow_dispatch:
     inputs:
       environment:
@@ -100,12 +94,11 @@ jobs:
 
       - name: Run tests
         run: npm test
-        continue-on-error: true
 
   deploy-dev:
     name: Deploy to Dev
     needs: validate
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.environment == 'dev')
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'dev'
     runs-on: ubuntu-latest
     environment: dev
     permissions:
