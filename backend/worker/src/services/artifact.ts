@@ -240,25 +240,6 @@ export async function submitArtifactWithLifecycle(
     override_flag: false,
   });
 
-  // Record orchestration-classified handoff outcome — unconditionally, using only
-  // orchestration-owned signals. Caller input does NOT control whether a handoff row is written.
-  {
-    const pv = req.parser_verdict;
-    const rv = req.review_verdict;
-    const tc = req.transition_context;
-    await recordHandoffOutcome(db, session, {
-      schema_valid: pv?.schema_valid ?? true,
-      fields_present: pv?.required_sections_present ?? true,
-      owner_resolved: true,
-      review_verdict_ok: rv ? rv.status !== "REJECTED" && rv.blocking !== true : true,
-      reentry_ready: pv?.reentry_ready ?? true,
-      parser_verdict_ok: pv
-        ? pv.schema_valid && pv.required_sections_present && pv.stage_matches_expected
-        : true,
-      legal_transition_ok: !(tc?.handoff_rejected ?? false),
-    });
-  }
-
   await decisionlogService.appendDecisionLog(db, session.session_id, {
     agent_id: req.agent_id ?? "unknown",
     action: "artifact.submitted",
@@ -288,6 +269,24 @@ export async function submitArtifactWithLifecycle(
       { ...session, pipeline_state: transition.pipeline_state },
       { entered_by: req.agent_id ?? "unknown" }
     );
+    // Record handoff outcome at the real handoff boundary: when a pipeline transition is
+    // evaluated. Only transition-triggering artifacts cross a stage boundary; intermediate
+    // work artifacts do not. HandoffOutcomeInput is derived from orchestration-owned signals
+    // only — caller input does not control whether this row is written.
+    const pv = req.parser_verdict;
+    const rv = req.review_verdict;
+    const tc = req.transition_context;
+    await recordHandoffOutcome(db, session, {
+      schema_valid: pv?.schema_valid ?? true,
+      fields_present: pv?.required_sections_present ?? true,
+      owner_resolved: true,
+      review_verdict_ok: rv ? rv.status !== "REJECTED" && rv.blocking !== true : true,
+      reentry_ready: pv?.reentry_ready ?? true,
+      parser_verdict_ok: pv
+        ? pv.schema_valid && pv.required_sections_present && pv.stage_matches_expected
+        : true,
+      legal_transition_ok: !(tc?.handoff_rejected ?? false),
+    });
   }
 
   return artifact;

@@ -1,11 +1,14 @@
 /**
  * Minimum wiring tests for submitArtifactWithLifecycle.
  *
- * These tests prove that the delivery-truth paths are live and orchestration-owned:
- *   - recordHandoffOutcome writes to handoff_events unconditionally on every
- *     artifact submission, using orchestration-owned signals only.
- *     Caller cannot suppress the handoff row by omitting delivery or setting
- *     handoff_status=pending.
+ * These tests prove that the delivery-truth paths match the intended semantic contract:
+ *   - handoff_events is an ACTUAL HANDOFF DECISION LOG, not an evaluation log.
+ *   - recordHandoffOutcome writes to handoff_events only when a real pipeline
+ *     transition is evaluated (the stage-boundary crossing).
+ *   - Intermediate work artifacts that do not trigger a transition produce no
+ *     handoff_events row.
+ *   - Caller cannot suppress a handoff row on a transition-triggering artifact
+ *     by omitting the delivery field — the trigger is orchestration-owned.
  *   - recordStageEntry writes to stage_entries when a pipeline transition fires.
  */
 
@@ -156,13 +159,14 @@ function createMockBucket(): Env["ARTIFACTS_BUCKET"] {
 // ---------- recordHandoffOutcome wiring tests ----------
 
 describe("submitArtifactWithLifecycle — recordHandoffOutcome wiring", () => {
-  it("writes a COMPLETED handoff_events row when all parser signals pass", async () => {
-    const session = makeSession();
+  it("writes a COMPLETED handoff_events row when a transition fires and all parser signals pass", async () => {
+    // ProblemBrief in intake triggers intake → problem_framing; handoff quality signals all pass
+    const session = makeSession({ pipeline_state: "intake" });
     const { db, handoffEvents } = createArtifactMockDb(session);
 
     const req: SubmitArtifactRequest & { agent_id?: string } = {
-      artifact_type: "FramingAssessment",
-      payload: { summary: "test" },
+      artifact_type: "ProblemBrief",
+      payload: { title: "my problem" },
       parser_verdict: {
         schema_valid: true,
         required_sections_present: true,
@@ -177,20 +181,21 @@ describe("submitArtifactWithLifecycle — recordHandoffOutcome wiring", () => {
     expect(handoffEvents).toHaveLength(1);
     expect(handoffEvents[0]).toMatchObject({
       session_id: "sess-art-001",
-      pipeline_state: "problem_framing",
+      pipeline_state: "intake",
       outcome: "COMPLETED",
       failure_reason: null,
       classified_by: "orchestration",
     });
   });
 
-  it("writes a FAILED handoff_events row when orchestration detects schema_valid=false", async () => {
-    const session = makeSession();
+  it("writes a FAILED handoff_events row when a transition fires but parser signals indicate failure", async () => {
+    // ProblemBrief in intake triggers transition; schema_valid=false causes SCHEMA_MISMATCH
+    const session = makeSession({ pipeline_state: "intake" });
     const { db, handoffEvents } = createArtifactMockDb(session);
 
     const req: SubmitArtifactRequest & { agent_id?: string } = {
-      artifact_type: "FramingAssessment",
-      payload: { summary: "test" },
+      artifact_type: "ProblemBrief",
+      payload: { title: "my problem" },
       parser_verdict: {
         schema_valid: false, // triggers SCHEMA_MISMATCH in classifyHandoffOutcome
         required_sections_present: true,
@@ -211,35 +216,16 @@ describe("submitArtifactWithLifecycle — recordHandoffOutcome wiring", () => {
     });
   });
 
-  it("writes a handoff_events row even when delivery is absent (caller cannot suppress)", async () => {
-    const session = makeSession();
+  it("writes a handoff_events row for a transition-triggering artifact even when delivery is absent", async () => {
+    // Proves orchestration owns the recording: omitting delivery does not suppress the row.
+    // The transition predicate (getArtifactTransition) is orchestration-owned, not caller-owned.
+    const session = makeSession({ pipeline_state: "intake" });
     const { db, handoffEvents } = createArtifactMockDb(session);
 
-    // No delivery field at all — caller has made no claim about handoff
     const req: SubmitArtifactRequest & { agent_id?: string } = {
-      artifact_type: "FramingAssessment",
-      payload: { summary: "test" },
-    };
-
-    await submitArtifactWithLifecycle(db, createMockBucket(), session, req);
-
-    // Orchestration must record a row regardless of caller input
-    expect(handoffEvents).toHaveLength(1);
-    expect(handoffEvents[0]).toMatchObject({
-      session_id: "sess-art-001",
-      classified_by: "orchestration",
-    });
-  });
-
-  it("writes a handoff_events row even when delivery.handoff_status=pending (caller cannot suppress by setting pending)", async () => {
-    const session = makeSession();
-    const { db, handoffEvents } = createArtifactMockDb(session);
-
-    // Caller explicitly says "pending" — must not prevent orchestration from recording
-    const req: SubmitArtifactRequest & { agent_id?: string } = {
-      artifact_type: "FramingAssessment",
-      payload: { summary: "test" },
-      delivery: { handoff_status: "pending" },
+      artifact_type: "ProblemBrief",
+      payload: { title: "my problem" },
+      // No delivery field — caller makes no handoff claim
     };
 
     await submitArtifactWithLifecycle(db, createMockBucket(), session, req);
@@ -247,18 +233,35 @@ describe("submitArtifactWithLifecycle — recordHandoffOutcome wiring", () => {
     expect(handoffEvents).toHaveLength(1);
     expect(handoffEvents[0]).toMatchObject({
       session_id: "sess-art-001",
+      pipeline_state: "intake",
       classified_by: "orchestration",
     });
   });
 
-  it("classifies REVIEW_REJECTED when review_verdict.status=REJECTED regardless of delivery field", async () => {
-    const session = makeSession();
+  it("does NOT write a handoff_events row for a non-transition artifact (intermediate work artifact)", async () => {
+    // FramingAssessment in problem_framing does not cross a stage boundary.
+    // handoff_events is a decision log for actual handoff events, not an evaluation counter.
+    const session = makeSession({ pipeline_state: "problem_framing" });
     const { db, handoffEvents } = createArtifactMockDb(session);
 
     const req: SubmitArtifactRequest & { agent_id?: string } = {
       artifact_type: "FramingAssessment",
       payload: { summary: "test" },
-      // No delivery field — orchestration owns the classification
+    };
+
+    await submitArtifactWithLifecycle(db, createMockBucket(), session, req);
+
+    expect(handoffEvents).toHaveLength(0);
+  });
+
+  it("classifies REVIEW_REJECTED for a transition-triggering artifact with review_verdict.status=REJECTED", async () => {
+    // ProblemBrief in intake triggers a transition; review failure is classified from the verdict signal
+    const session = makeSession({ pipeline_state: "intake" });
+    const { db, handoffEvents } = createArtifactMockDb(session);
+
+    const req: SubmitArtifactRequest & { agent_id?: string } = {
+      artifact_type: "ProblemBrief",
+      payload: { title: "my problem" },
       review_verdict: { status: "REJECTED" },
     };
 
