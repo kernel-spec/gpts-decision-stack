@@ -73,7 +73,7 @@ Files under `migrations/postgres/` are **never** picked up by `wrangler d1 migra
 
 ### Dependency reproducibility
 
-`backend/worker/package-lock.json` is the **only** authoritative npm lockfile in this repository. The repo root carries no npm scope. CI exclusively uses `npm ci` from `backend/worker`; any lockfile drift in that directory is treated as a contract violation and will fail the `validate` job.
+`backend/worker/package-lock.json` is the **reproducibility contract** for this repository. It is the only authoritative npm lockfile; the repo root carries no npm scope. CI exclusively uses `npm ci` from `backend/worker`. Editing `package.json` without regenerating the lockfile, or committing a stale lockfile, is a contract violation — the `validate` job will fail hard on any lockfile drift.
 
 ### D1 / PostgreSQL migration boundary
 
@@ -122,10 +122,22 @@ Worker poběží na `http://localhost:8787`.
 
 ## Deployment
 
-Viz `.github/workflows/deploy-workers.yaml` pro automatický deployment přes GitHub Actions.
+### Deploy workflow path
+
+Two workflows are active. Both run on push to `main` when `backend/worker/**` changes; `deploy-workers.yaml` additionally accepts `workflow_dispatch` for manual prod deploys.
+
+| Workflow | Trigger | Jobs | Notes |
+|---|---|---|---|
+| `.github/workflows/deploy-worker.yml` | push to `main` | `validate → deploy-dev` | Critical path. Dev auto-deploys on every merge. |
+| `.github/workflows/deploy-workers.yaml` | push to `main` OR `workflow_dispatch` | `validate → deploy-dev → deploy-prod` | Prod deploys only via `workflow_dispatch` with `environment: prod`. |
+
+**Assumptions:**
+- PRs do **not** trigger any deploy job. Deploy runs only after merge to `main`.
+- Evidence PRs (documentation, checklist updates, pilot records, post-merge verification docs) are **not** deploy events. Their merge may trigger the workflows above if `backend/worker/**` is in scope, but if no worker files changed, no deploy runs.
+- A successful CI run on a PR is not evidence of deployment. Deployment truth is the `deploy-dev` or `deploy-prod` job completing in the workflow run after the merge commit lands on `main`.
 
 ```bash
-# Ruční deployment:
+# Manual prod deploy (requires workflow_dispatch on deploy-workers.yaml):
 npm run deploy:prod
 ```
 

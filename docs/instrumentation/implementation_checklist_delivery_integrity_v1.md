@@ -428,6 +428,12 @@ Reviewer must confirm:
 - parser influences but does not own final classification
 - fallback to `UNKNOWN` is narrow and explicit
 
+### Delivery truth ownership
+- orchestration is the sole owner of delivery classification (attempt, replacement_reason, handoff verdict, loop signal)
+- no delivery truth is derived from worker self-report, PR automation, or evidence document content
+- evidence PRs (post-merge verification docs, pilot records, checklist updates) are operational artifacts — they are not deploy events and do not constitute delivery truth
+- a merged PR that contains only docs/evidence changes does not imply a deploy ran; check the workflow run on the merge commit
+
 ### UI
 - no hidden business logic in frontend
 - UI renders orchestration truth, does not infer it
