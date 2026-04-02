@@ -13,6 +13,10 @@ on:
 permissions:
   contents: read
 
+env:
+  D1_DIR: backend/worker/migrations
+  LOCKFILE: backend/worker/package-lock.json
+
 jobs:
   preflight:
     name: Structural Preflight
@@ -44,8 +48,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          D1_DIR="backend/worker/migrations"
-
           if [ ! -d "$D1_DIR" ]; then
             echo "::error::D1 migration directory not found: $D1_DIR"
             exit 1
@@ -76,7 +78,6 @@ jobs:
       - name: Verify lockfile is present
         run: |
           set -euo pipefail
-          LOCKFILE="backend/worker/package-lock.json"
           if [ ! -f "$LOCKFILE" ]; then
             echo "::error::$LOCKFILE is missing — run 'npm install' inside backend/worker and commit the result"
             exit 1
