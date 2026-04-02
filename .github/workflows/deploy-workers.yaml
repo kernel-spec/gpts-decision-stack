@@ -95,6 +95,16 @@ jobs:
             exit 1
           fi
 
+          PG_DIR="migrations/postgres"
+          if [ -d "$PG_DIR" ]; then
+            if find "$PG_DIR" -maxdepth 1 -type f -name '*.sql' ! -name '*_pg.sql' | grep -q .; then
+              echo "::error::Migration file in $PG_DIR/ is missing the _pg.sql suffix:"
+              find "$PG_DIR" -maxdepth 1 -type f -name '*.sql' ! -name '*_pg.sql' -print
+              echo "::error::All files in $PG_DIR/ must end with _pg.sql"
+              exit 1
+            fi
+          fi
+
       - name: Type-check
         run: npm run build
 
@@ -178,6 +188,16 @@ jobs:
             echo "::error::Only D1/SQLite-compatible SQL is allowed in migrations/"
             echo "::error::Move Postgres-specific migrations to migrations/postgres/"
             exit 1
+          fi
+
+          PG_DIR="migrations/postgres"
+          if [ -d "$PG_DIR" ]; then
+            if find "$PG_DIR" -maxdepth 1 -type f -name '*.sql' ! -name '*_pg.sql' | grep -q .; then
+              echo "::error::Migration file in $PG_DIR/ is missing the _pg.sql suffix:"
+              find "$PG_DIR" -maxdepth 1 -type f -name '*.sql' ! -name '*_pg.sql' -print
+              echo "::error::All files in $PG_DIR/ must end with _pg.sql"
+              exit 1
+            fi
           fi
 
       - name: Apply D1 migrations (dev)
@@ -273,6 +293,16 @@ jobs:
             echo "::error::Only D1/SQLite-compatible SQL is allowed in migrations/"
             echo "::error::Move Postgres-specific migrations to migrations/postgres/"
             exit 1
+          fi
+
+          PG_DIR="migrations/postgres"
+          if [ -d "$PG_DIR" ]; then
+            if find "$PG_DIR" -maxdepth 1 -type f -name '*.sql' ! -name '*_pg.sql' | grep -q .; then
+              echo "::error::Migration file in $PG_DIR/ is missing the _pg.sql suffix:"
+              find "$PG_DIR" -maxdepth 1 -type f -name '*.sql' ! -name '*_pg.sql' -print
+              echo "::error::All files in $PG_DIR/ must end with _pg.sql"
+              exit 1
+            fi
           fi
 
       - name: Apply D1 migrations (prod)

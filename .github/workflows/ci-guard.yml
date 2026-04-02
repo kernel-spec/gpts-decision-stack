@@ -1,0 +1,84 @@
+name: CI Guard
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/**"
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    name: Structural Preflight
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate workflow YAML syntax
+        run: |
+          set -euo pipefail
+          fail=0
+          for f in .github/workflows/*.yml .github/workflows/*.yaml; do
+            [ -f "$f" ] || continue
+            if ! python3 -c "import yaml, sys; yaml.safe_load(open(sys.argv[1]))" "$f"; then
+              echo "::error file=$f::YAML syntax error in $f"
+              fail=1
+            fi
+          done
+          if [ "$fail" -eq 1 ]; then
+            echo "::error::One or more workflow files have YAML syntax errors"
+            exit 1
+          fi
+          echo "All workflow YAML files parse cleanly"
+
+      - name: Validate migration placement
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          D1_DIR="backend/worker/migrations"
+
+          if [ ! -d "$D1_DIR" ]; then
+            echo "::error::D1 migration directory not found: $D1_DIR"
+            exit 1
+          fi
+
+          # D1 root must not contain *_pg.sql files
+          if find "$D1_DIR" -maxdepth 1 -type f -name '*_pg.sql' | grep -q .; then
+            echo "::error::Postgres-only migration file found in D1 scope ($D1_DIR):"
+            find "$D1_DIR" -maxdepth 1 -type f -name '*_pg.sql' -print
+            echo "::error::Move Postgres migrations to $D1_DIR/postgres/"
+            exit 1
+          fi
+
+          # postgres/ subdirectory must only contain *_pg.sql files — no suffix means
+          # wrangler would silently skip it, masking a misplaced D1 migration
+          PG_DIR="$D1_DIR/postgres"
+          if [ -d "$PG_DIR" ]; then
+            if find "$PG_DIR" -maxdepth 1 -type f -name '*.sql' ! -name '*_pg.sql' | grep -q .; then
+              echo "::error::Migration file in $PG_DIR/ is missing the _pg.sql suffix:"
+              find "$PG_DIR" -maxdepth 1 -type f -name '*.sql' ! -name '*_pg.sql' -print
+              echo "::error::All files in $PG_DIR/ must end with _pg.sql"
+              exit 1
+            fi
+          fi
+
+          echo "Migration placement is clean"
+
+      - name: Verify lockfile is present
+        run: |
+          set -euo pipefail
+          LOCKFILE="backend/worker/package-lock.json"
+          if [ ! -f "$LOCKFILE" ]; then
+            echo "::error::$LOCKFILE is missing — run 'npm install' inside backend/worker and commit the result"
+            exit 1
+          fi
+          echo "Lockfile present: $LOCKFILE"
