@@ -55,6 +55,37 @@ jobs:
       - name: Type-check
         run: npm run build
 
+      - name: Validate D1 migration scope
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          D1_DIR="migrations"
+
+          if [ ! -d "$D1_DIR" ]; then
+            echo "::error::D1 migration directory not found: $D1_DIR"
+            exit 1
+          fi
+
+          if find "$D1_DIR" -maxdepth 1 -type f -name '*_pg.sql' | grep -q .; then
+            echo "::error::Postgres-only migration file found in D1 scope:"
+            find "$D1_DIR" -maxdepth 1 -type f -name '*_pg.sql' -print
+            echo "::error::Move Postgres migrations to migrations/postgres/"
+            exit 1
+          fi
+
+          PG_MARKERS_REGEX='TIMESTAMPTZ|DEFAULT[[:space:]]+NOW\(|::|SERIAL|CREATE[[:space:]]+INDEX.*USING|ALTER[[:space:]]+TABLE.*TYPE|USING[[:space:]]+gin|USING[[:space:]]+btree|gen_random_uuid|jsonb|RETURNING'
+
+          offending_files="$(find "$D1_DIR" -maxdepth 1 -type f -name '*.sql' -print0 | xargs -0 -r grep -nE "$PG_MARKERS_REGEX" || true)"
+
+          if [ -n "$offending_files" ]; then
+            echo "::error::Postgres dialect markers detected in D1 migration scope:"
+            echo "$offending_files"
+            echo "::error::Only D1/SQLite-compatible SQL is allowed in migrations/"
+            echo "::error::Move Postgres-specific migrations to migrations/postgres/"
+            exit 1
+          fi
+
       - name: Run tests
         run: npm test
 
@@ -80,6 +111,14 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Apply D1 migrations (dev)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx wrangler d1 migrations apply gpts-decision-stack-db-dev --env dev --remote
 
       - name: Deploy to Cloudflare (dev)
         env:
