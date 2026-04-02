@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
-import type { Env, Session } from "../types/index.js";
-import { recordArtifactAttempt, recordStageEntry } from "./delivery-integrity.js";
+import type { Env, Session, DeliveryIntegrityInput, HandoffFailureReason } from "../types/index.js";
+import { REPLACEMENT_REASONS } from "../types/index.js";
+import {
+  appendDeliveryIntegrityEvent,
+  recordArtifactAttempt,
+  recordStageEntry,
+  validateDeliveryInput,
+} from "./delivery-integrity.js";
 
 // ---------- Mock DB ----------
 
@@ -834,5 +840,325 @@ describe("recordStageEntry", () => {
     const r2 = await recordStageEntry(db, session, { entered_by: "orchestration" });
 
     expect(r1.entry.entry_id).not.toBe(r2.entry.entry_id);
+  });
+});
+
+// ---------- validateDeliveryInput ----------
+// Anchors for AC-DI-003 (reject superseding write without reason)
+// and AC-DI-006 (unknown reason threshold alert — validation boundary)
+
+describe("validateDeliveryInput", () => {
+  it("returns null for null input", () => {
+    expect(validateDeliveryInput(null)).toBeNull();
+  });
+
+  it("returns null for undefined input", () => {
+    expect(validateDeliveryInput(undefined)).toBeNull();
+  });
+
+  it("returns null for empty object input", () => {
+    expect(validateDeliveryInput({})).toBeNull();
+  });
+
+  // AC-DI-003: orchestration owns replacement_reason — callers must be rejected
+  it("rejects caller-supplied replacement_reason (AC-DI-003)", () => {
+    const result = validateDeliveryInput(
+      { replacement_reason: "QUALITY_ISSUE" } as unknown as DeliveryIntegrityInput
+    );
+    expect(result).toMatch(/replacement_reason.*orchestration/);
+  });
+
+  it("rejects non-null replacement_reason regardless of value (AC-DI-003)", () => {
+    const result = validateDeliveryInput(
+      { replacement_reason: "INVALID_SCHEMA" } as unknown as DeliveryIntegrityInput
+    );
+    expect(result).not.toBeNull();
+  });
+
+  it("rejects attempt < 1", () => {
+    const result = validateDeliveryInput({ attempt: 0 });
+    expect(result).toMatch(/attempt.*integer.*1/i);
+  });
+
+  it("rejects attempt > 1 without supersedes_artifact_id", () => {
+    const result = validateDeliveryInput({ attempt: 2 });
+    expect(result).toMatch(/supersedes_artifact_id.*required/i);
+  });
+
+  it("rejects handoff_status=failed without handoff_failure_reason", () => {
+    const result = validateDeliveryInput({ handoff_status: "failed" });
+    expect(result).toMatch(/handoff_failure_reason.*required/i);
+  });
+
+  // AC-DI-006: unknown/unrecognized handoff_failure_reason must be rejected at input boundary
+  it("rejects unrecognized handoff_failure_reason (AC-DI-006)", () => {
+    const result = validateDeliveryInput({
+      handoff_status: "failed",
+      handoff_failure_reason: "TOTALLY_UNKNOWN_REASON" as HandoffFailureReason,
+    });
+    expect(result).toBe("handoff_failure_reason is not recognized");
+  });
+
+  it("accepts valid failed handoff with recognized reason", () => {
+    const result = validateDeliveryInput({
+      attempt: 2,
+      supersedes_artifact_id: "ART_PREV",
+      handoff_status: "failed",
+      handoff_failure_reason: "REENTRY_NOT_READY",
+    });
+    expect(result).toBeNull();
+  });
+
+  it("accepts valid first-attempt input", () => {
+    const result = validateDeliveryInput({ attempt: 1, handoff_status: "pending" });
+    expect(result).toBeNull();
+  });
+
+  // AC-DI-006: enum boundary — REPLACEMENT_REASONS canonical set must not contain UNKNOWN
+  it("REPLACEMENT_REASONS canonical set does not include UNKNOWN (AC-DI-006 enum boundary)", () => {
+    expect(REPLACEMENT_REASONS).not.toContain("UNKNOWN");
+    expect(REPLACEMENT_REASONS).toHaveLength(7);
+  });
+});
+
+// ---------- appendDeliveryIntegrityEvent ----------
+// Code-level anchors for AC-DI-003 (replacement_reason caller rejection + rollback)
+// and AC-DI-006 (unknown reason rejection + rollback)
+
+type DeliveryIntegrityEventRow = {
+  event_id: string;
+  artifact_id: string;
+  session_id: string;
+  pipeline_state: string;
+  attempt: number;
+  supersedes_artifact_id: string | null;
+  replacement_reason: string | null;
+  handoff_status: string;
+  handoff_failure_reason: string | null;
+  stage_loop_detected: number;
+  classified_by: string;
+  classified_at: string;
+};
+
+function createDeliveryEventMockDb(
+  priorSessions: Array<{ session_id: string; pipeline_state: string }> = []
+) {
+  const eventRows: DeliveryIntegrityEventRow[] = [];
+
+  const db = {
+    prepare(sql: string) {
+      return {
+        bind(...params: unknown[]) {
+          return {
+            async first<T>() {
+              if (sql.includes("FROM delivery_integrity_events")) {
+                const [session_id, pipeline_state] = params as [string, string];
+                const hasPrior =
+                  priorSessions.some(
+                    (p) => p.session_id === session_id && p.pipeline_state === pipeline_state
+                  ) ||
+                  eventRows.some(
+                    (r) => r.session_id === session_id && r.pipeline_state === pipeline_state
+                  );
+                return (hasPrior ? { has_prior: 1 } : null) as T;
+              }
+              return null as T;
+            },
+            async run() {
+              if (sql.includes("INSERT INTO delivery_integrity_events")) {
+                const [
+                  event_id,
+                  artifact_id,
+                  session_id,
+                  pipeline_state,
+                  attempt,
+                  supersedes_artifact_id,
+                  replacement_reason,
+                  handoff_status,
+                  handoff_failure_reason,
+                  stage_loop_detected,
+                  classified_by,
+                  classified_at,
+                ] = params as [
+                  string,
+                  string,
+                  string,
+                  string,
+                  number,
+                  string | null,
+                  string | null,
+                  string,
+                  string | null,
+                  number,
+                  string,
+                  string,
+                ];
+                eventRows.push({
+                  event_id,
+                  artifact_id,
+                  session_id,
+                  pipeline_state,
+                  attempt,
+                  supersedes_artifact_id,
+                  replacement_reason,
+                  handoff_status,
+                  handoff_failure_reason,
+                  stage_loop_detected,
+                  classified_by,
+                  classified_at,
+                });
+              }
+              if (sql.includes("DELETE FROM delivery_integrity_events")) {
+                const [event_id] = params as [string];
+                const idx = eventRows.findIndex((r) => r.event_id === event_id);
+                if (idx !== -1) eventRows.splice(idx, 1);
+              }
+              return { success: true };
+            },
+          };
+        },
+      };
+    },
+  };
+
+  return { db: db as unknown as Env["DECISIONS_DB"], eventRows };
+}
+
+describe("appendDeliveryIntegrityEvent", () => {
+  it("persists first-attempt event with stage_loop_detected=false", async () => {
+    const { db, eventRows } = createDeliveryEventMockDb();
+    const session = makeSession();
+
+    const record = await appendDeliveryIntegrityEvent(db, session, "ART_DIE_001", {
+      attempt: 1,
+      handoff_status: "pending",
+    });
+
+    expect(record.event_id).toBeTruthy();
+    expect(record.artifact_id).toBe("ART_DIE_001");
+    expect(record.session_id).toBe("sess-001");
+    expect(record.pipeline_state).toBe("problem_framing");
+    expect(record.attempt).toBe(1);
+    expect(record.stage_loop_detected).toBe(false);
+    expect(record.classified_by).toBe("orchestration");
+    // replacement_reason is always null in delivery_integrity_events (orchestration-owned in artifact_lineage)
+    expect(record.replacement_reason).toBeNull();
+
+    expect(eventRows).toHaveLength(1);
+    expect(eventRows[0]?.stage_loop_detected).toBe(0);
+  });
+
+  it("sets stage_loop_detected=true on repeated entry to the same stage", async () => {
+    const { db, eventRows } = createDeliveryEventMockDb([
+      { session_id: "sess-001", pipeline_state: "problem_framing" },
+    ]);
+    const session = makeSession();
+
+    const record = await appendDeliveryIntegrityEvent(db, session, "ART_DIE_002", {
+      attempt: 2,
+      supersedes_artifact_id: "ART_DIE_001",
+      handoff_status: "pending",
+    });
+
+    expect(record.stage_loop_detected).toBe(true);
+    expect(eventRows).toHaveLength(1);
+    expect(eventRows[0]?.stage_loop_detected).toBe(1);
+  });
+
+  // AC-DI-003: caller-supplied replacement_reason must throw before persisting
+  it("throws and does not persist when caller supplies replacement_reason (AC-DI-003)", async () => {
+    const { db, eventRows } = createDeliveryEventMockDb();
+    const session = makeSession();
+
+    await expect(
+      appendDeliveryIntegrityEvent(
+        db,
+        session,
+        "ART_DIE_003",
+        { replacement_reason: "QUALITY_ISSUE" } as unknown as DeliveryIntegrityInput
+      )
+    ).rejects.toThrow(/replacement_reason.*orchestration/);
+
+    // Invariant: no row was persisted after rejection
+    expect(eventRows).toHaveLength(0);
+  });
+
+  // AC-DI-006: unrecognized handoff_failure_reason must throw before persisting
+  it("throws and does not persist when handoff_failure_reason is unrecognized (AC-DI-006)", async () => {
+    const { db, eventRows } = createDeliveryEventMockDb();
+    const session = makeSession();
+
+    await expect(
+      appendDeliveryIntegrityEvent(db, session, "ART_DIE_004", {
+        handoff_status: "failed",
+        handoff_failure_reason: "COMPLETELY_MADE_UP" as HandoffFailureReason,
+      })
+    ).rejects.toThrow("handoff_failure_reason is not recognized");
+
+    expect(eventRows).toHaveLength(0);
+  });
+
+  it("always persists null replacement_reason (orchestration owns this field in artifact_lineage)", async () => {
+    const { db, eventRows } = createDeliveryEventMockDb();
+    const session = makeSession();
+
+    await appendDeliveryIntegrityEvent(db, session, "ART_DIE_005", {
+      attempt: 2,
+      supersedes_artifact_id: "ART_DIE_PREV",
+      handoff_status: "completed",
+    });
+
+    expect(eventRows[0]?.replacement_reason).toBeNull();
+  });
+});
+
+// ---------- recordArtifactAttempt — source-of-truth invariants (AC-DI-003) ----------
+// Verifies the application-layer guarantee: repair attempts can never silently persist
+// without an orchestration-classified replacement_reason.
+
+describe("recordArtifactAttempt — source-of-truth invariants (AC-DI-003)", () => {
+  it("repair attempt always produces a non-null replacement_reason (AC-DI-003 invariant)", async () => {
+    const { db } = createMockDb([
+      {
+        lineage_id: "LIN_INV_001",
+        run_id: "RUN_INV",
+        artifact_id: "ART_INV_1",
+        artifact_type: "FramingAssessment",
+        stage: "problem_framing",
+        attempt: 1,
+        supersedes_artifact_id: null,
+        created_at: "2026-01-01T00:00:00.000Z",
+        created_by_role: "AE-Framing",
+        classified_by: "orchestration",
+        replacement_reason: null,
+        replacement_reason_source: null,
+        is_repair_attempt: 0,
+        is_first_attempt_in_stage: 1,
+        override_flag: 0,
+      },
+    ]);
+
+    // All-OK parser verdict triggers QUALITY_ISSUE as the fallback classification
+    const { record } = await recordArtifactAttempt(db, {
+      run_id: "RUN_INV",
+      stage: "problem_framing",
+      artifact_id: "ART_INV_2",
+      artifact_type: "FramingAssessment",
+      created_by_role: "AE-Framing",
+      parser_verdict: {
+        schema_valid: true,
+        required_sections_present: true,
+        stage_matches_expected: true,
+        reentry_ready: true,
+      },
+      review_verdict: { status: "NOT_REQUIRED" },
+      scope_fingerprint_changed: false,
+      transition_context: {},
+    });
+
+    expect(record.is_repair_attempt).toBe(true);
+    // Source-of-truth invariant: repair attempts MUST have a classified reason — never null
+    expect(record.replacement_reason).not.toBeNull();
+    expect(record.replacement_reason_source).toBe("orchestration");
   });
 });
