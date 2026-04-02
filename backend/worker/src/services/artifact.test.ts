@@ -1,9 +1,11 @@
 /**
  * Minimum wiring tests for submitArtifactWithLifecycle.
  *
- * These tests prove that the previously dead delivery-truth paths are now live:
- *   - recordHandoffOutcome writes to handoff_events when handoff_status is
- *     "completed" or "failed".
+ * These tests prove that the delivery-truth paths are live and orchestration-owned:
+ *   - recordHandoffOutcome writes to handoff_events unconditionally on every
+ *     artifact submission, using orchestration-owned signals only.
+ *     Caller cannot suppress the handoff row by omitting delivery or setting
+ *     handoff_status=pending.
  *   - recordStageEntry writes to stage_entries when a pipeline transition fires.
  */
 
@@ -154,14 +156,13 @@ function createMockBucket(): Env["ARTIFACTS_BUCKET"] {
 // ---------- recordHandoffOutcome wiring tests ----------
 
 describe("submitArtifactWithLifecycle — recordHandoffOutcome wiring", () => {
-  it("writes a handoff_events row when delivery.handoff_status=completed", async () => {
+  it("writes a COMPLETED handoff_events row when all parser signals pass", async () => {
     const session = makeSession();
     const { db, handoffEvents } = createArtifactMockDb(session);
 
     const req: SubmitArtifactRequest & { agent_id?: string } = {
       artifact_type: "FramingAssessment",
       payload: { summary: "test" },
-      delivery: { handoff_status: "completed" },
       parser_verdict: {
         schema_valid: true,
         required_sections_present: true,
@@ -183,15 +184,13 @@ describe("submitArtifactWithLifecycle — recordHandoffOutcome wiring", () => {
     });
   });
 
-  it("writes a FAILED handoff_events row when orchestration signals failure via parser_verdict", async () => {
+  it("writes a FAILED handoff_events row when orchestration detects schema_valid=false", async () => {
     const session = makeSession();
     const { db, handoffEvents } = createArtifactMockDb(session);
 
     const req: SubmitArtifactRequest & { agent_id?: string } = {
       artifact_type: "FramingAssessment",
       payload: { summary: "test" },
-      // Caller signals a handoff decision; orchestration classifies outcome from signals
-      delivery: { handoff_status: "failed", handoff_failure_reason: "SCHEMA_MISMATCH" },
       parser_verdict: {
         schema_valid: false, // triggers SCHEMA_MISMATCH in classifyHandoffOutcome
         required_sections_present: true,
@@ -212,10 +211,31 @@ describe("submitArtifactWithLifecycle — recordHandoffOutcome wiring", () => {
     });
   });
 
-  it("does NOT write a handoff_events row when delivery.handoff_status=pending (no handoff decision yet)", async () => {
+  it("writes a handoff_events row even when delivery is absent (caller cannot suppress)", async () => {
     const session = makeSession();
     const { db, handoffEvents } = createArtifactMockDb(session);
 
+    // No delivery field at all — caller has made no claim about handoff
+    const req: SubmitArtifactRequest & { agent_id?: string } = {
+      artifact_type: "FramingAssessment",
+      payload: { summary: "test" },
+    };
+
+    await submitArtifactWithLifecycle(db, createMockBucket(), session, req);
+
+    // Orchestration must record a row regardless of caller input
+    expect(handoffEvents).toHaveLength(1);
+    expect(handoffEvents[0]).toMatchObject({
+      session_id: "sess-art-001",
+      classified_by: "orchestration",
+    });
+  });
+
+  it("writes a handoff_events row even when delivery.handoff_status=pending (caller cannot suppress by setting pending)", async () => {
+    const session = makeSession();
+    const { db, handoffEvents } = createArtifactMockDb(session);
+
+    // Caller explicitly says "pending" — must not prevent orchestration from recording
     const req: SubmitArtifactRequest & { agent_id?: string } = {
       artifact_type: "FramingAssessment",
       payload: { summary: "test" },
@@ -224,21 +244,32 @@ describe("submitArtifactWithLifecycle — recordHandoffOutcome wiring", () => {
 
     await submitArtifactWithLifecycle(db, createMockBucket(), session, req);
 
-    expect(handoffEvents).toHaveLength(0);
+    expect(handoffEvents).toHaveLength(1);
+    expect(handoffEvents[0]).toMatchObject({
+      session_id: "sess-art-001",
+      classified_by: "orchestration",
+    });
   });
 
-  it("does NOT write a handoff_events row when delivery is absent", async () => {
+  it("classifies REVIEW_REJECTED when review_verdict.status=REJECTED regardless of delivery field", async () => {
     const session = makeSession();
     const { db, handoffEvents } = createArtifactMockDb(session);
 
     const req: SubmitArtifactRequest & { agent_id?: string } = {
       artifact_type: "FramingAssessment",
       payload: { summary: "test" },
+      // No delivery field — orchestration owns the classification
+      review_verdict: { status: "REJECTED" },
     };
 
     await submitArtifactWithLifecycle(db, createMockBucket(), session, req);
 
-    expect(handoffEvents).toHaveLength(0);
+    expect(handoffEvents).toHaveLength(1);
+    expect(handoffEvents[0]).toMatchObject({
+      outcome: "FAILED",
+      failure_reason: "REVIEW_REJECTED",
+      classified_by: "orchestration",
+    });
   });
 });
 

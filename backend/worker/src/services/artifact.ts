@@ -240,10 +240,9 @@ export async function submitArtifactWithLifecycle(
     override_flag: false,
   });
 
-  // Record orchestration-classified handoff outcome when the caller signals a handoff decision.
-  // "pending" means no handoff decision yet — no row is written to handoff_events.
-  const handoffStatus = req.delivery?.handoff_status ?? "pending";
-  if (handoffStatus === "completed" || handoffStatus === "failed") {
+  // Record orchestration-classified handoff outcome — unconditionally, using only
+  // orchestration-owned signals. Caller input does NOT control whether a handoff row is written.
+  {
     const pv = req.parser_verdict;
     const rv = req.review_verdict;
     const tc = req.transition_context;
