@@ -205,4 +205,32 @@ describe("recordHandoffOutcome", () => {
 
     expect(r1.event_id).not.toBe(r2.event_id);
   });
+
+  // AC-DI-004: REENTRY_NOT_READY failure must be persisted in DB — never disappear from truth
+  it("persists FAILED event with REENTRY_NOT_READY to DB and returns matching record (AC-DI-004)", async () => {
+    const { db, handoffEvents } = createMockDb();
+    const session = makeSession({ pipeline_state: "primitive_selection" });
+
+    const record = await recordHandoffOutcome(db, session, {
+      ...allOkInput(),
+      reentry_ready: false,
+    });
+
+    // Classification result
+    expect(record.outcome).toBe("FAILED");
+    expect(record.failure_reason).toBe("REENTRY_NOT_READY");
+    expect(record.session_id).toBe("sess-001");
+    expect(record.pipeline_state).toBe("primitive_selection");
+    expect(record.classified_by).toBe("orchestration");
+
+    // Source-of-truth invariant: the failure row must exist in the DB
+    expect(handoffEvents).toHaveLength(1);
+    expect(handoffEvents[0]).toMatchObject({
+      outcome: "FAILED",
+      failure_reason: "REENTRY_NOT_READY",
+      session_id: "sess-001",
+      pipeline_state: "primitive_selection",
+      classified_by: "orchestration",
+    });
+  });
 });
