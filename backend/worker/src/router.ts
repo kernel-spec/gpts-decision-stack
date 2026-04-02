@@ -25,6 +25,11 @@ import {
   handleRequestFounderDecision,
   handleSaveArtifact,
 } from "./handlers/founder.js";
+import {
+  handleGetRunDeliveryHistory,
+  handleGetRunDeliverySummary,
+  handleGetRunNextAction,
+} from "./handlers/operator-delivery.js";
 
 // ---------- Helpers ----------
 
@@ -202,6 +207,36 @@ export async function route(request: Request, env: Env): Promise<Response> {
   if (founderDecisionRequestMatch) {
     const project_id = founderDecisionRequestMatch[1];
     if (method === "POST") return handleRequestFounderDecision(request, project_id, env);
+    return methodNotAllowed();
+  }
+
+  // /operator/session/{session_id}/delivery-summary
+  const operatorDeliverySummaryMatch = path.match(
+    /^\/operator\/session\/([^/]+)\/delivery-summary$/
+  );
+  if (operatorDeliverySummaryMatch) {
+    const session_id = operatorDeliverySummaryMatch[1];
+    if (method === "GET") return handleGetRunDeliverySummary(session_id, env);
+    return methodNotAllowed();
+  }
+
+  // /operator/session/{session_id}/delivery-history
+  const operatorDeliveryHistoryMatch = path.match(
+    /^\/operator\/session\/([^/]+)\/delivery-history$/
+  );
+  if (operatorDeliveryHistoryMatch) {
+    const session_id = operatorDeliveryHistoryMatch[1];
+    if (method === "GET") return handleGetRunDeliveryHistory(session_id, env);
+    return methodNotAllowed();
+  }
+
+  // /operator/session/{session_id}/next-action
+  const operatorNextActionMatch = path.match(
+    /^\/operator\/session\/([^/]+)\/next-action$/
+  );
+  if (operatorNextActionMatch) {
+    const session_id = operatorNextActionMatch[1];
+    if (method === "GET") return handleGetRunNextAction(session_id, env);
     return methodNotAllowed();
   }
 
