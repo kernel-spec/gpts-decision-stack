@@ -71,6 +71,10 @@ wrangler d1 migrations apply gpts-decision-stack-db --env prod --remote
 Wrangler scans `migrations/` (root only, non-recursive) for numbered `*.sql` files.
 Files under `migrations/postgres/` are **never** picked up by `wrangler d1 migrations apply`.
 
+### Dependency reproducibility
+
+`backend/worker/package-lock.json` is the **only** authoritative npm lockfile in this repository. The repo root carries no npm scope. CI exclusively uses `npm ci` from `backend/worker`; any lockfile drift in that directory is treated as a contract violation and will fail the `validate` job.
+
 ### D1 / PostgreSQL migration boundary
 
 | Location | Applied by | Allowed dialect |
