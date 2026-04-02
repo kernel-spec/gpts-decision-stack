@@ -2,7 +2,7 @@ schema_version: "1.0.0"
 suite_id: AC-DI-pack
 suite_name: delivery_integrity_instrumentation_v1
 owner: orchestration
-status: draft_v1
+status: active
 
 tests:
 
