@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { Env, Session, DeliveryIntegrityInput, HandoffFailureReason } from "../types/index.js";
 import { REPLACEMENT_REASONS } from "../types/index.js";
 import {
@@ -106,6 +106,11 @@ function createMockDb(seed: LineageRow[] = []) {
                   override_flag,
                 });
               }
+              if (sql.includes("DELETE FROM artifact_lineage")) {
+                const [lineage_id] = params as [string];
+                const idx = rows.findIndex((r) => r.lineage_id === lineage_id);
+                if (idx !== -1) rows.splice(idx, 1);
+              }
               return { success: true };
             },
           };
@@ -153,6 +158,8 @@ describe("recordArtifactAttempt", () => {
     expect(rows[0]?.attempt).toBe(1);
     expect(rows[0]?.is_first_attempt_in_stage).toBe(1);
     expect(rows[0]?.is_repair_attempt).toBe(0);
+    // Source-of-truth boundary: replacement_reason must be null in the persisted row
+    expect(rows[0]?.replacement_reason).toBeNull();
 
     // Events: only artifact_attempt_created, no artifact_superseded
     expect(events).toHaveLength(1);
@@ -211,6 +218,10 @@ describe("recordArtifactAttempt", () => {
     expect(record.replacement_reason).toBe("MISSING_REQUIRED_SECTION");
     expect(record.replacement_reason_source).toBe("orchestration");
     expect(rows).toHaveLength(2);
+    // Source-of-truth boundary: persisted row must carry the orchestration-classified reason
+    expect(rows[1]?.replacement_reason).toBe("MISSING_REQUIRED_SECTION");
+    expect(rows[1]?.replacement_reason_source).toBe("orchestration");
+    expect(rows[1]?.is_repair_attempt).toBe(1);
 
     // Events: artifact_attempt_created AND artifact_superseded
     expect(events).toHaveLength(2);
@@ -841,6 +852,37 @@ describe("recordStageEntry", () => {
 
     expect(r1.entry.entry_id).not.toBe(r2.entry.entry_id);
   });
+
+  // AC-DI-005 rollback guard: emit-failure removes both stage entry and loop signal
+  it("rolls back both stage entry and loop signal when emit fails — loop truth does not persist silently (AC-DI-005 rollback guard)", async () => {
+    const { db, entryRows, loopRows } = createStageEntryMockDb([
+      {
+        entry_id: "ENT_RB_001",
+        session_id: "sess-001",
+        pipeline_state: "problem_framing",
+        entry_count: 1,
+        classified_by: "orchestration",
+        classified_at: "2026-01-01T00:00:00.000Z",
+      },
+    ]);
+    const session = makeSession();
+
+    const consoleSpy = vi.spyOn(console, "log").mockImplementationOnce(() => {
+      throw new Error("simulated emit failure");
+    });
+
+    try {
+      await expect(
+        recordStageEntry(db, session, { entered_by: "orchestration" })
+      ).rejects.toThrow("stage entry event emission failed after rollback");
+
+      // Source-of-truth rollback guard: only the seeded entry remains; the loop signal was never persisted
+      expect(entryRows.filter((r) => r.session_id === "sess-001")).toHaveLength(1);
+      expect(loopRows).toHaveLength(0);
+    } finally {
+      consoleSpy.mockRestore();
+    }
+  });
 });
 
 // ---------- validateDeliveryInput ----------
@@ -1118,7 +1160,7 @@ describe("appendDeliveryIntegrityEvent", () => {
 
 describe("recordArtifactAttempt — source-of-truth invariants (AC-DI-003)", () => {
   it("repair attempt always produces a non-null replacement_reason (AC-DI-003 invariant)", async () => {
-    const { db } = createMockDb([
+    const { db, rows } = createMockDb([
       {
         lineage_id: "LIN_INV_001",
         run_id: "RUN_INV",
@@ -1160,5 +1202,68 @@ describe("recordArtifactAttempt — source-of-truth invariants (AC-DI-003)", () 
     // Source-of-truth invariant: repair attempts MUST have a classified reason — never null
     expect(record.replacement_reason).not.toBeNull();
     expect(record.replacement_reason_source).toBe("orchestration");
+    // DB-row-level guard: the persisted row must also carry the non-null reason
+    expect(rows[1]?.replacement_reason).not.toBeNull();
+    expect(rows[1]?.replacement_reason_source).toBe("orchestration");
+    expect(rows[1]?.is_repair_attempt).toBe(1);
+  });
+});
+
+// ---------- recordArtifactAttempt — rollback guard (AC-DI-003) ----------
+// Verifies that a repair attempt row is deleted when event emission fails,
+// preventing silent persistence without an orchestration-classified reason.
+
+describe("recordArtifactAttempt — rollback guard (AC-DI-003)", () => {
+  it("rolls back the persisted lineage row when event emission fails — repair attempt does not persist silently", async () => {
+    const { db, rows } = createMockDb([
+      {
+        lineage_id: "LIN_RB_001",
+        run_id: "RUN_RB",
+        artifact_id: "ART_RB_1",
+        artifact_type: "FramingAssessment",
+        stage: "problem_framing",
+        attempt: 1,
+        supersedes_artifact_id: null,
+        created_at: "2026-01-01T00:00:00.000Z",
+        created_by_role: "AE-Framing",
+        classified_by: "orchestration",
+        replacement_reason: null,
+        replacement_reason_source: null,
+        is_repair_attempt: 0,
+        is_first_attempt_in_stage: 1,
+        override_flag: 0,
+      },
+    ]);
+
+    const consoleSpy = vi.spyOn(console, "log").mockImplementationOnce(() => {
+      throw new Error("simulated emit failure");
+    });
+
+    try {
+      await expect(
+        recordArtifactAttempt(db, {
+          run_id: "RUN_RB",
+          stage: "problem_framing",
+          artifact_id: "ART_RB_2",
+          artifact_type: "FramingAssessment",
+          created_by_role: "AE-Framing",
+          parser_verdict: {
+            schema_valid: true,
+            required_sections_present: false,
+            stage_matches_expected: true,
+            reentry_ready: false,
+          },
+          review_verdict: { status: "NOT_REQUIRED" },
+          scope_fingerprint_changed: false,
+          transition_context: {},
+        })
+      ).rejects.toThrow("artifact attempt event emission failed after rollback");
+
+      // Source-of-truth rollback guard: only the seeded row must remain — the repair attempt was deleted
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.artifact_id).toBe("ART_RB_1");
+    } finally {
+      consoleSpy.mockRestore();
+    }
   });
 });
