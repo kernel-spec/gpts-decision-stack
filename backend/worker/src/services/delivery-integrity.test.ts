@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { Env } from "../types/index.js";
-import { recordArtifactAttempt } from "./delivery-integrity.js";
+import type { Env, Session } from "../types/index.js";
+import { recordArtifactAttempt, recordStageEntry } from "./delivery-integrity.js";
 
 // ---------- Mock DB ----------
 
@@ -612,5 +612,227 @@ describe("recordArtifactAttempt", () => {
 
     expect(result.record.attempt).toBe(1);
     expect(result.record.supersedes_artifact_id).toBeNull();
+  });
+});
+
+// ---------- recordStageEntry ----------
+
+type StageEntryRow = {
+  entry_id: string;
+  session_id: string;
+  pipeline_state: string;
+  entry_count: number;
+  classified_by: string;
+  classified_at: string;
+};
+
+type LoopSignalRow = {
+  loop_signal_id: string;
+  session_id: string;
+  pipeline_state: string;
+  entry_count: number;
+  loop_type: string;
+  classified_by: string;
+  classified_at: string;
+};
+
+function createStageEntryMockDb(seedEntries: StageEntryRow[] = []) {
+  const entryRows: StageEntryRow[] = [...seedEntries];
+  const loopRows: LoopSignalRow[] = [];
+
+  const db = {
+    prepare(sql: string) {
+      return {
+        bind(...params: unknown[]) {
+          return {
+            async first<T>() {
+              if (sql.includes("COUNT(*)") && sql.includes("FROM stage_entries")) {
+                const [session_id, pipeline_state] = params as [string, string];
+                const cnt = entryRows.filter(
+                  (r) => r.session_id === session_id && r.pipeline_state === pipeline_state
+                ).length;
+                return { cnt } as T;
+              }
+              return null;
+            },
+            async run() {
+              if (sql.includes("INSERT INTO stage_entries")) {
+                const [entry_id, session_id, pipeline_state, entry_count, classified_by, classified_at] =
+                  params as [string, string, string, number, string, string];
+                entryRows.push({ entry_id, session_id, pipeline_state, entry_count, classified_by, classified_at });
+              }
+              if (sql.includes("INSERT INTO stage_loop_signals")) {
+                const [loop_signal_id, session_id, pipeline_state, entry_count, loop_type, classified_by, classified_at] =
+                  params as [string, string, string, number, string, string, string];
+                loopRows.push({ loop_signal_id, session_id, pipeline_state, entry_count, loop_type, classified_by, classified_at });
+              }
+              if (sql.includes("DELETE FROM stage_entries")) {
+                const [entry_id] = params as [string];
+                const idx = entryRows.findIndex((r) => r.entry_id === entry_id);
+                if (idx !== -1) entryRows.splice(idx, 1);
+              }
+              if (sql.includes("DELETE FROM stage_loop_signals")) {
+                const [loop_signal_id] = params as [string];
+                const idx = loopRows.findIndex((r) => r.loop_signal_id === loop_signal_id);
+                if (idx !== -1) loopRows.splice(idx, 1);
+              }
+              return { success: true };
+            },
+          };
+        },
+      };
+    },
+  };
+
+  return { db: db as unknown as Env["DECISIONS_DB"], entryRows, loopRows };
+}
+
+function makeSession(overrides?: Partial<Session>): Session {
+  return {
+    session_id: "sess-001",
+    requestor_type: "founder-led",
+    pipeline_state: "problem_framing",
+    decision_status: "proceed",
+    veto_active: false,
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: "2026-01-01T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+describe("recordStageEntry", () => {
+  // AC-DI-005 (first half): first entry in a stage creates entry record without loop signal
+  it("creates a stage entry with entry_count=1 and no loop signal on first entry", async () => {
+    const { db, entryRows, loopRows } = createStageEntryMockDb();
+    const session = makeSession();
+
+    const { entry, loop_signal } = await recordStageEntry(db, session, { entered_by: "orchestration" });
+
+    expect(entry.entry_id).toBeTruthy();
+    expect(entry.session_id).toBe("sess-001");
+    expect(entry.pipeline_state).toBe("problem_framing");
+    expect(entry.entry_count).toBe(1);
+    expect(entry.classified_by).toBe("orchestration");
+    expect(entry.classified_at).toBeTruthy();
+
+    expect(loop_signal).toBeNull();
+    expect(entryRows).toHaveLength(1);
+    expect(loopRows).toHaveLength(0);
+  });
+
+  // AC-DI-005: same stage entered twice emits SAME_STAGE_REPEAT loop signal
+  it("emits SAME_STAGE_REPEAT loop signal on second entry to the same stage", async () => {
+    const { db, entryRows, loopRows } = createStageEntryMockDb([
+      {
+        entry_id: "ENT_001",
+        session_id: "sess-001",
+        pipeline_state: "problem_framing",
+        entry_count: 1,
+        classified_by: "orchestration",
+        classified_at: "2026-01-01T00:00:00.000Z",
+      },
+    ]);
+    const session = makeSession();
+
+    const { entry, loop_signal } = await recordStageEntry(db, session, { entered_by: "orchestration" });
+
+    expect(entry.entry_count).toBe(2);
+    expect(loop_signal).not.toBeNull();
+    expect(loop_signal?.loop_type).toBe("SAME_STAGE_REPEAT");
+    expect(loop_signal?.entry_count).toBe(2);
+    expect(loop_signal?.session_id).toBe("sess-001");
+    expect(loop_signal?.pipeline_state).toBe("problem_framing");
+    expect(loop_signal?.classified_by).toBe("orchestration");
+    expect(loop_signal?.loop_signal_id).toBeTruthy();
+
+    expect(entryRows).toHaveLength(2);
+    expect(loopRows).toHaveLength(1);
+    expect(loopRows[0]?.loop_type).toBe("SAME_STAGE_REPEAT");
+    expect(loopRows[0]?.entry_count).toBe(2);
+  });
+
+  // Third entry also produces a loop signal with correct entry_count
+  it("increments entry_count and emits loop signal on third entry", async () => {
+    const { db, loopRows } = createStageEntryMockDb([
+      {
+        entry_id: "ENT_001",
+        session_id: "sess-001",
+        pipeline_state: "problem_framing",
+        entry_count: 1,
+        classified_by: "orchestration",
+        classified_at: "2026-01-01T00:00:00.000Z",
+      },
+      {
+        entry_id: "ENT_002",
+        session_id: "sess-001",
+        pipeline_state: "problem_framing",
+        entry_count: 2,
+        classified_by: "orchestration",
+        classified_at: "2026-01-01T00:01:00.000Z",
+      },
+    ]);
+    const session = makeSession();
+
+    const { entry, loop_signal } = await recordStageEntry(db, session, { entered_by: "orchestration" });
+
+    expect(entry.entry_count).toBe(3);
+    expect(loop_signal?.entry_count).toBe(3);
+    expect(loopRows).toHaveLength(1);
+    expect(loopRows[0]?.entry_count).toBe(3);
+  });
+
+  // Stage entries are isolated per session
+  it("counts entries independently per session", async () => {
+    const { db, entryRows, loopRows } = createStageEntryMockDb([
+      {
+        entry_id: "ENT_OTHER",
+        session_id: "sess-other",
+        pipeline_state: "problem_framing",
+        entry_count: 1,
+        classified_by: "orchestration",
+        classified_at: "2026-01-01T00:00:00.000Z",
+      },
+    ]);
+    const session = makeSession({ session_id: "sess-001" });
+
+    const { entry, loop_signal } = await recordStageEntry(db, session, { entered_by: "orchestration" });
+
+    expect(entry.entry_count).toBe(1);
+    expect(loop_signal).toBeNull();
+    expect(loopRows).toHaveLength(0);
+    // Only the new entry was added for sess-001
+    expect(entryRows.filter((r) => r.session_id === "sess-001")).toHaveLength(1);
+  });
+
+  // Stage entries are isolated per pipeline_state
+  it("counts entries independently per pipeline_state", async () => {
+    const { db, loopRows } = createStageEntryMockDb([
+      {
+        entry_id: "ENT_OTHER_STAGE",
+        session_id: "sess-001",
+        pipeline_state: "claims_validation",
+        entry_count: 1,
+        classified_by: "orchestration",
+        classified_at: "2026-01-01T00:00:00.000Z",
+      },
+    ]);
+    const session = makeSession({ pipeline_state: "problem_framing" });
+
+    const { entry, loop_signal } = await recordStageEntry(db, session, { entered_by: "orchestration" });
+
+    expect(entry.entry_count).toBe(1);
+    expect(loop_signal).toBeNull();
+    expect(loopRows).toHaveLength(0);
+  });
+
+  // Each call generates a unique entry_id
+  it("generates unique entry_ids per call", async () => {
+    const { db } = createStageEntryMockDb();
+    const session = makeSession();
+
+    const r1 = await recordStageEntry(db, session, { entered_by: "orchestration" });
+    const r2 = await recordStageEntry(db, session, { entered_by: "orchestration" });
+
+    expect(r1.entry.entry_id).not.toBe(r2.entry.entry_id);
   });
 });
