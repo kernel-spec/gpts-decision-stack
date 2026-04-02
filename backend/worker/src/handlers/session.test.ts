@@ -1,0 +1,166 @@
+/**
+ * Minimum wiring tests for handleTriggerReentry.
+ *
+ * These tests prove that the previously dead recordStageEntry path is now live
+ * in the reentry handler: a stage_entries row is written for the target stage
+ * every time a reentry is triggered.
+ */
+
+import { describe, expect, it } from "vitest";
+import type { Env, Session } from "../types/index.js";
+import { handleTriggerReentry } from "./session.js";
+
+// ---------- Helpers ----------
+
+function makeSession(overrides?: Partial<Session>): Session {
+  return {
+    session_id: "sess-reentry-001",
+    requestor_type: "founder-led",
+    pipeline_state: "problem_framing",
+    decision_status: "proceed",
+    veto_active: false,
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: "2026-01-01T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+type StageEntryRow = {
+  entry_id: string;
+  session_id: string;
+  pipeline_state: string;
+  entry_count: number;
+};
+
+/**
+ * Mock DB that handles all queries needed by handleTriggerReentry and
+ * captures stage_entries inserts.
+ */
+function createReentryMockDb(session: Session) {
+  const stageEntries: StageEntryRow[] = [];
+
+  const db = {
+    prepare(sql: string) {
+      return {
+        bind(...params: unknown[]) {
+          return {
+            async first<T>() {
+              // getSession query (called at handler start and inside updateSessionState)
+              if (sql.includes("FROM sessions s") && sql.includes("WHERE s.session_id")) {
+                return {
+                  session_id: session.session_id,
+                  requestor_type: session.requestor_type,
+                  pipeline_state: session.pipeline_state,
+                  decision_status: session.decision_status,
+                  created_at: session.created_at,
+                  updated_at: session.updated_at,
+                  veto_active: 0,
+                } as T;
+              }
+              // stage_entries count (called by recordStageEntry)
+              if (sql.includes("COUNT(*)") && sql.includes("FROM stage_entries")) {
+                const [session_id, pipeline_state] = params as [string, string];
+                const cnt = stageEntries.filter(
+                  (r) => r.session_id === session_id && r.pipeline_state === pipeline_state
+                ).length;
+                return { cnt } as T;
+              }
+              return null as T;
+            },
+            async run() {
+              if (sql.includes("INSERT INTO stage_entries")) {
+                const [entry_id, session_id, pipeline_state, entry_count] = params as [
+                  string,
+                  string,
+                  string,
+                  number,
+                ];
+                stageEntries.push({ entry_id, session_id, pipeline_state, entry_count });
+              }
+              return { success: true };
+            },
+          };
+        },
+      };
+    },
+  };
+
+  return { db: db as unknown as Env["DECISIONS_DB"], stageEntries };
+}
+
+// ---------- Tests ----------
+
+describe("handleTriggerReentry — recordStageEntry wiring", () => {
+  it("writes a stage_entries row for the target stage on reentry", async () => {
+    const session = makeSession();
+    const { db, stageEntries } = createReentryMockDb(session);
+
+    const env = { DECISIONS_DB: db } as unknown as Env;
+    const request = new Request("https://example.com/sessions/sess-reentry-001/reentry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from_state: "problem_framing",
+        to_state: "intake",
+        reason: "restart required",
+        agent_id: "operator-001",
+      }),
+    });
+
+    const response = await handleTriggerReentry(request, "sess-reentry-001", env);
+
+    expect(response.status).toBe(200);
+    expect(stageEntries).toHaveLength(1);
+    expect(stageEntries[0]).toMatchObject({
+      session_id: "sess-reentry-001",
+      pipeline_state: "intake", // the stage we are re-entering
+      entry_count: 1,
+    });
+  });
+
+  it("writes a loop signal entry when the same stage is re-entered a second time", async () => {
+    const session = makeSession({ pipeline_state: "problem_framing" });
+    const { db, stageEntries } = createReentryMockDb(session);
+
+    const env = { DECISIONS_DB: db } as unknown as Env;
+
+    // First reentry to intake
+    await handleTriggerReentry(
+      new Request("https://example.com/sessions/sess-reentry-001/reentry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from_state: "problem_framing",
+          to_state: "intake",
+          reason: "first reentry",
+          agent_id: "operator-001",
+        }),
+      }),
+      "sess-reentry-001",
+      env
+    );
+
+    // Second reentry to the same stage — should produce entry_count=2 (loop)
+    await handleTriggerReentry(
+      new Request("https://example.com/sessions/sess-reentry-001/reentry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from_state: "problem_framing",
+          to_state: "intake",
+          reason: "second reentry",
+          agent_id: "operator-001",
+        }),
+      }),
+      "sess-reentry-001",
+      env
+    );
+
+    expect(stageEntries).toHaveLength(2);
+    expect(stageEntries[1]).toMatchObject({
+      session_id: "sess-reentry-001",
+      pipeline_state: "intake",
+      entry_count: 2,
+    });
+  });
+});

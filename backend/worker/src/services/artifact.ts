@@ -6,7 +6,8 @@ import type {
 } from "../types/index.js";
 import * as decisionlogService from "./decisionlog.js";
 import * as stateService from "./state.js";
-import { appendDeliveryIntegrityEvent, recordArtifactAttempt } from "./delivery-integrity.js";
+import { appendDeliveryIntegrityEvent, recordArtifactAttempt, recordStageEntry } from "./delivery-integrity.js";
+import { recordHandoffOutcome } from "./handoff.js";
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -239,6 +240,26 @@ export async function submitArtifactWithLifecycle(
     override_flag: false,
   });
 
+  // Record orchestration-classified handoff outcome when the caller signals a handoff decision.
+  // "pending" means no handoff decision yet — no row is written to handoff_events.
+  const handoffStatus = req.delivery?.handoff_status ?? "pending";
+  if (handoffStatus === "completed" || handoffStatus === "failed") {
+    const pv = req.parser_verdict;
+    const rv = req.review_verdict;
+    const tc = req.transition_context;
+    await recordHandoffOutcome(db, session, {
+      schema_valid: pv?.schema_valid ?? true,
+      fields_present: pv?.required_sections_present ?? true,
+      owner_resolved: true,
+      review_verdict_ok: rv ? rv.status !== "REJECTED" && rv.blocking !== true : true,
+      reentry_ready: pv?.reentry_ready ?? true,
+      parser_verdict_ok: pv
+        ? pv.schema_valid && pv.required_sections_present && pv.stage_matches_expected
+        : true,
+      legal_transition_ok: !(tc?.handoff_rejected ?? false),
+    });
+  }
+
   await decisionlogService.appendDecisionLog(db, session.session_id, {
     agent_id: req.agent_id ?? "unknown",
     action: "artifact.submitted",
@@ -262,6 +283,12 @@ export async function submitArtifactWithLifecycle(
       decision_status: transition.decision_status,
       notes: transition.notes,
     });
+    // Record orchestration-owned stage entry for the stage we are transitioning into.
+    await recordStageEntry(
+      db,
+      { ...session, pipeline_state: transition.pipeline_state },
+      { entered_by: req.agent_id ?? "unknown" }
+    );
   }
 
   return artifact;

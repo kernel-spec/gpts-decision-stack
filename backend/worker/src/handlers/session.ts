@@ -2,6 +2,7 @@ import type { Env, CreateSessionRequest, ReentryRequest } from "../types/index.j
 import { VALID_REQUESTOR_TYPES } from "../types/index.js";
 import * as stateService from "../services/state.js";
 import * as decisionlogService from "../services/decisionlog.js";
+import { recordStageEntry } from "../services/delivery-integrity.js";
 import { errorResponse, requireJson } from "../router.js";
 
 export async function handleCreateSession(
@@ -78,6 +79,13 @@ export async function handleTriggerReentry(
     decision_status: "unresolved",
     notes: `Reentry from ${body.from_state ?? session.pipeline_state} to ${body.to_state}: ${body.reason}`,
   });
+
+  // Record orchestration-owned stage entry for the stage we are re-entering.
+  await recordStageEntry(
+    env.DECISIONS_DB,
+    { ...session, pipeline_state: body.to_state },
+    { entered_by: body.agent_id }
+  );
 
   return Response.json({ ok: true, data: updated });
 }
