@@ -28,7 +28,14 @@ backend/worker/src/
     veto.ts                   ← GET/POST /veto/{id}/status|activate|release
     approval.ts               ← GET/POST /approval/{id}/submit
 migrations/
-  0001_init.sql               ← D1 schema migrace
+  0001_init.sql               ← D1: initial schema
+  0002_add_requestor_columns.sql ← D1: requestor columns
+  0003_add_founder_write_loop.sql ← D1: founder artifact + model-output tables
+  0004_delivery_integrity.sql ← D1: delivery integrity events
+  0006_artifact_lineage.sql   ← D1: artifact lineage (PR-2)
+  0007_handoff_events.sql     ← D1: handoff events (PR-3)
+  postgres/
+    0005_delivery_integrity_pg.sql ← PG-only; never applied by wrangler d1
 ```
 
 ## Cloudflare bindings
@@ -52,14 +59,29 @@ wrangler d1 create gpts-decision-stack-db-dev
 
 Zkopírujte `database_id` do `wrangler.toml`.
 
-### 2. Aplikace D1 migrace
+### 2. Aplikace D1 migrací
 
 ```bash
 # Dev:
-wrangler d1 execute gpts-decision-stack-db-dev --file migrations/0001_init.sql
+wrangler d1 migrations apply gpts-decision-stack-db-dev --env dev --remote
 # Prod:
-wrangler d1 execute gpts-decision-stack-db --file migrations/0001_init.sql
+wrangler d1 migrations apply gpts-decision-stack-db --env prod --remote
 ```
+
+Wrangler scans `migrations/` (root only, non-recursive) for numbered `*.sql` files.
+Files under `migrations/postgres/` are **never** picked up by `wrangler d1 migrations apply`.
+
+### D1 / PostgreSQL migration boundary
+
+| Location | Applied by | Allowed dialect |
+|---|---|---|
+| `migrations/*.sql` | `wrangler d1 migrations apply` | D1/SQLite only |
+| `migrations/postgres/*.sql` | external Postgres tooling | PostgreSQL |
+
+**Rules:**
+- D1 migrations must not contain: `TIMESTAMPTZ`, `DEFAULT NOW(`, `::` (cast), `SERIAL`, `CREATE INDEX … USING`, `ALTER TABLE … TYPE`, `USING gin`, `USING btree`, `gen_random_uuid`, `jsonb`, `RETURNING`.
+- PostgreSQL-only files must live under `migrations/postgres/` and follow the `*_pg.sql` naming convention.
+- CI enforces this boundary on every push (`validate` job in both `deploy-worker.yml` and `deploy-workers.yaml`). Any `*_pg.sql` in `migrations/` root, or any PG dialect marker in a `migrations/*.sql` file, causes the workflow to fail hard with `::error::` output.
 
 ### 3. Vytvoření R2 bucketu
 
