@@ -109,27 +109,36 @@ export async function recordHandoffOutcome(
     .run();
 
   // Emit second
-  if (outcome === HANDOFF_COMPLETED) {
-    console.log(
-      JSON.stringify({
-        event: "handoff_completed",
-        event_id,
-        session_id: session.session_id,
-        pipeline_state: session.pipeline_state,
-        classified_at,
-      })
-    );
-  } else {
-    console.log(
-      JSON.stringify({
-        event: "handoff_failed",
-        event_id,
-        session_id: session.session_id,
-        pipeline_state: session.pipeline_state,
-        failure_reason,
-        classified_at,
-      })
-    );
+  try {
+    if (outcome === HANDOFF_COMPLETED) {
+      console.log(
+        JSON.stringify({
+          event: "handoff_completed",
+          event_id,
+          session_id: session.session_id,
+          pipeline_state: session.pipeline_state,
+          classified_at,
+        })
+      );
+    } else {
+      console.log(
+        JSON.stringify({
+          event: "handoff_failed",
+          event_id,
+          session_id: session.session_id,
+          pipeline_state: session.pipeline_state,
+          failure_reason,
+          classified_at,
+        })
+      );
+    }
+  } catch (emitError) {
+    await db
+      .prepare(`DELETE FROM handoff_events WHERE event_id = ?`)
+      .bind(event_id)
+      .run();
+    const reason = emitError instanceof Error ? emitError.message : String(emitError);
+    throw new Error(`handoff event emission failed after rollback: ${reason}`);
   }
 
   return {

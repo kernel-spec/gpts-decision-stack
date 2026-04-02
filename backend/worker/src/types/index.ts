@@ -381,6 +381,35 @@ export interface FounderDecisionResponse {
   founder_response_required: boolean;
 }
 
+// ---------- Stage Entry ----------
+
+export const STAGE_LOOP_TYPES = ["SAME_STAGE_REPEAT", "TWO_NODE_LOOP"] as const;
+
+export type StageLoopType = (typeof STAGE_LOOP_TYPES)[number];
+
+export interface StageEntryInput {
+  entered_by: string;
+}
+
+export interface StageEntryRecord {
+  entry_id: string;
+  session_id: string;
+  pipeline_state: Session["pipeline_state"];
+  entry_count: number;
+  classified_by: "orchestration";
+  classified_at: string;
+}
+
+export interface StageLoopSignalRecord {
+  loop_signal_id: string;
+  session_id: string;
+  pipeline_state: Session["pipeline_state"];
+  entry_count: number;
+  loop_type: StageLoopType;
+  classified_by: "orchestration";
+  classified_at: string;
+}
+
 // ---------- Handoff outcome ----------
 
 export const HANDOFF_OUTCOMES = [

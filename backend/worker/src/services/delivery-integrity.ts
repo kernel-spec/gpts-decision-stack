@@ -10,6 +10,9 @@ import type {
   ReplacementReason,
   ReviewVerdict,
   Session,
+  StageEntryInput,
+  StageEntryRecord,
+  StageLoopSignalRecord,
   TransitionContext,
 } from "../types/index.js";
 import {
@@ -347,5 +350,159 @@ export async function recordArtifactAttempt(
     });
   }
 
+  try {
+    for (const ev of events) {
+      console.log(JSON.stringify({ ...ev }));
+    }
+  } catch (emitError) {
+    await db
+      .prepare(`DELETE FROM artifact_lineage WHERE lineage_id = ?`)
+      .bind(lineage_id)
+      .run();
+    const reason = emitError instanceof Error ? emitError.message : String(emitError);
+    throw new Error(`artifact attempt event emission failed after rollback: ${reason}`);
+  }
+
   return { record, events };
+}
+
+// ---------- Stage Entry (PR-4) ----------
+
+export async function recordStageEntry(
+  db: Env["DECISIONS_DB"],
+  session: Session,
+  input: StageEntryInput
+): Promise<{ entry: StageEntryRecord; loop_signal: StageLoopSignalRecord | null }> {
+  // 1. Count prior entries for this (session, stage)
+  const countRow = await db
+    .prepare(
+      `SELECT COUNT(*) as cnt
+         FROM stage_entries
+        WHERE session_id = ? AND pipeline_state = ?`
+    )
+    .bind(session.session_id, session.pipeline_state)
+    .first<{ cnt: number } | null>();
+
+  const prior_count = countRow?.cnt ?? 0;
+  const entry_count = prior_count + 1;
+
+  const entry_id = newId();
+  const classified_at = nowIso();
+
+  // 2. Persist stage entry first
+  await db
+    .prepare(
+      `INSERT INTO stage_entries (
+         entry_id,
+         session_id,
+         pipeline_state,
+         entry_count,
+         classified_by,
+         classified_at
+       )
+       VALUES (?, ?, ?, ?, ?, ?)`
+    )
+    .bind(
+      entry_id,
+      session.session_id,
+      session.pipeline_state,
+      entry_count,
+      "orchestration",
+      classified_at
+    )
+    .run();
+
+  const entry: StageEntryRecord = {
+    entry_id,
+    session_id: session.session_id,
+    pipeline_state: session.pipeline_state,
+    entry_count,
+    classified_by: "orchestration",
+    classified_at,
+  };
+
+  // 3. Detect SAME_STAGE_REPEAT loop when this is not the first entry
+  let loop_signal: StageLoopSignalRecord | null = null;
+
+  if (entry_count > 1) {
+    const loop_signal_id = newId();
+
+    await db
+      .prepare(
+        `INSERT INTO stage_loop_signals (
+           loop_signal_id,
+           session_id,
+           pipeline_state,
+           entry_count,
+           loop_type,
+           classified_by,
+           classified_at
+         )
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind(
+        loop_signal_id,
+        session.session_id,
+        session.pipeline_state,
+        entry_count,
+        "SAME_STAGE_REPEAT",
+        "orchestration",
+        classified_at
+      )
+      .run();
+
+    loop_signal = {
+      loop_signal_id,
+      session_id: session.session_id,
+      pipeline_state: session.pipeline_state,
+      entry_count,
+      loop_type: "SAME_STAGE_REPEAT",
+      classified_by: "orchestration",
+      classified_at,
+    };
+  }
+
+  // 4. Emit event — persist first, emit second
+  try {
+    if (loop_signal) {
+      console.log(
+        JSON.stringify({
+          event: "stage_loop_detected",
+          entry_id,
+          loop_signal_id: loop_signal.loop_signal_id,
+          session_id: session.session_id,
+          pipeline_state: session.pipeline_state,
+          loop_type: "SAME_STAGE_REPEAT",
+          entry_count,
+          classified_at,
+        })
+      );
+    } else {
+      console.log(
+        JSON.stringify({
+          event: "stage_entry_created",
+          entry_id,
+          session_id: session.session_id,
+          pipeline_state: session.pipeline_state,
+          entry_count,
+          classified_at,
+        })
+      );
+    }
+  } catch (emitError) {
+    if (loop_signal) {
+      await db
+        .prepare(`DELETE FROM stage_loop_signals WHERE loop_signal_id = ?`)
+        .bind(loop_signal.loop_signal_id)
+        .run();
+    }
+    await db
+      .prepare(`DELETE FROM stage_entries WHERE entry_id = ?`)
+      .bind(entry_id)
+      .run();
+    const reason = emitError instanceof Error ? emitError.message : String(emitError);
+    throw new Error(`stage entry event emission failed after rollback: ${reason}`);
+  }
+
+  return { entry, loop_signal };
 }
