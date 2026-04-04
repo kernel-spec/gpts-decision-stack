@@ -5,6 +5,7 @@ import type {
   ReentryRequest,
   StageEntryRecord,
   StageLoopSignalRecord,
+  PipelineState,
 } from "../types/index.js";
 
 function nowIso(): string {
@@ -65,6 +66,85 @@ export async function createSession(
     created_at: now,
     updated_at: now,
   };
+}
+
+/**
+ * Atomic session creation with lifecycle boundary.
+ * Performs session INSERT and initial stage_entry INSERT in a single D1 batch.
+ * No realistic path remains where session exists but stage entry is missing.
+ */
+export async function createSessionWithLifecycle(
+  db: Env["DECISIONS_DB"],
+  req: CreateSessionRequest
+): Promise<{
+  session: Session;
+  stage_entry: StageEntryRecord;
+  lifecycle_id: string;
+}> {
+  const session_id = newId();
+  const now = nowIso();
+  const lifecycle_id = newId();
+  const stage_entry_id = newId();
+  const pipeline_state: PipelineState = "intake";
+  const decision_status: Session["decision_status"] = "unresolved";
+
+  const statements: BatchableStatement[] = [
+    db
+      .prepare(
+        `INSERT INTO sessions (session_id, agent_id, requestor_type, external_ref, pipeline_state, decision_status, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind(
+        session_id,
+        "system",
+        req.requestor_type,
+        req.external_ref ?? null,
+        pipeline_state,
+        decision_status,
+        now,
+        now
+      ),
+    db
+      .prepare(
+        `INSERT INTO stage_entries (
+           stage_entry_id, session_id, pipeline_state, entry_count, classified_by, created_at, lifecycle_id
+         ) VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind(
+        stage_entry_id,
+        session_id,
+        pipeline_state,
+        1, // first entry
+        "orchestration",
+        now,
+        lifecycle_id
+      ),
+  ];
+
+  await (db as unknown as BatchableDb).batch(statements);
+
+  const session: Session = {
+    session_id,
+    requestor_type: req.requestor_type,
+    pipeline_state,
+    decision_status,
+    veto_active: false,
+    created_at: now,
+    updated_at: now,
+  };
+
+  const stage_entry: StageEntryRecord = {
+    stage_entry_id,
+    entry_id: stage_entry_id,
+    session_id,
+    artifact_id: null,
+    pipeline_state,
+    entry_count: 1,
+    classified_by: "orchestration",
+    created_at: now,
+  };
+
+  return { session, stage_entry, lifecycle_id };
 }
 
 export async function getSession(
@@ -149,6 +229,12 @@ export function assertLegalReentry(
   session: Session,
   request: ReentryRequest
 ): ReentryTransitionCandidate {
+  if (session.veto_active) {
+    throw new Error(
+      `illegal reentry transition: session ${session.session_id} has active veto`
+    );
+  }
+  
   const candidate = getReentryTransitionCandidate(session, request);
   if (!candidate || !candidate.legal_transition_ok) {
     throw new Error(

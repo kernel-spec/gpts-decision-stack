@@ -2,7 +2,6 @@ import type { Env, CreateSessionRequest, ReentryRequest } from "../types/index.j
 import { VALID_REQUESTOR_TYPES } from "../types/index.js";
 import * as stateService from "../services/state.js";
 import * as decisionlogService from "../services/decisionlog.js";
-import * as deliveryIntegrityService from "../services/delivery-integrity.js";
 import * as operatorDeliveryService from "../services/operator-delivery.js";
 import { errorResponse, requireJson } from "../router.js";
 
@@ -24,25 +23,20 @@ export async function handleCreateSession(
   const externalRef =
     typeof body.external_ref === "string" ? body.external_ref : null;
 
-  const session = await stateService.createSession(env.DECISIONS_DB, {
+  const result = await stateService.createSessionWithLifecycle(env.DECISIONS_DB, {
     requestor_type: requestorType,
     external_ref: externalRef,
   });
 
-  await deliveryIntegrityService.recordStageEntry(env.DECISIONS_DB, {
-    session_id: session.session_id,
-    pipeline_state: session.pipeline_state,
-  });
-
-  await decisionlogService.appendDecisionLog(env.DECISIONS_DB, session.session_id, {
+  await decisionlogService.appendDecisionLog(env.DECISIONS_DB, result.session.session_id, {
     agent_id: "system",
     action: "session.created",
-    pipeline_state: session.pipeline_state,
+    pipeline_state: result.session.pipeline_state,
     decision_status: "unresolved",
     notes: `Session created for requestor_type: ${requestorType}`,
   });
 
-  return Response.json({ ok: true, data: session }, { status: 201 });
+  return Response.json({ ok: true, data: result.session }, { status: 201 });
 }
 
 export async function handleGetSession(

@@ -54,7 +54,7 @@ function createReentryMockDb(session: Session) {
                   decision_status: session.decision_status,
                   created_at: session.created_at,
                   updated_at: session.updated_at,
-                  veto_active: 0,
+                  veto_active: session.veto_active ? 1 : 0,
                 } as T;
               }
               // stage_entries count (called by recordStageEntry)
@@ -203,5 +203,78 @@ describe("handleTriggerReentry — recordStageEntry wiring", () => {
       pipeline_state: "intake",
       entry_count: 2,
     });
+  });
+
+  it("rejects reentry when session has active veto", async () => {
+    const session = makeSession({ veto_active: true, decision_status: "blocked" });
+    const { db } = createReentryMockDb(session);
+
+    const env = { DECISIONS_DB: db } as unknown as Env;
+    const request = new Request("https://example.com/sessions/sess-reentry-001/reentry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from_state: "problem_framing",
+        to_state: "intake",
+        reason: "restart required",
+        agent_id: "operator-001",
+      }),
+    });
+
+    const response = await handleTriggerReentry(request, "sess-reentry-001", env);
+
+    expect(response.status).toBe(409);
+    const body = await response.json() as { ok: boolean; code: string; error: string };
+    expect(body.ok).toBe(false);
+    expect(body.code).toBe("ILLEGAL_REENTRY_TRANSITION");
+    expect(body.error).toContain("active veto");
+  });
+
+  it("rejects illegal forward reentry transition", async () => {
+    const session = makeSession({ pipeline_state: "intake" });
+    const { db } = createReentryMockDb(session);
+
+    const env = { DECISIONS_DB: db } as unknown as Env;
+    const request = new Request("https://example.com/sessions/sess-reentry-001/reentry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from_state: "intake",
+        to_state: "problem_framing", // illegal: forward progression not allowed
+        reason: "invalid forward move",
+        agent_id: "operator-001",
+      }),
+    });
+
+    const response = await handleTriggerReentry(request, "sess-reentry-001", env);
+
+    expect(response.status).toBe(409);
+    const body = await response.json() as { ok: boolean; code: string };
+    expect(body.ok).toBe(false);
+    expect(body.code).toBe("ILLEGAL_REENTRY_TRANSITION");
+  });
+
+  it("rejects reentry when from_state does not match current session state", async () => {
+    const session = makeSession({ pipeline_state: "problem_framing" });
+    const { db } = createReentryMockDb(session);
+
+    const env = { DECISIONS_DB: db } as unknown as Env;
+    const request = new Request("https://example.com/sessions/sess-reentry-001/reentry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from_state: "intake", // wrong: session is actually at problem_framing
+        to_state: "intake",
+        reason: "invalid from_state",
+        agent_id: "operator-001",
+      }),
+    });
+
+    const response = await handleTriggerReentry(request, "sess-reentry-001", env);
+
+    expect(response.status).toBe(409);
+    const body = await response.json() as { ok: boolean; code: string };
+    expect(body.ok).toBe(false);
+    expect(body.code).toBe("ILLEGAL_REENTRY_TRANSITION");
   });
 });
