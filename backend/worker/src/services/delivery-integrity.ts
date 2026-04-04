@@ -416,9 +416,8 @@ export async function recordStageEntry(
   entry: StageEntryRecord;
   loop_signal: StageLoopSignalRecord | null;
 }> {
-  const legacyMode = "requestor_type" in inputOrSession;
   const input =
-    legacyMode
+    "requestor_type" in inputOrSession
       ? {
           session_id: inputOrSession.session_id,
           pipeline_state: inputOrSession.pipeline_state,
@@ -457,29 +456,7 @@ export async function recordStageEntry(
   const stage_entry_id = newId();
   const created_at = nowIso();
 
-  if (legacyMode) {
-    await db
-      .prepare(
-        `INSERT INTO stage_entries (
-           entry_id,
-           session_id,
-           pipeline_state,
-           entry_count,
-           classified_by,
-           classified_at
-         )
-         VALUES (?, ?, ?, ?, ?, ?)`
-      )
-      .bind(
-        stage_entry_id,
-        input.session_id,
-        input.pipeline_state,
-        entry_count,
-        "orchestration",
-        created_at
-      )
-      .run();
-  } else if (input.artifact_id === null) {
+  if (input.artifact_id === null) {
     await db
       .prepare(
         `INSERT INTO stage_entries (
@@ -542,55 +519,29 @@ export async function recordStageEntry(
   let loop_signal: StageLoopSignalRecord | null = null;
   if (entry_count > 1) {
     const loop_signal_id = newId();
-    if (legacyMode) {
-      await db
-        .prepare(
-          `INSERT INTO stage_loop_signals (
-             loop_signal_id,
-             session_id,
-             pipeline_state,
-             entry_count,
-             loop_type,
-             classified_by,
-             classified_at
-           )
-           VALUES (?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          loop_signal_id,
-          input.session_id,
-          input.pipeline_state,
-          entry_count,
-          "SAME_STAGE_REPEAT",
-          "orchestration",
-          created_at
-        )
-        .run();
-    } else {
-      await db
-        .prepare(
-          `INSERT INTO stage_loop_signals (
-             loop_signal_id,
-             session_id,
-             pipeline_state,
-             entry_count,
-             loop_type,
-             classified_by,
-             created_at
-           )
-           VALUES (?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(
-          loop_signal_id,
-          input.session_id,
-          input.pipeline_state,
-          entry_count,
-          "SAME_STAGE_REPEAT",
-          "orchestration",
-          created_at
-        )
-        .run();
-    }
+    await db
+      .prepare(
+        `INSERT INTO stage_loop_signals (
+           loop_signal_id,
+           session_id,
+           pipeline_state,
+           entry_count,
+           loop_type,
+           classified_by,
+           created_at
+         )
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind(
+        loop_signal_id,
+        input.session_id,
+        input.pipeline_state,
+        entry_count,
+        "SAME_STAGE_REPEAT",
+        "orchestration",
+        created_at
+      )
+      .run();
 
     loop_signal = {
       loop_signal_id,
@@ -636,17 +587,10 @@ export async function recordStageEntry(
         .bind(loop_signal.loop_signal_id)
         .run();
     }
-    if (legacyMode) {
-      await db
-        .prepare(`DELETE FROM stage_entries WHERE entry_id = ?`)
-        .bind(stage_entry_id)
-        .run();
-    } else {
-      await db
-        .prepare(`DELETE FROM stage_entries WHERE stage_entry_id = ?`)
-        .bind(stage_entry_id)
-        .run();
-    }
+    await db
+      .prepare(`DELETE FROM stage_entries WHERE stage_entry_id = ?`)
+      .bind(stage_entry_id)
+      .run();
     const reason = emitError instanceof Error ? emitError.message : String(emitError);
     throw new Error(`stage entry event emission failed after rollback: ${reason}`);
   }
