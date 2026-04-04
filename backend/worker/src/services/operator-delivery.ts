@@ -92,21 +92,8 @@ export async function getRunDeliverySummary(
     .bind(session_id)
     .first<{ outcome: string } | null>();
 
-  // 5. Fallback: handoff_status from delivery_integrity_events when no handoff_events row exists
-  let handoff_status: string | null = latestHandoff?.outcome ?? null;
-  if (!handoff_status) {
-    const latestDie = await db
-      .prepare(
-        `SELECT handoff_status
-           FROM delivery_integrity_events
-          WHERE session_id = ?
-          ORDER BY classified_at DESC
-          LIMIT 1`
-      )
-      .bind(session_id)
-      .first<{ handoff_status: string } | null>();
-    handoff_status = latestDie?.handoff_status ?? null;
-  }
+  // 5. Only orchestration-classified handoff truth is allowed in this read model.
+  const handoff_status: string | null = latestHandoff?.outcome ?? null;
 
   // 6. Loop flag: any loop signal recorded for this session
   const loopRow = await db

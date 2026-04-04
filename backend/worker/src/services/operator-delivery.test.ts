@@ -329,7 +329,7 @@ describe("getRunDeliverySummary", () => {
     expect(result!.next_action_code).toBe("HANDOFF_COMPLETE");
   });
 
-  it("falls back to delivery_integrity_events when no handoff_events exist", async () => {
+  it("does not surface caller-supplied handoff_status when no handoff_events exist", async () => {
     const db = createMockDb(
       baseState({
         lineage: [
@@ -355,7 +355,8 @@ describe("getRunDeliverySummary", () => {
     );
     const result = await getRunDeliverySummary(db, "sess-001");
     expect(result).not.toBeNull();
-    expect(result!.handoff_status).toBe("pending");
+    expect(result!.handoff_status).toBeNull();
+    expect(result!.next_action_code).toBe("UNKNOWN");
   });
 
   it("exposes all required output fields", async () => {
