@@ -120,16 +120,29 @@ npm run dev
 
 Worker poběží na `http://localhost:8787`.
 
+## Required GitHub Secrets
+
+The following secrets must be configured in the repository settings before any workflow can succeed:
+
+| Secret | Used by | Purpose |
+|---|---|---|
+| `CLOUDFLARE_API_TOKEN` | `deploy-worker.yml`, `deploy-workers.yaml` | Cloudflare API authentication for wrangler |
+| `CLOUDFLARE_ACCOUNT_ID` | `deploy-worker.yml`, `deploy-workers.yaml` | Cloudflare account identifier for wrangler |
+| `DEV_WORKER_URL` | `dev-runtime-evidence.yaml`, `dev-acceptance-evidence.yaml` | Base URL of the deployed dev Worker (e.g. `https://gpts-decision-stack-dev.<subdomain>.workers.dev`) |
+| `DEV_API_KEY` | `dev-runtime-evidence.yaml`, `dev-acceptance-evidence.yaml` | `API_KEY_SECRET` value set on the dev Worker |
+
+> **Never commit actual secret values to the repository.** Set them via GitHub → Settings → Secrets and variables → Actions.
+
 ## Deployment
 
 ### Deploy workflow path
 
-Two workflows are active. Both run on push to `main` when `backend/worker/**` changes; `deploy-workers.yaml` additionally accepts `workflow_dispatch` for manual prod deploys.
+Two workflows are active. `deploy-worker.yml` auto-deploys to dev on every push to `main` when `backend/worker/**` changes. `deploy-workers.yaml` is manual-only (`workflow_dispatch`) and covers both dev and prod.
 
 | Workflow | Trigger | Jobs | Notes |
 |---|---|---|---|
 | `.github/workflows/deploy-worker.yml` | push to `main` | `validate → deploy-dev` | Critical path. Dev auto-deploys on every merge. |
-| `.github/workflows/deploy-workers.yaml` | push to `main` OR `workflow_dispatch` | `validate → deploy-dev → deploy-prod` | Prod deploys only via `workflow_dispatch` with `environment: prod`. |
+| `.github/workflows/deploy-workers.yaml` | `workflow_dispatch` only | `validate → deploy-dev → deploy-prod` | Manual deploys. Select `dev` or `prod` from the input. |
 
 **Assumptions:**
 - PRs do **not** trigger any deploy job. Deploy runs only after merge to `main`.
