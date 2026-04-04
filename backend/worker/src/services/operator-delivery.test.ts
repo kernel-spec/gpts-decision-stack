@@ -329,7 +329,7 @@ describe("getRunDeliverySummary", () => {
     expect(result!.next_action_code).toBe("HANDOFF_COMPLETE");
   });
 
-  it("falls back to delivery_integrity_events when no handoff_events exist", async () => {
+  it("returns null for handoff_status when no handoff_events exist — delivery_integrity_events is not used as a fallback", async () => {
     const db = createMockDb(
       baseState({
         lineage: [
@@ -355,7 +355,9 @@ describe("getRunDeliverySummary", () => {
     );
     const result = await getRunDeliverySummary(db, "sess-001");
     expect(result).not.toBeNull();
-    expect(result!.handoff_status).toBe("pending");
+    // handoff_status is null when no handoff_events row exists —
+    // caller-supplied values from delivery_integrity_events must not leak into the read model
+    expect(result!.handoff_status).toBeNull();
   });
 
   it("exposes all required output fields", async () => {

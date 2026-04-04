@@ -1329,4 +1329,31 @@ describe("ADVERSARIAL 5 — read model reports DB truth without fabrication", ()
     // no handoff events → handoff_status from DB is null (no fallback fabrication)
     expect(summary!.handoff_status).toBeNull();
   });
+
+  it("caller-supplied delivery.handoff_status on a non-transition artifact does NOT appear in the read model", async () => {
+    // Attack: a caller submits a non-transition artifact with delivery.handoff_status = "completed".
+    // This writes to delivery_integrity_events but must NOT surface as handoff_status in the
+    // operator read model. handoff_status is orchestration-owned and only comes from handoff_events.
+    const session = makeSession({ pipeline_state: "problem_framing" });
+    const { db, state } = createFullMockDb(session);
+
+    await submitArtifactWithLifecycle(db, createMockBucket(), session, {
+      artifact_type: "FramingAssessment",
+      payload: { summary: "caller attempts to inject completed status" },
+      delivery: { handoff_status: "completed" },
+    });
+
+    // delivery_integrity_events captured the caller-supplied value
+    expect(state.deliveryEvents.length).toBeGreaterThan(0);
+    expect(state.deliveryEvents[0]!.handoff_status).toBe("completed");
+
+    // but no handoff_events row was written (FramingAssessment is not a transition trigger)
+    expect(state.handoffEvents).toHaveLength(0);
+
+    const summary = await getRunDeliverySummary(db, session.session_id);
+    expect(summary).not.toBeNull();
+
+    // read model MUST return null — not the caller-supplied "completed" from DIE
+    expect(summary!.handoff_status).toBeNull();
+  });
 });
