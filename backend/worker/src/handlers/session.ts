@@ -97,7 +97,7 @@ export async function handleTriggerReentry(
   if (updated) {
     await deliveryIntegrityService.recordStageEntry(env.DECISIONS_DB, {
       session_id,
-      pipeline_state: updated.pipeline_state,
+      pipeline_state: body.to_state,
     });
   }
 

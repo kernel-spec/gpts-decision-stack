@@ -69,15 +69,35 @@ function createMockDb() {
             },
             async run() {
               if (sql.includes("INSERT INTO stage_entries")) {
-                const [
-                  stage_entry_id,
-                  session_id,
-                  artifact_id,
-                  pipeline_state,
-                  entry_count,
-                  classified_by,
-                  created_at,
-                ] = params;
+                let stage_entry_id: unknown;
+                let session_id: unknown;
+                let artifact_id: unknown;
+                let pipeline_state: unknown;
+                let entry_count: unknown;
+                let classified_by: unknown;
+                let created_at: unknown;
+
+                if (params.length === 7) {
+                  [
+                    stage_entry_id,
+                    session_id,
+                    artifact_id,
+                    pipeline_state,
+                    entry_count,
+                    classified_by,
+                    created_at,
+                  ] = params;
+                } else {
+                  [
+                    stage_entry_id,
+                    session_id,
+                    pipeline_state,
+                    entry_count,
+                    classified_by,
+                    created_at,
+                  ] = params;
+                  artifact_id = null;
+                }
                 stageEntries.push({
                   stage_entry_id,
                   session_id,

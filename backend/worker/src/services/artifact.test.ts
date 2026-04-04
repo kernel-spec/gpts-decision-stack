@@ -118,14 +118,33 @@ function createArtifactMockDb(session: Session) {
                 });
               }
               if (sql.includes("INSERT INTO stage_entries")) {
-                const [
-                  entry_id,
-                  session_id,
-                  pipeline_state,
-                  entry_count,
-                  classified_by,
-                  classified_at,
-                ] = params as [string, string, string, number, string, string];
+                let entry_id: string;
+                let session_id: string;
+                let pipeline_state: string;
+                let entry_count: number;
+                let classified_by: string;
+                let classified_at: string;
+
+                if (params.length === 7) {
+                  [
+                    entry_id,
+                    session_id,
+                    ,
+                    pipeline_state,
+                    entry_count,
+                    classified_by,
+                    classified_at,
+                  ] = params as [string, string, string | null, string, number, string, string];
+                } else {
+                  [
+                    entry_id,
+                    session_id,
+                    pipeline_state,
+                    entry_count,
+                    classified_by,
+                    classified_at,
+                  ] = params as [string, string, string, number, string, string];
+                }
                 stageEntries.push({
                   entry_id,
                   session_id,
