@@ -86,8 +86,10 @@ components:
     DeliverySummary:
       type: object
       required:
-        [current_stage, current_attempt, handoff_status, loop_flag, next_action_code, truth_completeness]
+        [session_id, current_stage, current_attempt, handoff_status, loop_flag, next_action_code, truth_completeness]
       properties:
+        session_id:
+          type: string
         current_stage:
           type: string
           enum:
