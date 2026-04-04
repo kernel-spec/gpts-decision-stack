@@ -981,7 +981,7 @@ describe("FLOW E — Reentry loop", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("FLOW F — Read model consistency", () => {
-  it("reports current_stage from sessions, handoff_status from handoff_events, loop_flag from stage_loop_signals, correct next_action_code — no fabricated values", async () => {
+  it("reports current_stage from sessions, handoff_status from handoff_events, loop_flag from stage_loop_signals, and explicit truth completeness", async () => {
     // Build a DB state that has a full handoff history for session sess-pv-f
     const session = makeSession({
       session_id: "sess-pv-f",
@@ -1043,27 +1043,28 @@ describe("FLOW F — Read model consistency", () => {
     // next_action_code is derived from DB-sourced values, NOT fabricated
     // loop_flag=true → LOOP_DETECTED takes precedence
     expect(summary!.next_action_code).toBe("LOOP_DETECTED");
+    expect(summary!.truth_completeness).toBe("FULL");
 
     // No required field is missing — all output fields present
     expect(summary).toHaveProperty("session_id");
     expect(summary).toHaveProperty("current_stage");
-    expect(summary).toHaveProperty("current_artifact_type");
     expect(summary).toHaveProperty("current_attempt");
-    expect(summary).toHaveProperty("last_replacement_reason");
     expect(summary).toHaveProperty("handoff_status");
     expect(summary).toHaveProperty("loop_flag");
     expect(summary).toHaveProperty("next_action_code");
+    expect(summary).toHaveProperty("truth_completeness");
   });
 
-  it("returns AWAITING_FIRST_ARTIFACT when no lineage exists — no fabricated next_action", async () => {
+  it("returns MISSING truth completeness and null next_action_code when no lineage exists", async () => {
     const session = makeSession({ session_id: "sess-pv-empty", pipeline_state: "intake" });
     const { db } = createFullMockDb(session);
 
     const summary = await getRunDeliverySummary(db, "sess-pv-empty");
     expect(summary).not.toBeNull();
-    expect(summary!.current_artifact_type).toBeNull();
     expect(summary!.current_attempt).toBeNull();
-    expect(summary!.next_action_code).toBe("AWAITING_FIRST_ARTIFACT");
+    expect(summary!.handoff_status).toBe("NONE");
+    expect(summary!.truth_completeness).toBe("MISSING");
+    expect(summary!.next_action_code).toBeNull();
   });
 });
 
@@ -1262,7 +1263,7 @@ describe("ADVERSARIAL 5 — read model reports DB truth without fabrication", ()
     // - handoff_status comes from handoff_events (COMPLETED)
     //
     // This documents a known SILENT FAILURE RISK: the operator read model does not
-    // cross-validate these layers and may show next_action_code=HANDOFF_COMPLETE while
+    // cross-validate these layers and may show next_action_code=HANDOFF_COMPLETED while
     // current_stage is still at the originating stage.
     const session = makeSession({
       session_id: "sess-pv-mismatch",
@@ -1290,6 +1291,7 @@ describe("ADVERSARIAL 5 — read model reports DB truth without fabrication", ()
 
     // handoff_status MUST come from handoff_events — reflects DB truth
     expect(summary!.handoff_status).toBe("COMPLETED");
+    expect(summary!.truth_completeness).toBe("PARTIAL");
 
     // No value is fabricated — the output accurately reflects what is in the DB
     // even when those values suggest an inconsistency between layers.
@@ -1327,12 +1329,11 @@ describe("ADVERSARIAL 5 — read model reports DB truth without fabrication", ()
     const summary = await getRunDeliverySummary(db, "sess-pv-immutable");
 
     expect(summary).not.toBeNull();
-    // artifact_type comes from artifact_lineage, not caller input
-    expect(summary!.current_artifact_type).toBe("FramingAssessment");
     // attempt comes from artifact_lineage, not caller input
     expect(summary!.current_attempt).toBe(1);
-    // no handoff events → handoff_status from DB is null (no fallback fabrication)
-    expect(summary!.handoff_status).toBeNull();
+    // no handoff events → handoff_status from DB is NONE (no fallback fabrication)
+    expect(summary!.handoff_status).toBe("NONE");
+    expect(summary!.truth_completeness).toBe("PARTIAL");
   });
 
   it("caller-supplied delivery.handoff_status on a non-transition artifact does NOT appear in the read model", async () => {
@@ -1358,7 +1359,8 @@ describe("ADVERSARIAL 5 — read model reports DB truth without fabrication", ()
     const summary = await getRunDeliverySummary(db, session.session_id);
     expect(summary).not.toBeNull();
 
-    // read model MUST return null — not the caller-supplied "completed" from DIE
-    expect(summary!.handoff_status).toBeNull();
+    // read model MUST return NONE — not the caller-supplied "completed" from DIE
+    expect(summary!.handoff_status).toBe("NONE");
+    expect(summary!.truth_completeness).toBe("PARTIAL");
   });
 });

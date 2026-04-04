@@ -3,39 +3,48 @@ import type {
   PipelineState,
   ReplacementReason,
   RunDeliveryHistory,
+  RunHandoffStatus,
   RunDeliverySummary,
   RunNextActionCode,
+  TruthCompleteness,
 } from "../types/index.js";
 
 // ---------- Helpers ----------
 
+function normalizeHandoffStatus(outcome: string | null): RunHandoffStatus {
+  if (outcome === null) return "NONE";
+  if (outcome === "COMPLETED" || outcome === "FAILED") return outcome;
+  return "UNKNOWN";
+}
+
 function deriveNextActionCode(opts: {
   current_attempt: number | null;
-  handoff_status: string | null;
+  handoff_status: RunHandoffStatus;
   loop_flag: boolean;
-}): RunNextActionCode {
+  truth_completeness: TruthCompleteness;
+}): RunNextActionCode | null {
+  if (opts.truth_completeness === "MISSING") {
+    return null;
+  }
   if (opts.loop_flag) {
     return "LOOP_DETECTED";
   }
-  if (
-    opts.handoff_status === "FAILED" ||
-    opts.handoff_status === "failed"
-  ) {
+  if (opts.handoff_status === "FAILED") {
     return "HANDOFF_FAILED";
   }
   if (opts.current_attempt !== null && opts.current_attempt > 1) {
-    return "REPAIR_IN_PROGRESS";
+    return "REPAIR_REQUIRED";
   }
-  if (
-    opts.handoff_status === "COMPLETED" ||
-    opts.handoff_status === "completed"
-  ) {
-    return "HANDOFF_COMPLETE";
+  if (opts.handoff_status === "COMPLETED") {
+    return "HANDOFF_COMPLETED";
   }
-  if (opts.current_attempt !== null) {
+  if (opts.handoff_status === "UNKNOWN") {
     return "UNKNOWN";
   }
-  return "AWAITING_FIRST_ARTIFACT";
+  if (opts.current_attempt === null && opts.handoff_status === "NONE") {
+    return "AWAITING_TRUTH";
+  }
+  return "NO_ACTIONABLE_NEXT_STEP";
 }
 
 // ---------- Read model ----------
@@ -68,19 +77,7 @@ export async function getRunDeliverySummary(
     .bind(session_id)
     .first<{ artifact_type: string; attempt: number } | null>();
 
-  // 3. Most recent replacement reason from any repair attempt in this run
-  const lastRepair = await db
-    .prepare(
-      `SELECT replacement_reason
-         FROM artifact_lineage
-        WHERE run_id = ? AND is_repair_attempt = 1
-        ORDER BY created_at DESC
-        LIMIT 1`
-    )
-    .bind(session_id)
-    .first<{ replacement_reason: string | null } | null>();
-
-  // 4. Latest handoff outcome from handoff_events (orchestration-classified)
+  // 3. Latest handoff outcome from handoff_events (orchestration-classified)
   const latestHandoff = await db
     .prepare(
       `SELECT outcome
@@ -92,13 +89,10 @@ export async function getRunDeliverySummary(
     .bind(session_id)
     .first<{ outcome: string } | null>();
 
-  // 5. handoff_status comes exclusively from handoff_events (orchestration-classified).
-  //    delivery_integrity_events is not used as a fallback — caller-supplied handoff_status
-  //    values from that table must not leak into the operator read model.
-  // 5. Only orchestration-classified handoff truth is allowed in this read model.
-  const handoff_status: string | null = latestHandoff?.outcome ?? null;
+  // 4. Strict truth-only mapping; forbidden: delivery_integrity_events fallback / caller fields
+  const handoff_status = normalizeHandoffStatus(latestHandoff?.outcome ?? null);
 
-  // 6. Loop flag: any loop signal recorded for this session
+  // 5. Loop flag: any loop signal recorded for this session
   const loopRow = await db
     .prepare(
       `SELECT 1 AS has_loop FROM stage_loop_signals WHERE session_id = ? LIMIT 1`
@@ -106,21 +100,28 @@ export async function getRunDeliverySummary(
     .bind(session_id)
     .first<{ has_loop: number } | null>();
   const loop_flag = loopRow !== null;
+  const hasLineage = latestLineage !== null;
+  const hasKnownHandoff = handoff_status !== "NONE" && handoff_status !== "UNKNOWN";
+  const truth_completeness: TruthCompleteness = hasLineage && hasKnownHandoff
+    ? "FULL"
+    : hasLineage || hasKnownHandoff
+      ? "PARTIAL"
+      : "MISSING";
+  const next_action_code = deriveNextActionCode({
+    current_attempt: latestLineage?.attempt ?? null,
+    handoff_status,
+    loop_flag,
+    truth_completeness,
+  });
 
   return {
     session_id,
     current_stage: sessionRow.pipeline_state as PipelineState,
-    current_artifact_type: latestLineage?.artifact_type ?? null,
     current_attempt: latestLineage?.attempt ?? null,
-    last_replacement_reason: (lastRepair?.replacement_reason ??
-      null) as ReplacementReason | null,
     handoff_status,
     loop_flag,
-    next_action_code: deriveNextActionCode({
-      current_attempt: latestLineage?.attempt ?? null,
-      handoff_status,
-      loop_flag,
-    }),
+    next_action_code,
+    truth_completeness,
   };
 }
 
@@ -214,7 +215,7 @@ export async function getRunDeliveryHistory(
 export async function getRunNextAction(
   db: Env["DECISIONS_DB"],
   session_id: string
-): Promise<{ session_id: string; next_action_code: RunNextActionCode } | null> {
+): Promise<{ session_id: string; next_action_code: RunNextActionCode | null } | null> {
   const summary = await getRunDeliverySummary(db, session_id);
   if (!summary) {
     return null;

@@ -458,22 +458,26 @@ export interface DeliverySummary {
 // ---------- Legacy operator read-model compatibility ----------
 
 export type RunNextActionCode =
-  | "AWAITING_FIRST_ARTIFACT"
-  | "REPAIR_IN_PROGRESS"
+  | "AWAITING_TRUTH"
+  | "NO_ACTIONABLE_NEXT_STEP"
+  | "REPAIR_REQUIRED"
   | "HANDOFF_FAILED"
   | "LOOP_DETECTED"
-  | "HANDOFF_COMPLETE"
+  | "HANDOFF_COMPLETED"
   | "UNKNOWN";
+
+export type RunHandoffStatus = "COMPLETED" | "FAILED" | "NONE" | "UNKNOWN";
+
+export type TruthCompleteness = "FULL" | "PARTIAL" | "MISSING";
 
 export interface RunDeliverySummary {
   session_id: string;
-  current_stage: PipelineState | null;
-  current_artifact_type: string | null;
+  current_stage: PipelineState;
   current_attempt: number | null;
-  last_replacement_reason: ReplacementReason | null;
-  handoff_status: string | null;
+  handoff_status: RunHandoffStatus;
   loop_flag: boolean;
-  next_action_code: RunNextActionCode;
+  next_action_code: RunNextActionCode | null;
+  truth_completeness: TruthCompleteness;
 }
 
 export interface RunDeliveryHistoryEntry {
