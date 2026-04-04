@@ -390,15 +390,31 @@ function classifyNextActionCode(input: {
 
 export async function recordStageEntry(
   db: Env["DECISIONS_DB"],
-  input: {
-    session_id: string;
-    pipeline_state: Session["pipeline_state"];
-    artifact_id?: string | null;
-  }
+  inputOrSession:
+    | {
+        session_id: string;
+        pipeline_state: Session["pipeline_state"];
+        artifact_id?: string | null;
+      }
+    | Session,
+  _legacyInput?: { entered_by?: string }
 ): Promise<{
   stage_entry: StageEntryRecord;
+  entry: StageEntryRecord;
   loop_signal: StageLoopSignalRecord | null;
 }> {
+  const input =
+    "requestor_type" in inputOrSession
+      ? {
+          session_id: inputOrSession.session_id,
+          pipeline_state: inputOrSession.pipeline_state,
+          artifact_id: null,
+        }
+      : {
+          session_id: inputOrSession.session_id,
+          pipeline_state: inputOrSession.pipeline_state,
+          artifact_id: inputOrSession.artifact_id ?? null,
+        };
   const prior = await db
     .prepare(
       `SELECT entry_count
@@ -440,12 +456,14 @@ export async function recordStageEntry(
 
   const stage_entry: StageEntryRecord = {
     stage_entry_id,
+    entry_id: stage_entry_id,
     session_id: input.session_id,
     artifact_id: input.artifact_id ?? null,
     pipeline_state: input.pipeline_state,
     entry_count,
     classified_by: "orchestration",
     created_at,
+    classified_at: created_at,
   };
 
   let loop_signal: StageLoopSignalRecord | null = null;
@@ -486,7 +504,7 @@ export async function recordStageEntry(
     };
   }
 
-  return { stage_entry, loop_signal };
+  return { stage_entry, entry: stage_entry, loop_signal };
 }
 
 export async function getDeliverySummary(

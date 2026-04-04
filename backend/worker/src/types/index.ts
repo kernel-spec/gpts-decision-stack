@@ -421,12 +421,14 @@ export type NextActionCode =
 
 export interface StageEntryRecord {
   stage_entry_id: string;
+  entry_id?: string;
   session_id: string;
   artifact_id: string | null;
   pipeline_state: Session["pipeline_state"];
   entry_count: number;
   classified_by: string;
   created_at: string;
+  classified_at?: string;
 }
 
 export interface StageLoopSignalRecord {
@@ -449,6 +451,54 @@ export interface DeliverySummary {
   loop_flag: boolean;
   loop_type: LoopType | null;
   next_action_code: NextActionCode;
+}
+
+// ---------- Legacy operator read-model compatibility ----------
+
+export type RunNextActionCode =
+  | "AWAITING_FIRST_ARTIFACT"
+  | "REPAIR_IN_PROGRESS"
+  | "HANDOFF_FAILED"
+  | "LOOP_DETECTED"
+  | "HANDOFF_COMPLETE"
+  | "UNKNOWN";
+
+export interface RunDeliverySummary {
+  session_id: string;
+  current_stage: PipelineState | null;
+  current_artifact_type: string | null;
+  current_attempt: number | null;
+  last_replacement_reason: ReplacementReason | null;
+  handoff_status: string | null;
+  loop_flag: boolean;
+  next_action_code: RunNextActionCode;
+}
+
+export interface RunDeliveryHistoryEntry {
+  artifact_id: string;
+  artifact_type: string;
+  stage: string;
+  attempt: number;
+  replacement_reason: ReplacementReason | null;
+  is_repair_attempt: boolean;
+  created_at: string;
+}
+
+export interface RunDeliveryHistory {
+  session_id: string;
+  lineage: RunDeliveryHistoryEntry[];
+  loop_signals: Array<{
+    pipeline_state: string;
+    entry_count: number;
+    loop_type: string;
+    classified_at: string;
+  }>;
+  handoff_outcomes: Array<{
+    pipeline_state: string;
+    outcome: string;
+    failure_reason: string | null;
+    classified_at: string;
+  }>;
 }
 
 // ---------- API responses ----------
