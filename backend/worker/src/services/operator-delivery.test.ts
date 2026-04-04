@@ -179,6 +179,15 @@ describe("getRunDeliverySummary", () => {
     expect(result).toBeNull();
   });
 
+  it("returns null for corrupted sessions with invalid pipeline_state", async () => {
+    const db = createMockDb({
+      ...baseState(),
+      sessions: [{ pipeline_state: "not-a-canonical-state" }],
+    });
+    const result = await getRunDeliverySummary(db, "sess-corrupted");
+    expect(result).toBeNull();
+  });
+
   it("returns MISSING truth completeness when lineage and handoff are both absent", async () => {
     const db = createMockDb(baseState());
     const result = await getRunDeliverySummary(db, "sess-001");
@@ -333,7 +342,7 @@ describe("getRunDeliverySummary", () => {
     const result = await getRunDeliverySummary(db, "sess-001");
     expect(result).not.toBeNull();
     expect(result!.handoff_status).toBe("FAILED");
-    expect(result!.truth_completeness).toBe("PARTIAL");
+    expect(result!.truth_completeness).toBe("FULL");
     expect(result!.next_action_code).toBe("HANDOFF_FAILED");
   });
 

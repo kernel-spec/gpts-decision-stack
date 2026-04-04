@@ -11,6 +11,21 @@ import type {
 
 // ---------- Helpers ----------
 
+const VALID_PIPELINE_STATES: readonly PipelineState[] = [
+  "intake",
+  "problem_framing",
+  "primitive_selection",
+  "architecture_validation",
+  "claims_validation",
+  "risk_governance_validation",
+  "commercial_packaging",
+  "release_decision",
+];
+
+function isPipelineState(value: string): value is PipelineState {
+  return VALID_PIPELINE_STATES.includes(value as PipelineState);
+}
+
 function normalizeHandoffStatus(outcome: string | null): RunHandoffStatus {
   if (outcome === null) return "NONE";
   if (outcome === "COMPLETED" || outcome === "FAILED") return outcome;
@@ -64,6 +79,9 @@ export async function getRunDeliverySummary(
   if (!sessionRow) {
     return null;
   }
+  if (!isPipelineState(sessionRow.pipeline_state)) {
+    return null;
+  }
 
   // 2. Latest artifact attempt for this run (run_id = session_id in the primary path)
   const latestLineage = await db
@@ -102,9 +120,10 @@ export async function getRunDeliverySummary(
   const loop_flag = loopRow !== null;
   const hasLineage = latestLineage !== null;
   const hasKnownHandoff = handoff_status !== "NONE" && handoff_status !== "UNKNOWN";
+  const hasLoopTruth = loop_flag;
   const truth_completeness: TruthCompleteness = hasLineage && hasKnownHandoff
     ? "FULL"
-    : hasLineage || hasKnownHandoff
+    : hasLineage || hasKnownHandoff || hasLoopTruth
       ? "PARTIAL"
       : "MISSING";
   const next_action_code = deriveNextActionCode({
@@ -116,7 +135,7 @@ export async function getRunDeliverySummary(
 
   return {
     session_id,
-    current_stage: sessionRow.pipeline_state as PipelineState,
+    current_stage: sessionRow.pipeline_state,
     current_attempt: latestLineage?.attempt ?? null,
     handoff_status,
     loop_flag,
