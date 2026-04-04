@@ -16,8 +16,16 @@ type SessionRow = {
   veto_active: number;
 };
 
+type StageEntryRow = {
+  stage_entry_id: string;
+  session_id: string;
+  pipeline_state: string;
+  entry_count: number;
+};
+
 function createMockDb(seed: SessionRow[] = []) {
   const sessions: SessionRow[] = [...seed];
+  const stageEntries: StageEntryRow[] = [];
 
   const db = {
     prepare(sql: string) {
@@ -52,15 +60,31 @@ function createMockDb(seed: SessionRow[] = []) {
                   veto_active: 0,
                 });
               }
+              if (sql.includes("INSERT INTO stage_entries")) {
+                const [stage_entry_id, session_id, pipeline_state, entry_count] = params as [
+                  string,
+                  string,
+                  string,
+                  number,
+                ];
+                stageEntries.push({ stage_entry_id, session_id, pipeline_state, entry_count });
+              }
               return { success: true };
             },
           };
         },
       };
     },
+    async batch(statements: Array<{ run(): Promise<unknown> }>) {
+      const results = [];
+      for (const stmt of statements) {
+        results.push(await stmt.run());
+      }
+      return results;
+    },
   };
 
-  return { db: db as unknown as Env["DECISIONS_DB"], sessions };
+  return { db: db as unknown as Env["DECISIONS_DB"], sessions, stageEntries };
 }
 
 function makeEnv(seed: SessionRow[] = []): Env {
@@ -176,6 +200,32 @@ describe("handleCreateSession", () => {
 
     const response = await handleCreateSession(request, env);
     expect(response.status).toBe(201);
+  });
+
+  it("creates session and stage_entry atomically in a single batch", async () => {
+    const { db, sessions, stageEntries } = createMockDb();
+    const env = { DECISIONS_DB: db } as unknown as Env;
+    const request = new Request("https://example.com/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestor_type: "founder-led" }),
+    });
+
+    const response = await handleCreateSession(request, env);
+    const body = await response.json() as { ok: boolean; data: Session };
+
+    expect(response.status).toBe(201);
+    expect(sessions).toHaveLength(1);
+    expect(stageEntries).toHaveLength(1);
+    
+    // Verify session
+    expect(sessions[0].session_id).toBe(body.data.session_id);
+    expect(sessions[0].pipeline_state).toBe("intake");
+    
+    // Verify stage_entry matches session
+    expect(stageEntries[0].session_id).toBe(body.data.session_id);
+    expect(stageEntries[0].pipeline_state).toBe("intake");
+    expect(stageEntries[0].entry_count).toBe(1);
   });
 });
 
