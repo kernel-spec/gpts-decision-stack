@@ -1,13 +1,11 @@
 import type {
   ArtifactAttemptInput,
   ArtifactLineageRecord,
-  DeliverySummary,
   DeliveryEvent,
   DeliveryHandoffStatus,
   DeliveryIntegrityInput,
   Env,
   HandoffFailureReason,
-  NextActionCode,
   ParserVerdict,
   ReplacementReason,
   ReviewVerdict,
@@ -177,16 +175,8 @@ export async function appendDeliveryIntegrityEvent(
         classified_at,
       })
     );
-  } catch (emitError) {
-    await db
-      .prepare(`DELETE FROM delivery_integrity_events WHERE event_id = ?`)
-      .bind(event_id)
-      .run();
-    const reason =
-      emitError instanceof Error ? emitError.message : String(emitError);
-    throw new Error(
-      `delivery integrity event emission failed after rollback: ${reason}`
-    );
+  } catch {
+    // non-critical: truth is already persisted and remains append-only
   }
 
   return {
@@ -355,50 +345,11 @@ export async function recordArtifactAttempt(
     for (const ev of events) {
       console.log(JSON.stringify({ ...ev }));
     }
-  } catch (emitError) {
-    await db
-      .prepare(`DELETE FROM artifact_lineage WHERE lineage_id = ?`)
-      .bind(lineage_id)
-      .run();
-    const reason = emitError instanceof Error ? emitError.message : String(emitError);
-    throw new Error(`artifact attempt event emission failed after rollback: ${reason}`);
+  } catch {
+    // non-critical: truth is already persisted and remains append-only
   }
 
   return { record, events };
-}
-
-function classifyNextActionCode(input: {
-  handoff_status: DeliveryHandoffStatus;
-  handoff_failure_reason: HandoffFailureReason | null;
-  loop_flag: boolean;
-  current_attempt: number;
-}): NextActionCode {
-  if (input.loop_flag) {
-    return "REPAIR_SAME_STAGE";
-  }
-
-  if (input.handoff_status === "completed") {
-    return "READY_FOR_NEXT_STAGE";
-  }
-
-  if (input.handoff_status === "failed") {
-    if (input.handoff_failure_reason === "REVIEW_REJECTED") {
-      return "REVIEW_REQUIRED";
-    }
-    if (input.handoff_failure_reason === "AMBIGUOUS_OWNER") {
-      return "MANUAL_OVERRIDE_REQUIRED";
-    }
-    if (input.handoff_failure_reason === "REENTRY_NOT_READY") {
-      return "RETURN_TO_PREVIOUS_STAGE";
-    }
-    return "REPAIR_SAME_STAGE";
-  }
-
-  if (input.current_attempt > 1) {
-    return "REPAIR_SAME_STAGE";
-  }
-
-  return "REPAIR_SAME_STAGE";
 }
 
 export async function recordStageEntry(
@@ -580,95 +531,9 @@ export async function recordStageEntry(
         })
       );
     }
-  } catch (emitError) {
-    if (loop_signal) {
-      await db
-        .prepare(`DELETE FROM stage_loop_signals WHERE loop_signal_id = ?`)
-        .bind(loop_signal.loop_signal_id)
-        .run();
-    }
-    await db
-      .prepare(`DELETE FROM stage_entries WHERE stage_entry_id = ?`)
-      .bind(stage_entry_id)
-      .run();
-    const reason = emitError instanceof Error ? emitError.message : String(emitError);
-    throw new Error(`stage entry event emission failed after rollback: ${reason}`);
+  } catch {
+    // non-critical: truth is already persisted and remains append-only
   }
 
   return { stage_entry, entry: stage_entry, loop_signal };
-}
-
-export async function getDeliverySummary(
-  db: Env["DECISIONS_DB"],
-  session: Session
-): Promise<DeliverySummary> {
-  const latestLineage = await db
-    .prepare(
-      `SELECT artifact_type, attempt, replacement_reason
-         FROM artifact_lineage
-        WHERE run_id = ? AND stage = ?
-        ORDER BY attempt DESC
-        LIMIT 1`
-    )
-    .bind(session.session_id, session.pipeline_state)
-    .first<{
-      artifact_type: string;
-      attempt: number;
-      replacement_reason: ReplacementReason | null;
-    } | null>();
-
-  const latestHandoff = await db
-    .prepare(
-      `SELECT outcome, failure_reason
-         FROM handoff_events
-        WHERE session_id = ?
-        ORDER BY classified_at DESC
-        LIMIT 1`
-    )
-    .bind(session.session_id)
-    .first<{
-      outcome: "COMPLETED" | "FAILED";
-      failure_reason: HandoffFailureReason | null;
-    } | null>();
-
-  const latestLoop = await db
-    .prepare(
-      `SELECT loop_type, entry_count
-         FROM stage_loop_signals
-        WHERE session_id = ? AND pipeline_state = ?
-        ORDER BY created_at DESC
-        LIMIT 1`
-    )
-    .bind(session.session_id, session.pipeline_state)
-    .first<{
-      loop_type: StageLoopSignalRecord["loop_type"];
-      entry_count: number;
-    } | null>();
-
-  const handoff_status: DeliveryHandoffStatus = latestHandoff
-    ? latestHandoff.outcome === "COMPLETED"
-      ? "completed"
-      : "failed"
-    : "pending";
-
-  const handoff_failure_reason = latestHandoff?.failure_reason ?? null;
-  const loop_flag = latestLoop !== null;
-  const current_attempt = latestLineage?.attempt ?? 0;
-
-  return {
-    current_stage: session.pipeline_state,
-    current_artifact_type: latestLineage?.artifact_type ?? null,
-    current_attempt,
-    last_replacement_reason: latestLineage?.replacement_reason ?? null,
-    handoff_status,
-    handoff_failure_reason,
-    loop_flag,
-    loop_type: latestLoop?.loop_type ?? null,
-    next_action_code: classifyNextActionCode({
-      handoff_status,
-      handoff_failure_reason,
-      loop_flag,
-      current_attempt,
-    }),
-  };
 }

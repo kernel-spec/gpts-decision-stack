@@ -132,13 +132,8 @@ export async function recordHandoffOutcome(
         })
       );
     }
-  } catch (emitError) {
-    await db
-      .prepare(`DELETE FROM handoff_events WHERE event_id = ?`)
-      .bind(event_id)
-      .run();
-    const reason = emitError instanceof Error ? emitError.message : String(emitError);
-    throw new Error(`handoff event emission failed after rollback: ${reason}`);
+  } catch {
+    // non-critical: truth is already persisted and remains append-only
   }
 
   return {

@@ -106,11 +106,6 @@ function createMockDb(seed: LineageRow[] = []) {
                   override_flag,
                 });
               }
-              if (sql.includes("DELETE FROM artifact_lineage")) {
-                const [lineage_id] = params as [string];
-                const idx = rows.findIndex((r) => r.lineage_id === lineage_id);
-                if (idx !== -1) rows.splice(idx, 1);
-              }
               return { success: true };
             },
           };
@@ -683,16 +678,6 @@ function createStageEntryMockDb(seedEntries: StageEntryRow[] = []) {
                   params as [string, string, string, number, string, string, string];
                 loopRows.push({ loop_signal_id, session_id, pipeline_state, entry_count, loop_type, classified_by, classified_at });
               }
-              if (sql.includes("DELETE FROM stage_entries")) {
-                const [entry_id] = params as [string];
-                const idx = entryRows.findIndex((r) => r.entry_id === entry_id);
-                if (idx !== -1) entryRows.splice(idx, 1);
-              }
-              if (sql.includes("DELETE FROM stage_loop_signals")) {
-                const [loop_signal_id] = params as [string];
-                const idx = loopRows.findIndex((r) => r.loop_signal_id === loop_signal_id);
-                if (idx !== -1) loopRows.splice(idx, 1);
-              }
               return { success: true };
             },
           };
@@ -853,8 +838,7 @@ describe("recordStageEntry", () => {
     expect(r1.entry.entry_id).not.toBe(r2.entry.entry_id);
   });
 
-  // AC-DI-005 rollback guard: emit-failure removes both stage entry and loop signal
-  it("rolls back both stage entry and loop signal when emit fails — loop truth does not persist silently (AC-DI-005 rollback guard)", async () => {
+  it("keeps stage entry and loop signal persisted when emit fails (append-only truth)", async () => {
     const { db, entryRows, loopRows } = createStageEntryMockDb([
       {
         entry_id: "ENT_RB_001",
@@ -872,13 +856,11 @@ describe("recordStageEntry", () => {
     });
 
     try {
-      await expect(
-        recordStageEntry(db, session, { entered_by: "orchestration" })
-      ).rejects.toThrow("stage entry event emission failed after rollback");
-
-      // Source-of-truth rollback guard: only the seeded entry remains; the loop signal was never persisted
-      expect(entryRows.filter((r) => r.session_id === "sess-001")).toHaveLength(1);
-      expect(loopRows).toHaveLength(0);
+      const result = await recordStageEntry(db, session, { entered_by: "orchestration" });
+      expect(result.entry.entry_count).toBe(2);
+      expect(result.loop_signal?.loop_type).toBe("SAME_STAGE_REPEAT");
+      expect(entryRows.filter((r) => r.session_id === "sess-001")).toHaveLength(2);
+      expect(loopRows).toHaveLength(1);
     } finally {
       consoleSpy.mockRestore();
     }
@@ -1050,13 +1032,8 @@ function createDeliveryEventMockDb(
                   classified_at,
                 });
               }
-              if (sql.includes("DELETE FROM delivery_integrity_events")) {
-                const [event_id] = params as [string];
-                const idx = eventRows.findIndex((r) => r.event_id === event_id);
-                if (idx !== -1) eventRows.splice(idx, 1);
-              }
-              return { success: true };
-            },
+               return { success: true };
+             },
           };
         },
       };
@@ -1209,12 +1186,8 @@ describe("recordArtifactAttempt — source-of-truth invariants (AC-DI-003)", () 
   });
 });
 
-// ---------- recordArtifactAttempt — rollback guard (AC-DI-003) ----------
-// Verifies that a repair attempt row is deleted when event emission fails,
-// preventing silent persistence without an orchestration-classified reason.
-
-describe("recordArtifactAttempt — rollback guard (AC-DI-003)", () => {
-  it("rolls back the persisted lineage row when event emission fails — repair attempt does not persist silently", async () => {
+describe("recordArtifactAttempt — append-only behavior", () => {
+  it("keeps persisted lineage row when event emission fails", async () => {
     const { db, rows } = createMockDb([
       {
         lineage_id: "LIN_RB_001",
@@ -1240,28 +1213,26 @@ describe("recordArtifactAttempt — rollback guard (AC-DI-003)", () => {
     });
 
     try {
-      await expect(
-        recordArtifactAttempt(db, {
-          run_id: "RUN_RB",
-          stage: "problem_framing",
-          artifact_id: "ART_RB_2",
-          artifact_type: "FramingAssessment",
-          created_by_role: "AE-Framing",
-          parser_verdict: {
-            schema_valid: true,
-            required_sections_present: false,
-            stage_matches_expected: true,
-            reentry_ready: false,
-          },
-          review_verdict: { status: "NOT_REQUIRED" },
-          scope_fingerprint_changed: false,
-          transition_context: {},
-        })
-      ).rejects.toThrow("artifact attempt event emission failed after rollback");
+      const result = await recordArtifactAttempt(db, {
+        run_id: "RUN_RB",
+        stage: "problem_framing",
+        artifact_id: "ART_RB_2",
+        artifact_type: "FramingAssessment",
+        created_by_role: "AE-Framing",
+        parser_verdict: {
+          schema_valid: true,
+          required_sections_present: false,
+          stage_matches_expected: true,
+          reentry_ready: false,
+        },
+        review_verdict: { status: "NOT_REQUIRED" },
+        scope_fingerprint_changed: false,
+        transition_context: {},
+      });
 
-      // Source-of-truth rollback guard: only the seeded row must remain — the repair attempt was deleted
-      expect(rows).toHaveLength(1);
-      expect(rows[0]?.artifact_id).toBe("ART_RB_1");
+      expect(result.record.attempt).toBe(2);
+      expect(rows).toHaveLength(2);
+      expect(rows[1]?.artifact_id).toBe("ART_RB_2");
     } finally {
       consoleSpy.mockRestore();
     }

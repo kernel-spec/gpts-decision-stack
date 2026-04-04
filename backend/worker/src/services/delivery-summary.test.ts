@@ -1,19 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { Env, Session } from "../types/index.js";
-import { getDeliverySummary, recordStageEntry } from "./delivery-integrity.js";
-
-function makeSession(overrides: Partial<Session> = {}): Session {
-  return {
-    session_id: "sess-001",
-    requestor_type: "founder-led",
-    pipeline_state: "problem_framing",
-    decision_status: "proceed",
-    veto_active: false,
-    created_at: "2026-01-01T00:00:00.000Z",
-    updated_at: "2026-01-01T00:00:00.000Z",
-    ...overrides,
-  };
-}
+import type { Env } from "../types/index.js";
+import { recordStageEntry } from "./delivery-integrity.js";
 
 function createMockDb() {
   const stageEntries: Array<Record<string, unknown>> = [];
@@ -147,7 +134,7 @@ function createMockDb() {
   };
 }
 
-describe("delivery integrity stage tracking and read model", () => {
+describe("delivery integrity stage tracking", () => {
   it("emits SAME_STAGE_REPEAT on second entry into the same stage", async () => {
     const { db, stageEntries, loopSignals } = createMockDb();
 
@@ -171,43 +158,4 @@ describe("delivery integrity stage tracking and read model", () => {
     expect(loopSignals).toHaveLength(1);
   });
 
-  it("builds a delivery summary from latest lineage, handoff, and loop signal", async () => {
-    const { db, lineage, handoffEvents, loopSignals } = createMockDb();
-    const session = makeSession();
-
-    lineage.push({
-      run_id: "sess-001",
-      stage: "problem_framing",
-      artifact_type: "FramingAssessment",
-      attempt: 2,
-      replacement_reason: "QUALITY_ISSUE",
-    });
-    handoffEvents.push({
-      session_id: "sess-001",
-      outcome: "FAILED",
-      failure_reason: "REVIEW_REJECTED",
-      classified_at: "2026-01-01T00:01:00.000Z",
-    });
-    loopSignals.push({
-      session_id: "sess-001",
-      pipeline_state: "problem_framing",
-      loop_type: "SAME_STAGE_REPEAT",
-      entry_count: 2,
-      created_at: "2026-01-01T00:02:00.000Z",
-    });
-
-    const summary = await getDeliverySummary(db, session);
-
-    expect(summary).toEqual({
-      current_stage: "problem_framing",
-      current_artifact_type: "FramingAssessment",
-      current_attempt: 2,
-      last_replacement_reason: "QUALITY_ISSUE",
-      handoff_status: "failed",
-      handoff_failure_reason: "REVIEW_REJECTED",
-      loop_flag: true,
-      loop_type: "SAME_STAGE_REPEAT",
-      next_action_code: "REPAIR_SAME_STAGE",
-    });
-  });
 });

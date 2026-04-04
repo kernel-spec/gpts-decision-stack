@@ -26,7 +26,7 @@ function makeSession(overrides?: Partial<Session>): Session {
 }
 
 type StageEntryRow = {
-  entry_id: string;
+  stage_entry_id: string;
   session_id: string;
   pipeline_state: string;
   entry_count: number;
@@ -58,6 +58,18 @@ function createReentryMockDb(session: Session) {
                 } as T;
               }
               // stage_entries count (called by recordStageEntry)
+              if (
+                sql.includes("FROM stage_entries") &&
+                sql.includes("ORDER BY entry_count DESC")
+              ) {
+                const [session_id, pipeline_state] = params as [string, string];
+                const row = stageEntries
+                  .filter(
+                    (r) => r.session_id === session_id && r.pipeline_state === pipeline_state
+                  )
+                  .sort((a, b) => b.entry_count - a.entry_count)[0];
+                return (row ? { entry_count: row.entry_count } : null) as T;
+              }
               if (sql.includes("COUNT(*)") && sql.includes("FROM stage_entries")) {
                 const [session_id, pipeline_state] = params as [string, string];
                 const cnt = stageEntries.filter(
@@ -69,19 +81,48 @@ function createReentryMockDb(session: Session) {
             },
             async run() {
               if (sql.includes("INSERT INTO stage_entries")) {
-                const [entry_id, session_id, pipeline_state, entry_count] = params as [
-                  string,
-                  string,
-                  string,
-                  number,
-                ];
-                stageEntries.push({ entry_id, session_id, pipeline_state, entry_count });
+                let stage_entry_id: string;
+                let session_id: string;
+                let pipeline_state: string;
+                let entry_count: number;
+
+                if (params.length === 7) {
+                  // reentry lifecycle path: stage_entry_id, session_id, pipeline_state, entry_count, classified_by, created_at, lifecycle_id
+                  [stage_entry_id, session_id, pipeline_state, entry_count] = params as [
+                    string,
+                    string,
+                    string,
+                    number,
+                    string,
+                    string,
+                    string,
+                  ];
+                } else {
+                  // legacy shape fallback
+                  [stage_entry_id, session_id, pipeline_state, entry_count] = params as [
+                    string,
+                    string,
+                    string,
+                    number,
+                  ];
+                }
+                stageEntries.push({ stage_entry_id, session_id, pipeline_state, entry_count });
+              }
+              if (sql.includes("UPDATE sessions SET pipeline_state")) {
+                const [pipeline_state] = params as [string];
+                session.pipeline_state = pipeline_state as Session["pipeline_state"];
+                session.decision_status = "unresolved";
               }
               return { success: true };
             },
           };
         },
       };
+    },
+    async batch(stmts: Array<{ run(): Promise<unknown> }>) {
+      const results = [];
+      for (const s of stmts) results.push(await s.run());
+      return results;
     },
   };
 
@@ -146,7 +187,7 @@ describe("handleTriggerReentry — recordStageEntry wiring", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          from_state: "problem_framing",
+          from_state: "intake",
           to_state: "intake",
           reason: "second reentry",
           agent_id: "operator-001",

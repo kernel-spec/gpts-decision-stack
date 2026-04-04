@@ -414,13 +414,6 @@ export interface HandoffOutcomeRecord {
 
 export type LoopType = "SAME_STAGE_REPEAT" | "TWO_NODE_LOOP";
 
-export type NextActionCode =
-  | "REPAIR_SAME_STAGE"
-  | "RETURN_TO_PREVIOUS_STAGE"
-  | "REVIEW_REQUIRED"
-  | "MANUAL_OVERRIDE_REQUIRED"
-  | "READY_FOR_NEXT_STAGE";
-
 export interface StageEntryRecord {
   stage_entry_id: string;
   entry_id?: string;
@@ -441,18 +434,6 @@ export interface StageLoopSignalRecord {
   loop_type: LoopType;
   classified_by: string;
   created_at: string;
-}
-
-export interface DeliverySummary {
-  current_stage: Session["pipeline_state"];
-  current_artifact_type: string | null;
-  current_attempt: number;
-  last_replacement_reason: ReplacementReason | null;
-  handoff_status: DeliveryHandoffStatus;
-  handoff_failure_reason: HandoffFailureReason | null;
-  loop_flag: boolean;
-  loop_type: LoopType | null;
-  next_action_code: NextActionCode;
 }
 
 // ---------- Legacy operator read-model compatibility ----------

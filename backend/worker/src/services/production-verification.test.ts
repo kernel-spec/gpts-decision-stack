@@ -432,44 +432,54 @@ function createFullMockDb(session: Session): { db: Env["DECISIONS_DB"]; state: D
               }
 
               if (sql.includes("INSERT INTO stage_entries")) {
-                // 7-column form: with artifact_id; 6-column form: without
-                let entry_id: string;
+                // 8-column form: with artifact_id+lifecycle_id; 7-column reentry form; legacy fallback
+                let stage_entry_id: string;
                 let session_id: string;
                 let artifact_id: string | null;
                 let pipeline_state: string;
                 let entry_count: number;
                 let classified_by: string;
-                let classified_at: string;
+                let created_at: string;
 
-                if (params.length >= 7) {
+                if (params.length >= 8) {
                   [
-                    entry_id,
+                    stage_entry_id,
                     session_id,
                     artifact_id,
                     pipeline_state,
                     entry_count,
                     classified_by,
-                    classified_at,
-                  ] = params as [string, string, string | null, string, number, string, string];
-                } else {
+                    created_at,
+                  ] = params as [string, string, string | null, string, number, string, string, string];
+                } else if (params.length === 7) {
                   [
-                    entry_id,
+                    stage_entry_id,
                     session_id,
                     pipeline_state,
                     entry_count,
                     classified_by,
-                    classified_at,
+                    created_at,
+                  ] = params as [string, string, string, number, string, string, string];
+                  artifact_id = null;
+                } else {
+                  [
+                    stage_entry_id,
+                    session_id,
+                    pipeline_state,
+                    entry_count,
+                    classified_by,
+                    created_at,
                   ] = params as [string, string, string, number, string, string];
                   artifact_id = null;
                 }
                 state.stageEntries.push({
-                  entry_id,
+                  entry_id: stage_entry_id,
                   session_id,
                   artifact_id: artifact_id ?? null,
                   pipeline_state,
                   entry_count,
                   classified_by,
-                  classified_at,
+                  classified_at: created_at,
                 });
               }
 
@@ -537,24 +547,6 @@ function createFullMockDb(session: Session): { db: Env["DECISIONS_DB"]; state: D
                     updated_at,
                   });
                 }
-              }
-
-              if (sql.includes("DELETE FROM artifact_lineage WHERE lineage_id")) {
-                const [lineage_id] = params as [string];
-                const idx = state.lineage.findIndex((r) => r.lineage_id === lineage_id);
-                if (idx !== -1) state.lineage.splice(idx, 1);
-              }
-
-              if (sql.includes("DELETE FROM stage_entries WHERE")) {
-                const [entry_id] = params as [string];
-                const idx = state.stageEntries.findIndex((r) => r.entry_id === entry_id);
-                if (idx !== -1) state.stageEntries.splice(idx, 1);
-              }
-
-              if (sql.includes("DELETE FROM stage_loop_signals WHERE")) {
-                const [loop_signal_id] = params as [string];
-                const idx = state.loopSignals.findIndex((r) => r.loop_signal_id === loop_signal_id);
-                if (idx !== -1) state.loopSignals.splice(idx, 1);
               }
 
               return { success: true };
@@ -817,11 +809,6 @@ function createLineageMockDb(seed: LineageRow[] = []): {
                   override_flag,
                 });
               }
-              if (sql.includes("DELETE FROM artifact_lineage WHERE lineage_id")) {
-                const [lineage_id] = params as [string];
-                const idx = rows.findIndex((r) => r.lineage_id === lineage_id);
-                if (idx !== -1) rows.splice(idx, 1);
-              }
               return { success: true };
             },
           };
@@ -946,7 +933,7 @@ describe("FLOW E — Reentry loop", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          from_state: "problem_framing",
+          from_state: "intake",
           to_state: "intake",
           reason: "second reentry — loop",
           agent_id: "operator-pv-001",
