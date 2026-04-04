@@ -414,13 +414,6 @@ export interface HandoffOutcomeRecord {
 
 export type LoopType = "SAME_STAGE_REPEAT" | "TWO_NODE_LOOP";
 
-export type NextActionCode =
-  | "REPAIR_SAME_STAGE"
-  | "RETURN_TO_PREVIOUS_STAGE"
-  | "REVIEW_REQUIRED"
-  | "MANUAL_OVERRIDE_REQUIRED"
-  | "READY_FOR_NEXT_STAGE";
-
 export interface StageEntryRecord {
   stage_entry_id: string;
   entry_id?: string;
@@ -443,37 +436,29 @@ export interface StageLoopSignalRecord {
   created_at: string;
 }
 
-export interface DeliverySummary {
-  current_stage: Session["pipeline_state"];
-  current_artifact_type: string | null;
-  current_attempt: number;
-  last_replacement_reason: ReplacementReason | null;
-  handoff_status: DeliveryHandoffStatus;
-  handoff_failure_reason: HandoffFailureReason | null;
-  loop_flag: boolean;
-  loop_type: LoopType | null;
-  next_action_code: NextActionCode;
-}
-
 // ---------- Legacy operator read-model compatibility ----------
 
 export type RunNextActionCode =
-  | "AWAITING_FIRST_ARTIFACT"
-  | "REPAIR_IN_PROGRESS"
+  | "AWAITING_TRUTH"
+  | "NO_ACTIONABLE_NEXT_STEP"
+  | "REPAIR_REQUIRED"
   | "HANDOFF_FAILED"
   | "LOOP_DETECTED"
-  | "HANDOFF_COMPLETE"
+  | "HANDOFF_COMPLETED"
   | "UNKNOWN";
+
+export type RunHandoffStatus = "COMPLETED" | "FAILED" | "NONE" | "UNKNOWN";
+
+export type TruthCompleteness = "FULL" | "PARTIAL" | "MISSING";
 
 export interface RunDeliverySummary {
   session_id: string;
-  current_stage: PipelineState | null;
-  current_artifact_type: string | null;
+  current_stage: PipelineState;
   current_attempt: number | null;
-  last_replacement_reason: ReplacementReason | null;
-  handoff_status: string | null;
+  handoff_status: RunHandoffStatus;
   loop_flag: boolean;
-  next_action_code: RunNextActionCode;
+  next_action_code: RunNextActionCode | null;
+  truth_completeness: TruthCompleteness;
 }
 
 export interface RunDeliveryHistoryEntry {
@@ -493,7 +478,7 @@ export interface RunDeliveryHistory {
     pipeline_state: string;
     entry_count: number;
     loop_type: string;
-    classified_at: string;
+    created_at: string;
   }>;
   handoff_outcomes: Array<{
     pipeline_state: string;

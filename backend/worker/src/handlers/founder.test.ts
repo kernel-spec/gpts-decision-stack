@@ -31,6 +31,14 @@ function createMockDb(session: MockSessionRow) {
                 return (sessions.get(session_id) ?? null) as T | null;
               }
 
+              if (sql.includes("FROM artifact_lineage") && sql.includes("ORDER BY attempt DESC")) {
+                return null as T;
+              }
+
+              if (sql.includes("FROM stage_entries") && sql.includes("ORDER BY entry_count DESC")) {
+                return null as T;
+              }
+
               if (sql.includes("FROM delivery_integrity_events")) {
                 const [session_id, pipeline_state] = params as [string, string];
                 const exists = deliveryIntegrityEvents.some(
@@ -190,6 +198,11 @@ function createMockDb(session: MockSessionRow) {
           };
         },
       };
+    },
+    async batch(stmts: Array<{ run(): Promise<unknown> }>) {
+      const results = [];
+      for (const s of stmts) results.push(await s.run());
+      return results;
     },
   };
 

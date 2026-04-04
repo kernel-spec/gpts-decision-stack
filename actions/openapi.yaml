@@ -86,8 +86,10 @@ components:
     DeliverySummary:
       type: object
       required:
-        [current_stage, current_artifact_type, current_attempt, last_replacement_reason, handoff_status, handoff_failure_reason, loop_flag, loop_type, next_action_code]
+        [session_id, current_stage, current_attempt, handoff_status, loop_flag, next_action_code, truth_completeness]
       properties:
+        session_id:
+          type: string
         current_stage:
           type: string
           enum:
@@ -99,35 +101,30 @@ components:
             - risk_governance_validation
             - commercial_packaging
             - release_decision
-        current_artifact_type:
-          type: string
-          nullable: true
         current_attempt:
           type: integer
           minimum: 0
-        last_replacement_reason:
-          type: string
           nullable: true
         handoff_status:
           type: string
-          enum: [pending, completed, failed]
-        handoff_failure_reason:
-          type: string
-          nullable: true
+          enum: [COMPLETED, FAILED, NONE, UNKNOWN]
         loop_flag:
           type: boolean
-        loop_type:
-          type: string
-          nullable: true
-          enum: [SAME_STAGE_REPEAT, TWO_NODE_LOOP, null]
         next_action_code:
           type: string
+          nullable: true
           enum:
-            - REPAIR_SAME_STAGE
-            - RETURN_TO_PREVIOUS_STAGE
-            - REVIEW_REQUIRED
-            - MANUAL_OVERRIDE_REQUIRED
-            - READY_FOR_NEXT_STAGE
+            - AWAITING_TRUTH
+            - NO_ACTIONABLE_NEXT_STEP
+            - REPAIR_REQUIRED
+            - HANDOFF_FAILED
+            - LOOP_DETECTED
+            - HANDOFF_COMPLETED
+            - UNKNOWN
+            - null
+        truth_completeness:
+          type: string
+          enum: [FULL, PARTIAL, MISSING]
 
     ArtifactSubmission:
       type: object

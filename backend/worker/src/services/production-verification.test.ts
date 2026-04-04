@@ -432,44 +432,54 @@ function createFullMockDb(session: Session): { db: Env["DECISIONS_DB"]; state: D
               }
 
               if (sql.includes("INSERT INTO stage_entries")) {
-                // 7-column form: with artifact_id; 6-column form: without
-                let entry_id: string;
+                // 8-column form: with artifact_id+lifecycle_id; 7-column reentry form; legacy fallback
+                let stage_entry_id: string;
                 let session_id: string;
                 let artifact_id: string | null;
                 let pipeline_state: string;
                 let entry_count: number;
                 let classified_by: string;
-                let classified_at: string;
+                let created_at: string;
 
-                if (params.length === 7) {
+                if (params.length >= 8) {
                   [
-                    entry_id,
+                    stage_entry_id,
                     session_id,
                     artifact_id,
                     pipeline_state,
                     entry_count,
                     classified_by,
-                    classified_at,
-                  ] = params as [string, string, string | null, string, number, string, string];
-                } else {
+                    created_at,
+                  ] = params as [string, string, string | null, string, number, string, string, string];
+                } else if (params.length === 7) {
                   [
-                    entry_id,
+                    stage_entry_id,
                     session_id,
                     pipeline_state,
                     entry_count,
                     classified_by,
-                    classified_at,
+                    created_at,
+                  ] = params as [string, string, string, number, string, string, string];
+                  artifact_id = null;
+                } else {
+                  [
+                    stage_entry_id,
+                    session_id,
+                    pipeline_state,
+                    entry_count,
+                    classified_by,
+                    created_at,
                   ] = params as [string, string, string, number, string, string];
                   artifact_id = null;
                 }
                 state.stageEntries.push({
-                  entry_id,
+                  entry_id: stage_entry_id,
                   session_id,
                   artifact_id: artifact_id ?? null,
                   pipeline_state,
                   entry_count,
                   classified_by,
-                  classified_at,
+                  classified_at: created_at,
                 });
               }
 
@@ -539,29 +549,16 @@ function createFullMockDb(session: Session): { db: Env["DECISIONS_DB"]; state: D
                 }
               }
 
-              if (sql.includes("DELETE FROM artifact_lineage WHERE lineage_id")) {
-                const [lineage_id] = params as [string];
-                const idx = state.lineage.findIndex((r) => r.lineage_id === lineage_id);
-                if (idx !== -1) state.lineage.splice(idx, 1);
-              }
-
-              if (sql.includes("DELETE FROM stage_entries WHERE")) {
-                const [entry_id] = params as [string];
-                const idx = state.stageEntries.findIndex((r) => r.entry_id === entry_id);
-                if (idx !== -1) state.stageEntries.splice(idx, 1);
-              }
-
-              if (sql.includes("DELETE FROM stage_loop_signals WHERE")) {
-                const [loop_signal_id] = params as [string];
-                const idx = state.loopSignals.findIndex((r) => r.loop_signal_id === loop_signal_id);
-                if (idx !== -1) state.loopSignals.splice(idx, 1);
-              }
-
               return { success: true };
             },
           };
         },
       };
+    },
+    async batch(stmts: Array<{ run(): Promise<unknown> }>) {
+      const results = [];
+      for (const s of stmts) results.push(await s.run());
+      return results;
     },
   };
 
@@ -812,11 +809,6 @@ function createLineageMockDb(seed: LineageRow[] = []): {
                   override_flag,
                 });
               }
-              if (sql.includes("DELETE FROM artifact_lineage WHERE lineage_id")) {
-                const [lineage_id] = params as [string];
-                const idx = rows.findIndex((r) => r.lineage_id === lineage_id);
-                if (idx !== -1) rows.splice(idx, 1);
-              }
               return { success: true };
             },
           };
@@ -941,7 +933,7 @@ describe("FLOW E — Reentry loop", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          from_state: "problem_framing",
+          from_state: "intake",
           to_state: "intake",
           reason: "second reentry — loop",
           agent_id: "operator-pv-001",
@@ -976,7 +968,7 @@ describe("FLOW E — Reentry loop", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("FLOW F — Read model consistency", () => {
-  it("reports current_stage from sessions, handoff_status from handoff_events, loop_flag from stage_loop_signals, correct next_action_code — no fabricated values", async () => {
+  it("reports current_stage from sessions, handoff_status from handoff_events, loop_flag from stage_loop_signals, and explicit truth completeness", async () => {
     // Build a DB state that has a full handoff history for session sess-pv-f
     const session = makeSession({
       session_id: "sess-pv-f",
@@ -1038,27 +1030,28 @@ describe("FLOW F — Read model consistency", () => {
     // next_action_code is derived from DB-sourced values, NOT fabricated
     // loop_flag=true → LOOP_DETECTED takes precedence
     expect(summary!.next_action_code).toBe("LOOP_DETECTED");
+    expect(summary!.truth_completeness).toBe("FULL");
 
     // No required field is missing — all output fields present
     expect(summary).toHaveProperty("session_id");
     expect(summary).toHaveProperty("current_stage");
-    expect(summary).toHaveProperty("current_artifact_type");
     expect(summary).toHaveProperty("current_attempt");
-    expect(summary).toHaveProperty("last_replacement_reason");
     expect(summary).toHaveProperty("handoff_status");
     expect(summary).toHaveProperty("loop_flag");
     expect(summary).toHaveProperty("next_action_code");
+    expect(summary).toHaveProperty("truth_completeness");
   });
 
-  it("returns AWAITING_FIRST_ARTIFACT when no lineage exists — no fabricated next_action", async () => {
+  it("returns MISSING truth completeness and null next_action_code when no lineage exists", async () => {
     const session = makeSession({ session_id: "sess-pv-empty", pipeline_state: "intake" });
     const { db } = createFullMockDb(session);
 
     const summary = await getRunDeliverySummary(db, "sess-pv-empty");
     expect(summary).not.toBeNull();
-    expect(summary!.current_artifact_type).toBeNull();
     expect(summary!.current_attempt).toBeNull();
-    expect(summary!.next_action_code).toBe("AWAITING_FIRST_ARTIFACT");
+    expect(summary!.handoff_status).toBe("NONE");
+    expect(summary!.truth_completeness).toBe("MISSING");
+    expect(summary!.next_action_code).toBeNull();
   });
 });
 
@@ -1257,7 +1250,7 @@ describe("ADVERSARIAL 5 — read model reports DB truth without fabrication", ()
     // - handoff_status comes from handoff_events (COMPLETED)
     //
     // This documents a known SILENT FAILURE RISK: the operator read model does not
-    // cross-validate these layers and may show next_action_code=HANDOFF_COMPLETE while
+    // cross-validate these layers and may show next_action_code=HANDOFF_COMPLETED while
     // current_stage is still at the originating stage.
     const session = makeSession({
       session_id: "sess-pv-mismatch",
@@ -1285,6 +1278,7 @@ describe("ADVERSARIAL 5 — read model reports DB truth without fabrication", ()
 
     // handoff_status MUST come from handoff_events — reflects DB truth
     expect(summary!.handoff_status).toBe("COMPLETED");
+    expect(summary!.truth_completeness).toBe("PARTIAL");
 
     // No value is fabricated — the output accurately reflects what is in the DB
     // even when those values suggest an inconsistency between layers.
@@ -1322,12 +1316,11 @@ describe("ADVERSARIAL 5 — read model reports DB truth without fabrication", ()
     const summary = await getRunDeliverySummary(db, "sess-pv-immutable");
 
     expect(summary).not.toBeNull();
-    // artifact_type comes from artifact_lineage, not caller input
-    expect(summary!.current_artifact_type).toBe("FramingAssessment");
     // attempt comes from artifact_lineage, not caller input
     expect(summary!.current_attempt).toBe(1);
-    // no handoff events → handoff_status from DB is null (no fallback fabrication)
-    expect(summary!.handoff_status).toBeNull();
+    // no handoff events → handoff_status from DB is NONE (no fallback fabrication)
+    expect(summary!.handoff_status).toBe("NONE");
+    expect(summary!.truth_completeness).toBe("PARTIAL");
   });
 
   it("caller-supplied delivery.handoff_status on a non-transition artifact does NOT appear in the read model", async () => {
@@ -1353,7 +1346,8 @@ describe("ADVERSARIAL 5 — read model reports DB truth without fabrication", ()
     const summary = await getRunDeliverySummary(db, session.session_id);
     expect(summary).not.toBeNull();
 
-    // read model MUST return null — not the caller-supplied "completed" from DIE
-    expect(summary!.handoff_status).toBeNull();
+    // read model MUST return NONE — not the caller-supplied "completed" from DIE
+    expect(summary!.handoff_status).toBe("NONE");
+    expect(summary!.truth_completeness).toBe("PARTIAL");
   });
 });

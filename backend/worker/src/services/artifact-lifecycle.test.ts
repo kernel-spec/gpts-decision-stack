@@ -243,6 +243,11 @@ function createMockDb(session: Session) {
         },
       };
     },
+    async batch(stmts: Array<{ run(): Promise<unknown> }>) {
+      const results = [];
+      for (const s of stmts) results.push(await s.run());
+      return results;
+    },
   };
 
   return {

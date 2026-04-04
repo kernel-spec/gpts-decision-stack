@@ -3,6 +3,7 @@ import { VALID_REQUESTOR_TYPES } from "../types/index.js";
 import * as stateService from "../services/state.js";
 import * as decisionlogService from "../services/decisionlog.js";
 import * as deliveryIntegrityService from "../services/delivery-integrity.js";
+import * as operatorDeliveryService from "../services/operator-delivery.js";
 import { errorResponse, requireJson } from "../router.js";
 
 export async function handleCreateSession(
@@ -59,16 +60,13 @@ export async function handleGetDeliverySummary(
   session_id: string,
   env: Env
 ): Promise<Response> {
-  const session = await stateService.getSession(env.DECISIONS_DB, session_id);
-  if (!session) {
+  const summary = await operatorDeliveryService.getRunDeliverySummary(
+    env.DECISIONS_DB,
+    session_id
+  );
+  if (!summary) {
     return errorResponse("Session not found", "NOT_FOUND", 404);
   }
-
-  const summary = await deliveryIntegrityService.getDeliverySummary(
-    env.DECISIONS_DB,
-    session
-  );
-
   return Response.json({ ok: true, data: summary });
 }
 
@@ -87,18 +85,22 @@ export async function handleTriggerReentry(
     return errorResponse("to_state, reason and agent_id are required", "INVALID_REQUEST", 400);
   }
 
-  const updated = await stateService.updateSessionState(
-    env.DECISIONS_DB,
-    session_id,
-    body.to_state,
-    "unresolved"
-  );
-
-  if (updated) {
-    await deliveryIntegrityService.recordStageEntry(env.DECISIONS_DB, {
-      session_id,
-      pipeline_state: body.to_state,
-    });
+  let updated;
+  try {
+    const result = await stateService.triggerReentryWithLifecycle(
+      env.DECISIONS_DB,
+      session,
+      body
+    );
+    updated = result.session;
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      err.message.includes("illegal reentry transition")
+    ) {
+      return errorResponse(err.message, "ILLEGAL_REENTRY_TRANSITION", 409);
+    }
+    throw err;
   }
 
   await decisionlogService.appendDecisionLog(env.DECISIONS_DB, session_id, {
