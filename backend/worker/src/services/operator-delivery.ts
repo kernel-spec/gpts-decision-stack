@@ -161,17 +161,17 @@ export async function getRunDeliveryHistory(
   // All loop signals for this session ordered chronologically
   const loopRows = await db
     .prepare(
-      `SELECT pipeline_state, entry_count, loop_type, classified_at
+      `SELECT pipeline_state, entry_count, loop_type, created_at
          FROM stage_loop_signals
         WHERE session_id = ?
-        ORDER BY classified_at ASC`
+        ORDER BY created_at ASC`
     )
     .bind(session_id)
     .all<{
       pipeline_state: string;
       entry_count: number;
       loop_type: string;
-      classified_at: string;
+      created_at: string;
     }>();
 
   // All handoff outcomes for this session ordered chronologically
@@ -201,7 +201,12 @@ export async function getRunDeliveryHistory(
       is_repair_attempt: r.is_repair_attempt === 1,
       created_at: r.created_at,
     })),
-    loop_signals: loopRows.results,
+    loop_signals: loopRows.results.map((r) => ({
+      pipeline_state: r.pipeline_state,
+      entry_count: r.entry_count,
+      loop_type: r.loop_type,
+      created_at: r.created_at,
+    })),
     handoff_outcomes: handoffRows.results,
   };
 }

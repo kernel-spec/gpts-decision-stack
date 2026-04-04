@@ -32,7 +32,7 @@ type LoopSignalRow = {
   pipeline_state: string;
   entry_count: number;
   loop_type: string;
-  classified_at: string;
+  created_at: string;
 };
 type DeliveryIntegrityRow = {
   session_id: string;
@@ -143,8 +143,8 @@ function createMockDb(state: MockDbState): Env["DECISIONS_DB"] {
                   .filter((r) => r.session_id === session_id)
                   .sort(
                     (a, b) =>
-                      new Date(a.classified_at).getTime() -
-                      new Date(b.classified_at).getTime()
+                      new Date(a.created_at).getTime() -
+                      new Date(b.created_at).getTime()
                   );
                 return { results: rows as T[] };
               }
@@ -254,7 +254,7 @@ describe("getRunDeliverySummary", () => {
             pipeline_state: "problem_framing",
             entry_count: 2,
             loop_type: "SAME_STAGE_REPEAT",
-            classified_at: "2026-01-01T02:00:00Z",
+            created_at: "2026-01-01T02:00:00Z",
           },
         ],
       })
@@ -426,7 +426,7 @@ describe("getRunDeliveryHistory", () => {
             pipeline_state: "problem_framing",
             entry_count: 2,
             loop_type: "SAME_STAGE_REPEAT",
-            classified_at: "2026-01-01T02:00:00Z",
+            created_at: "2026-01-01T02:00:00Z",
           },
         ],
         handoffEvents: [
@@ -479,7 +479,7 @@ describe("getRunNextAction", () => {
             pipeline_state: "problem_framing",
             entry_count: 2,
             loop_type: "SAME_STAGE_REPEAT",
-            classified_at: "2026-01-01T00:00:00Z",
+            created_at: "2026-01-01T00:00:00Z",
           },
         ],
       })

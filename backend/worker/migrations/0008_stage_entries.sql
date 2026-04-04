@@ -1,11 +1,12 @@
 -- Append-only stage entry and loop signal tracking; orchestration is final truth owner
 CREATE TABLE IF NOT EXISTS stage_entries (
-  entry_id TEXT PRIMARY KEY,
+  stage_entry_id TEXT PRIMARY KEY,
   session_id TEXT NOT NULL REFERENCES sessions(session_id) ON DELETE RESTRICT,
+  artifact_id TEXT REFERENCES artifacts(id) ON DELETE RESTRICT,
   pipeline_state TEXT NOT NULL,
   entry_count INTEGER NOT NULL CHECK (entry_count >= 1),
   classified_by TEXT NOT NULL DEFAULT 'orchestration',
-  classified_at TEXT NOT NULL,
+  created_at TEXT NOT NULL,
   CHECK (classified_by = 'orchestration')
 );
 
@@ -20,7 +21,7 @@ CREATE TABLE IF NOT EXISTS stage_loop_signals (
   entry_count INTEGER NOT NULL CHECK (entry_count >= 2),
   loop_type TEXT NOT NULL,
   classified_by TEXT NOT NULL DEFAULT 'orchestration',
-  classified_at TEXT NOT NULL,
+  created_at TEXT NOT NULL,
   CHECK (classified_by = 'orchestration')
 );
 

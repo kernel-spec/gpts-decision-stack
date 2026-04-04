@@ -493,7 +493,7 @@ export interface RunDeliveryHistory {
     pipeline_state: string;
     entry_count: number;
     loop_type: string;
-    classified_at: string;
+    created_at: string;
   }>;
   handoff_outcomes: Array<{
     pipeline_state: string;
