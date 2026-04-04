@@ -51,80 +51,83 @@ type MockDbState = {
 function createMockDb(state: MockDbState): Env["DECISIONS_DB"] {
   const db = {
     prepare(sql: string) {
+      const allHandler = async function allFn<T>() {
+        // Pattern 1: COMPLETED handoffs with lifecycle_id that have no matching stage_entry
+        if (
+          sql.includes("FROM handoff_events") &&
+          sql.includes("he.outcome = 'COMPLETED'") &&
+          sql.includes("he.lifecycle_id IS NOT NULL")
+        ) {
+          const rows = state.handoffEvents
+            .filter((he) => he.outcome === "COMPLETED" && he.lifecycle_id !== null)
+            .filter(
+              (he) =>
+                !state.stageEntries.some((se) => se.lifecycle_id === he.lifecycle_id)
+            )
+            .map((he) => ({
+              session_id: he.session_id,
+              lifecycle_id: he.lifecycle_id,
+              pipeline_state: he.pipeline_state,
+            }));
+          return { results: rows as T[] };
+        }
+
+        // Pattern 2: Sessions in non-intake stage with no matching stage_entry
+        if (
+          sql.includes("FROM sessions s") &&
+          sql.includes("s.pipeline_state != 'intake'")
+        ) {
+          const rows = state.sessions
+            .filter((s) => s.pipeline_state !== "intake")
+            .filter(
+              (s) =>
+                !state.stageEntries.some(
+                  (se) =>
+                    se.session_id === s.session_id &&
+                    se.pipeline_state === s.pipeline_state
+                )
+            )
+            .map((s) => ({
+              session_id: s.session_id,
+              pipeline_state: s.pipeline_state,
+            }));
+          return { results: rows as T[] };
+        }
+
+        // Pattern 3: Transition lineage with lifecycle_id but no handoff_events
+        if (
+          sql.includes("FROM artifact_lineage al") &&
+          sql.includes("al.lifecycle_id IS NOT NULL")
+        ) {
+          const rows = state.lineage
+            .filter(
+              (al) =>
+                al.lifecycle_id !== null &&
+                (al.artifact_type === "ProblemBrief" ||
+                  al.artifact_type === "StateDecisionPacket")
+            )
+            .filter(
+              (al) =>
+                !state.handoffEvents.some((he) => he.lifecycle_id === al.lifecycle_id)
+            )
+            .map((al) => ({
+              session_id: al.run_id,
+              lifecycle_id: al.lifecycle_id,
+              stage: al.stage,
+              artifact_type: al.artifact_type,
+            }));
+          return { results: rows as T[] };
+        }
+
+        return { results: [] as T[] };
+      };
+
       return {
+        // Support .all() called directly on the prepared statement (no-param queries)
+        all: allHandler,
+        // Support .bind().all() for compatibility
         bind() {
-          return {
-            async all<T>() {
-              // Pattern 1: COMPLETED handoffs with lifecycle_id that have no matching stage_entry
-              if (
-                sql.includes("FROM handoff_events") &&
-                sql.includes("he.outcome = 'COMPLETED'") &&
-                sql.includes("he.lifecycle_id IS NOT NULL")
-              ) {
-                const rows = state.handoffEvents
-                  .filter((he) => he.outcome === "COMPLETED" && he.lifecycle_id !== null)
-                  .filter(
-                    (he) =>
-                      !state.stageEntries.some((se) => se.lifecycle_id === he.lifecycle_id)
-                  )
-                  .map((he) => ({
-                    session_id: he.session_id,
-                    lifecycle_id: he.lifecycle_id,
-                    pipeline_state: he.pipeline_state,
-                  }));
-                return { results: rows as T[] };
-              }
-
-              // Pattern 2: Sessions in non-intake stage with no matching stage_entry
-              if (
-                sql.includes("FROM sessions s") &&
-                sql.includes("s.pipeline_state != 'intake'")
-              ) {
-                const rows = state.sessions
-                  .filter((s) => s.pipeline_state !== "intake")
-                  .filter(
-                    (s) =>
-                      !state.stageEntries.some(
-                        (se) =>
-                          se.session_id === s.session_id &&
-                          se.pipeline_state === s.pipeline_state
-                      )
-                  )
-                  .map((s) => ({
-                    session_id: s.session_id,
-                    pipeline_state: s.pipeline_state,
-                  }));
-                return { results: rows as T[] };
-              }
-
-              // Pattern 3: Transition lineage with lifecycle_id but no handoff_events
-              if (
-                sql.includes("FROM artifact_lineage al") &&
-                sql.includes("al.lifecycle_id IS NOT NULL")
-              ) {
-                const rows = state.lineage
-                  .filter(
-                    (al) =>
-                      al.lifecycle_id !== null &&
-                      (al.artifact_type === "ProblemBrief" ||
-                        al.artifact_type === "StateDecisionPacket")
-                  )
-                  .filter(
-                    (al) =>
-                      !state.handoffEvents.some((he) => he.lifecycle_id === al.lifecycle_id)
-                  )
-                  .map((al) => ({
-                    session_id: al.run_id,
-                    lifecycle_id: al.lifecycle_id,
-                    stage: al.stage,
-                    artifact_type: al.artifact_type,
-                  }));
-                return { results: rows as T[] };
-              }
-
-              return { results: [] as T[] };
-            },
-          };
+          return { all: allHandler };
         },
       };
     },

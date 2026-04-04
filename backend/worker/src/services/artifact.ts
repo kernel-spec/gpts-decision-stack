@@ -7,8 +7,10 @@ import type {
   ReviewVerdict,
 } from "../types/index.js";
 import * as decisionlogService from "./decisionlog.js";
-import { executeArtifactLifecycleTransaction } from "./lifecycle-transaction.js";
-import type { TransitionCandidate as _TransitionCandidate } from "./lifecycle-transaction.js";
+import {
+  executeArtifactLifecycleTransaction,
+  type TransitionCandidate as TransitionCandidateBase,
+} from "./lifecycle-transaction.js";
 export type { TransitionCandidate } from "./lifecycle-transaction.js";
 
 function nowIso(): string {
@@ -64,7 +66,7 @@ type ArtifactTransition = {
   notes: string;
 } | null;
 
-type TransitionCandidate = _TransitionCandidate | null;
+type TransitionCandidate = TransitionCandidateBase | null;
 
 type StateDecisionPacketPayload = {
   state_id?: string;

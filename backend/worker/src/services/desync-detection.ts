@@ -63,7 +63,6 @@ export async function detectDesyncedSessions(
              WHERE se.lifecycle_id = he.lifecycle_id
           )`
     )
-    .bind()
     .all<{ session_id: string; lifecycle_id: string; pipeline_state: string }>();
 
   for (const row of completedWithoutEntry.results) {
@@ -89,7 +88,6 @@ export async function detectDesyncedSessions(
                AND se.pipeline_state = s.pipeline_state
           )`
     )
-    .bind()
     .all<{ session_id: string; pipeline_state: string }>();
 
   for (const row of statesWithoutEntry.results) {
@@ -115,7 +113,6 @@ export async function detectDesyncedSessions(
              WHERE he.lifecycle_id = al.lifecycle_id
           )`
     )
-    .bind()
     .all<{
       session_id: string;
       lifecycle_id: string;

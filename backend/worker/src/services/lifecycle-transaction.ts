@@ -285,20 +285,19 @@ export async function executeArtifactLifecycleTransaction(
 
   // ── INVARIANT CHECKS ────────────────────────────────────────────────────────
   // These guards enforce the write-ordering contract before any DB write occurs.
+  // They are positioned here so violations are caught before the batch is built.
 
   if (handoffCompleted && transition_candidate === null) {
-    // This path should be logically impossible (handoffOutcome is null when
-    // transition_candidate is null), but we assert explicitly as a hard guard.
+    // Logically impossible (handoffOutcome is null when transition_candidate is
+    // null), but asserted explicitly as a hard guard against future code drift.
     assertHasTransitionCandidate(transition_candidate, context);
   }
 
   if (handoffCompleted) {
+    // Guard: state change is only permitted after a COMPLETED handoff.
     assertHandoffCompletedForStateChange(handoffOutcome!, context);
-    assertStageEntryMatchesTransition(
-      transition_candidate!.pipeline_state,
-      transition_candidate!.pipeline_state,
-      context
-    );
+    // (Stage entry target inherits directly from transition_candidate — no
+    // independent source that could diverge here, so no tautological check.)
   }
 
   // ── ID GENERATION ───────────────────────────────────────────────────────────
@@ -518,6 +517,8 @@ export async function executeArtifactLifecycleTransaction(
   if (handoffCompleted && transition_candidate !== null) {
     stageEntryRecord = {
       stage_entry_id,
+      // entry_id duplicates stage_entry_id for backward compatibility with
+      // consumers that reference the legacy field name on StageEntryRecord.
       entry_id: stage_entry_id,
       session_id: session.session_id,
       artifact_id,
