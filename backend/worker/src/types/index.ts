@@ -1,3 +1,5 @@
+import type { D1Database, R2Bucket, KVNamespace } from '@cloudflare/workers-types';
+
 // Cloudflare Workers environment bindings
 export interface Env {
   DECISIONS_DB: D1Database;
