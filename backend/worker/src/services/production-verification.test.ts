@@ -484,9 +484,26 @@ function createFullMockDb(session: Session): { db: Env["DECISIONS_DB"]; state: D
               }
 
               if (sql.includes("INSERT INTO decision_log")) {
-                const [id, session_id, agent_id, action, pipeline_state, decision_status] =
-                  params as [string, string, string, string, string, string];
-                state.decisionLog.push({ id, session_id, agent_id, action, pipeline_state, decision_status });
+                const [
+                  id,
+                  session_id,
+                  agent_id,
+                  action,
+                  pipeline_state,
+                  decision_status,
+                  notes,
+                  logged_at,
+                ] = params as [string, string, string, string, string, string, string, string];
+                state.decisionLog.push({
+                  id,
+                  session_id,
+                  agent_id,
+                  action,
+                  pipeline_state,
+                  decision_status,
+                  notes,
+                  logged_at,
+                });
               }
 
               if (
@@ -690,66 +707,114 @@ describe("FLOW C — Failed transition", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Shared helper: lightweight lineage-only mock DB (used by Flow D and Adversarial 3)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Creates a minimal mock DB that only handles artifact_lineage queries.
+ * Used for tests that call recordArtifactAttempt in isolation, without
+ * needing the full multi-table mock required for submitArtifactWithLifecycle.
+ */
+function createLineageMockDb(seed: LineageRow[] = []): {
+  db: Env["DECISIONS_DB"];
+  rows: LineageRow[];
+} {
+  const rows: LineageRow[] = [...seed];
+
+  const db = {
+    prepare(sql: string) {
+      return {
+        bind(...params: unknown[]) {
+          return {
+            async first<T>() {
+              if (
+                sql.includes("FROM artifact_lineage") &&
+                sql.includes("ORDER BY attempt DESC")
+              ) {
+                const [run_id, stage] = params as [string, string];
+                const match = rows
+                  .filter((r) => r.run_id === run_id && r.stage === stage)
+                  .sort((a, b) => b.attempt - a.attempt)[0];
+                return (match ?? null) as T;
+              }
+              return null as T;
+            },
+            async run() {
+              if (sql.includes("INSERT INTO artifact_lineage")) {
+                const [
+                  lineage_id,
+                  run_id,
+                  artifact_id,
+                  artifact_type,
+                  stage,
+                  attempt,
+                  supersedes_artifact_id,
+                  created_at,
+                  created_by_role,
+                  classified_by,
+                  replacement_reason,
+                  replacement_reason_source,
+                  is_repair_attempt,
+                  is_first_attempt_in_stage,
+                  override_flag,
+                ] = params as [
+                  string,
+                  string,
+                  string,
+                  string,
+                  string,
+                  number,
+                  string | null,
+                  string,
+                  string,
+                  string,
+                  string | null,
+                  string | null,
+                  number,
+                  number,
+                  number,
+                ];
+                rows.push({
+                  lineage_id,
+                  run_id,
+                  artifact_id,
+                  artifact_type,
+                  stage,
+                  attempt,
+                  supersedes_artifact_id,
+                  created_at,
+                  created_by_role,
+                  classified_by,
+                  replacement_reason,
+                  replacement_reason_source,
+                  is_repair_attempt,
+                  is_first_attempt_in_stage,
+                  override_flag,
+                });
+              }
+              if (sql.includes("DELETE FROM artifact_lineage WHERE lineage_id")) {
+                const [lineage_id] = params as [string];
+                const idx = rows.findIndex((r) => r.lineage_id === lineage_id);
+                if (idx !== -1) rows.splice(idx, 1);
+              }
+              return { success: true };
+            },
+          };
+        },
+      };
+    },
+  };
+
+  return { db: db as unknown as Env["DECISIONS_DB"], rows };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // FLOW D — Repair attempt
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("FLOW D — Repair attempt", () => {
   it("increments attempt, sets supersedes_artifact_id and replacement_reason, and preserves the prior row", async () => {
-    const { db, rows } = (() => {
-      const rows: LineageRow[] = [];
-
-      const db = {
-        prepare(sql: string) {
-          return {
-            bind(...params: unknown[]) {
-              return {
-                async first<T>() {
-                  if (
-                    sql.includes("FROM artifact_lineage") &&
-                    sql.includes("ORDER BY attempt DESC")
-                  ) {
-                    const [run_id, stage] = params as [string, string];
-                    const match = rows
-                      .filter((r) => r.run_id === run_id && r.stage === stage)
-                      .sort((a, b) => b.attempt - a.attempt)[0];
-                    return (match ?? null) as T;
-                  }
-                  return null as T;
-                },
-                async run() {
-                  if (sql.includes("INSERT INTO artifact_lineage")) {
-                    const [
-                      lineage_id, run_id, artifact_id, artifact_type, stage,
-                      attempt, supersedes_artifact_id, created_at, created_by_role,
-                      classified_by, replacement_reason, replacement_reason_source,
-                      is_repair_attempt, is_first_attempt_in_stage, override_flag,
-                    ] = params as [
-                      string, string, string, string, string, number, string | null,
-                      string, string, string, string | null, string | null,
-                      number, number, number,
-                    ];
-                    rows.push({
-                      lineage_id, run_id, artifact_id, artifact_type, stage,
-                      attempt, supersedes_artifact_id, created_at, created_by_role,
-                      classified_by, replacement_reason, replacement_reason_source,
-                      is_repair_attempt, is_first_attempt_in_stage, override_flag,
-                    });
-                  }
-                  if (sql.includes("DELETE FROM artifact_lineage WHERE lineage_id")) {
-                    const [lineage_id] = params as [string];
-                    const idx = rows.findIndex((r) => r.lineage_id === lineage_id);
-                    if (idx !== -1) rows.splice(idx, 1);
-                  }
-                  return { success: true };
-                },
-              };
-            },
-          };
-        },
-      };
-
-      return { db: db as unknown as Env["DECISIONS_DB"], rows };
-    })();
+    const { db, rows } = createLineageMockDb();
 
     const base = {
       run_id: "run-pv-repair",
@@ -1055,7 +1120,7 @@ describe("ADVERSARIAL 3 — repair without replacement_reason is rejected", () =
   it("orchestration always classifies replacement_reason for repair attempts — never null on attempt > 1", async () => {
     // recordArtifactAttempt classifies replacement_reason via the 7-step precedence.
     // There is no code path that produces attempt > 1 with replacement_reason = null.
-    const priorRows: LineageRow[] = [
+    const { db, rows: _rows } = createLineageMockDb([
       {
         lineage_id: "lin-adv3-001",
         run_id: "run-adv3",
@@ -1073,56 +1138,9 @@ describe("ADVERSARIAL 3 — repair without replacement_reason is rejected", () =
         is_first_attempt_in_stage: 1,
         override_flag: 0,
       },
-    ];
+    ]);
 
-    const db = (() => {
-      const rows: LineageRow[] = [...priorRows];
-      return {
-        db: {
-          prepare(sql: string) {
-            return {
-              bind(...params: unknown[]) {
-                return {
-                  async first<T>() {
-                    if (sql.includes("FROM artifact_lineage") && sql.includes("ORDER BY attempt DESC")) {
-                      const [run_id, stage] = params as [string, string];
-                      const match = rows.filter((r) => r.run_id === run_id && r.stage === stage)
-                        .sort((a, b) => b.attempt - a.attempt)[0];
-                      return (match ?? null) as T;
-                    }
-                    return null as T;
-                  },
-                  async run() {
-                    if (sql.includes("INSERT INTO artifact_lineage")) {
-                      const [
-                        lineage_id, run_id, artifact_id, artifact_type, stage,
-                        attempt, supersedes_artifact_id, created_at, created_by_role,
-                        classified_by, replacement_reason, replacement_reason_source,
-                        is_repair_attempt, is_first_attempt_in_stage, override_flag,
-                      ] = params as [
-                        string, string, string, string, string, number, string | null,
-                        string, string, string, string | null, string | null,
-                        number, number, number,
-                      ];
-                      rows.push({
-                        lineage_id, run_id, artifact_id, artifact_type, stage,
-                        attempt, supersedes_artifact_id, created_at, created_by_role,
-                        classified_by, replacement_reason, replacement_reason_source,
-                        is_repair_attempt, is_first_attempt_in_stage, override_flag,
-                      });
-                    }
-                    return { success: true };
-                  },
-                };
-              },
-            };
-          },
-        } as unknown as Env["DECISIONS_DB"],
-        rows,
-      };
-    })();
-
-    const repair = await recordArtifactAttempt(db.db, {
+    const repair = await recordArtifactAttempt(db, {
       run_id: "run-adv3",
       stage: "problem_framing",
       artifact_id: "ART-ADV3-002",
