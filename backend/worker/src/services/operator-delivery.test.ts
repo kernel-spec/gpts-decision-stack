@@ -34,18 +34,11 @@ type LoopSignalRow = {
   loop_type: string;
   classified_at: string;
 };
-type DeliveryIntegrityRow = {
-  session_id: string;
-  handoff_status: string;
-  classified_at: string;
-};
-
 type MockDbState = {
   sessions: SessionRow[];
   lineage: LineageRow[];
   handoffEvents: HandoffEventRow[];
   loopSignals: LoopSignalRow[];
-  deliveryIntegrityEvents: DeliveryIntegrityRow[];
 };
 
 function createMockDb(state: MockDbState): Env["DECISIONS_DB"] {
@@ -102,19 +95,11 @@ function createMockDb(state: MockDbState): Env["DECISIONS_DB"] {
                 ) as T;
               }
               if (sql.includes("FROM delivery_integrity_events")) {
-                const [session_id] = params as [string];
-                const matching = state.deliveryIntegrityEvents
-                  .filter((r) => r.session_id === session_id)
-                  .sort(
-                    (a, b) =>
-                      new Date(b.classified_at).getTime() -
-                      new Date(a.classified_at).getTime()
-                  );
-                return (
-                  matching.length > 0
-                    ? { handoff_status: matching[0].handoff_status }
-                    : null
-                ) as T;
+                // delivery_integrity_events is no longer queried by the operator read model.
+                // This branch is intentionally unreachable; throw to catch any regression.
+                throw new Error(
+                  "operator read model must not read delivery_integrity_events — caller-supplied handoff_status is not orchestration truth"
+                );
               }
               if (sql.includes("FROM stage_loop_signals") && sql.includes("LIMIT 1")) {
                 const [session_id] = params as [string];
@@ -175,7 +160,6 @@ function baseState(overrides?: Partial<MockDbState>): MockDbState {
     lineage: [],
     handoffEvents: [],
     loopSignals: [],
-    deliveryIntegrityEvents: [],
     ...overrides,
   };
 }
@@ -329,7 +313,10 @@ describe("getRunDeliverySummary", () => {
     expect(result!.next_action_code).toBe("HANDOFF_COMPLETE");
   });
 
-  it("falls back to delivery_integrity_events when no handoff_events exist", async () => {
+  it("returns null handoff_status when no handoff_events row exists (does not leak caller-supplied state)", async () => {
+    // Sessions that have not yet produced a transition-triggering artifact will have no
+    // handoff_events row. The read model must return null rather than surfacing
+    // caller-supplied state from delivery_integrity_events.
     const db = createMockDb(
       baseState({
         lineage: [
@@ -344,18 +331,13 @@ describe("getRunDeliverySummary", () => {
             created_at: "2026-01-01T00:00:00Z",
           },
         ],
-        deliveryIntegrityEvents: [
-          {
-            session_id: "sess-001",
-            handoff_status: "pending",
-            classified_at: "2026-01-01T00:30:00Z",
-          },
-        ],
       })
     );
     const result = await getRunDeliverySummary(db, "sess-001");
     expect(result).not.toBeNull();
-    expect(result!.handoff_status).toBe("pending");
+    expect(result!.handoff_status).toBeNull();
+    // next_action_code must reflect first-attempt state, not a stale caller-supplied value
+    expect(result!.next_action_code).toBe("UNKNOWN");
   });
 
   it("exposes all required output fields", async () => {

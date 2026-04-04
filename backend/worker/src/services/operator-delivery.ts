@@ -80,7 +80,11 @@ export async function getRunDeliverySummary(
     .bind(session_id)
     .first<{ replacement_reason: string | null } | null>();
 
-  // 4. Latest handoff outcome from handoff_events (orchestration-classified)
+  // 4. Latest handoff outcome from handoff_events (orchestration-classified).
+  // handoff_events is the only authoritative source for handoff truth. Sessions that have not
+  // yet produced a transition-triggering artifact will have no row here; in that case
+  // handoff_status is null — caller-supplied state from delivery_integrity_events must never
+  // be surfaced as orchestration truth.
   const latestHandoff = await db
     .prepare(
       `SELECT outcome
@@ -92,23 +96,9 @@ export async function getRunDeliverySummary(
     .bind(session_id)
     .first<{ outcome: string } | null>();
 
-  // 5. Fallback: handoff_status from delivery_integrity_events when no handoff_events row exists
-  let handoff_status: string | null = latestHandoff?.outcome ?? null;
-  if (!handoff_status) {
-    const latestDie = await db
-      .prepare(
-        `SELECT handoff_status
-           FROM delivery_integrity_events
-          WHERE session_id = ?
-          ORDER BY classified_at DESC
-          LIMIT 1`
-      )
-      .bind(session_id)
-      .first<{ handoff_status: string } | null>();
-    handoff_status = latestDie?.handoff_status ?? null;
-  }
+  const handoff_status: string | null = latestHandoff?.outcome ?? null;
 
-  // 6. Loop flag: any loop signal recorded for this session
+  // 5. Loop flag: any loop signal recorded for this session
   const loopRow = await db
     .prepare(
       `SELECT 1 AS has_loop FROM stage_loop_signals WHERE session_id = ? LIMIT 1`

@@ -3,6 +3,13 @@
 --   stage_entries(entry_id, ..., classified_at)
 --   stage_loop_signals(..., classified_at)
 -- Upgrade those tables in-place so runtime inserts/selects use the canonical columns.
+--
+-- NOTE ON MIGRATION PREFIX: this file shares the "0007_" prefix with 0007_handoff_events.sql.
+-- Wrangler tracks migrations by full filename, not just the numeric prefix, so both files are
+-- applied as independent migrations in alphabetical order (0007_handoff_events.sql first).
+-- The shared prefix is a historical artifact and must NOT be "fixed" by renaming — renaming a
+-- migration that has already been applied would cause wrangler to treat it as a new migration
+-- and attempt to re-apply it. Future migrations must use prefix 0009 or higher.
 
 CREATE TABLE IF NOT EXISTS stage_entries (
   entry_id TEXT PRIMARY KEY,
