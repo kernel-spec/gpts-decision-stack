@@ -2,8 +2,9 @@
 
 set -u
 
-BASE_URL="${BASE_URL:-}"
-API_KEY="${API_KEY:-}"
+# Accept DEV_WORKER_URL (consistent with Node.js evidence scripts) or BASE_URL as fallback.
+BASE_URL="${DEV_WORKER_URL:-${BASE_URL:-}}"
+API_KEY="${DEV_API_KEY:-${API_KEY:-}}"
 CF_ENV="${CF_ENV:-dev}"
 D1_DATABASE_NAME="${D1_DATABASE_NAME:-gpts-decision-stack-db-dev}"
 WORKER_DIR="${WORKER_DIR:-/workspaces/gpts-decision-stack/backend/worker}"
@@ -203,7 +204,7 @@ need_cmd node
 resolve_wrangler_bin
 
 if [[ -z "$BASE_URL" || -z "$API_KEY" ]]; then
-  printf 'FATAL: set BASE_URL and API_KEY before running this script.\n' >&2
+  printf 'FATAL: set DEV_WORKER_URL (or BASE_URL) and DEV_API_KEY (or API_KEY) before running this script.\n' >&2
   exit 2
 fi
 
