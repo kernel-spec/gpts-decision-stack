@@ -3,6 +3,9 @@ name: Dev Runtime Evidence
 on:
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   run-evidence:
     name: Run Dev Runtime Evidence Pipeline

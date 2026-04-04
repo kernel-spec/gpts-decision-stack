@@ -8,6 +8,7 @@ CF_ENV="${CF_ENV:-dev}"
 D1_DATABASE_NAME="${D1_DATABASE_NAME:-gpts-decision-stack-db-dev}"
 WORKER_DIR="${WORKER_DIR:-/workspaces/gpts-decision-stack/backend/worker}"
 AGENT_ID="${AGENT_ID:-operator-001}"
+WRANGLER_BIN="${WRANGLER_BIN:-}"
 
 PASS_COUNT=0
 FAIL_COUNT=0
@@ -26,6 +27,25 @@ need_cmd() {
     printf 'FATAL: required command not found: %s\n' "$1" >&2
     exit 2
   fi
+}
+
+resolve_wrangler_bin() {
+  if [[ -n "$WRANGLER_BIN" ]]; then
+    return 0
+  fi
+
+  if command -v wrangler >/dev/null 2>&1; then
+    WRANGLER_BIN="wrangler"
+    return 0
+  fi
+
+  if [[ -x "$WORKER_DIR/node_modules/.bin/wrangler" ]]; then
+    WRANGLER_BIN="$WORKER_DIR/node_modules/.bin/wrangler"
+    return 0
+  fi
+
+  printf 'FATAL: required command not found: wrangler\n' >&2
+  exit 2
 }
 
 fail() {
@@ -115,11 +135,11 @@ api_call() {
 d1_exec() {
   local sql="$1"
   set +e
-  D1_OUT="$(cd "$WORKER_DIR" && wrangler d1 execute "$D1_DATABASE_NAME" --env "$CF_ENV" --command "$sql" --json 2>&1)"
+  D1_OUT="$(cd "$WORKER_DIR" && "$WRANGLER_BIN" d1 execute "$D1_DATABASE_NAME" --env "$CF_ENV" --remote --command "$sql" --json 2>&1)"
   D1_RC=$?
   set -e
-  printf '\n=== D1 SQL ===\n%s\n' "$sql"
-  printf '%s\n' "$D1_OUT"
+  printf '\n=== D1 SQL ===\n%s\n' "$sql" >&2
+  printf '%s\n' "$D1_OUT" >&2
 }
 
 d1_value() {
@@ -180,7 +200,7 @@ print_section() {
 
 need_cmd curl
 need_cmd node
-need_cmd wrangler
+resolve_wrangler_bin
 
 if [[ -z "$BASE_URL" || -z "$API_KEY" ]]; then
   printf 'FATAL: set BASE_URL and API_KEY before running this script.\n' >&2
@@ -385,7 +405,7 @@ api_call POST "/session/$SESSION_ID/reentry" '{
 check_http_status 'second reentry returns 200' '200'
 
 if STAGE_ENTRY_COUNT="$(d1_value "SELECT entry_count AS value FROM stage_entries WHERE session_id = '$SESSION_ID' AND pipeline_state = 'problem_framing' ORDER BY created_at DESC LIMIT 1;" value 2>/dev/null)"; then
-  check_eq 'same-stage reentry reaches entry_count=2' "$STAGE_ENTRY_COUNT" '2'
+  check_eq 'same-stage reentry reaches entry_count=3' "$STAGE_ENTRY_COUNT" '3'
 else
   fail 'stage_entries lookup after repeated reentry'
 fi

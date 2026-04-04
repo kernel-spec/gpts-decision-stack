@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "target": "ES2022",
     "module": "ES2022",
     "moduleResolution": "bundler",
@@ -9,6 +10,7 @@
     "noImplicitAny": true,
     "esModuleInterop": false,
     "skipLibCheck": true,
+    "rootDir": "./src",
     "outDir": "dist"
   },
   "include": ["src/**/*.ts"],
