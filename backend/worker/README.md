@@ -161,6 +161,7 @@ Viz `actions/openapi.yaml` pro kompletní API kontrakt.
 | GET /health                           | getHealth          |
 | POST /session                         | createSession      |
 | GET /session/{session_id}             | getSessionState    |
+| GET /session/{session_id}/delivery    | getDeliverySummary |
 | POST /session/{session_id}/artifact   | submitArtifact     |
 | POST /session/{session_id}/reentry    | triggerReentry     |
 | GET /session/{session_id}/decision-log| getDecisionLog     |

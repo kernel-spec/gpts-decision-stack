@@ -3,10 +3,16 @@ import type {
   Artifact,
   SubmitArtifactRequest,
   Session,
+  ParserVerdict,
+  ReviewVerdict,
 } from "../types/index.js";
 import * as decisionlogService from "./decisionlog.js";
 import * as stateService from "./state.js";
-import { appendDeliveryIntegrityEvent, recordArtifactAttempt, recordStageEntry } from "./delivery-integrity.js";
+import {
+  appendDeliveryIntegrityEvent,
+  recordArtifactAttempt,
+  recordStageEntry,
+} from "./delivery-integrity.js";
 import { recordHandoffOutcome } from "./handoff.js";
 
 function nowIso(): string {
@@ -62,6 +68,13 @@ type ArtifactTransition = {
   notes: string;
 } | null;
 
+type TransitionCandidate = {
+  pipeline_state: Session["pipeline_state"];
+  decision_status: Session["decision_status"];
+  notes: string;
+  legal_transition_ok: boolean;
+} | null;
+
 type StateDecisionPacketPayload = {
   state_id?: string;
   outcome?: string;
@@ -102,11 +115,20 @@ export function getArtifactTransition(
   session: Session,
   req: SubmitArtifactRequest
 ): ArtifactTransition {
+  const candidate = getTransitionCandidate(session, req);
+  return candidate?.legal_transition_ok ? candidate : null;
+}
+
+function getTransitionCandidate(
+  session: Session,
+  req: SubmitArtifactRequest
+): TransitionCandidate {
   if (session.pipeline_state === "intake" && req.artifact_type === "ProblemBrief") {
     return {
       pipeline_state: "problem_framing",
       decision_status: session.decision_status,
       notes: "Transitioned intake → problem_framing after accepted ProblemBrief",
+      legal_transition_ok: true,
     };
   }
 
@@ -115,7 +137,7 @@ export function getArtifactTransition(
   }
 
   const pkt = asStateDecisionPacketPayload(req.payload);
-  if (pkt?.outcome !== "proceed") {
+  if (!pkt?.state_id) {
     return null;
   }
 
@@ -128,6 +150,7 @@ export function getArtifactTransition(
       decision_status: "proceed",
       notes:
         "Transitioned problem_framing → primitive_selection after accepted StateDecisionPacket (outcome=proceed)",
+      legal_transition_ok: pkt.outcome === "proceed",
     };
   }
 
@@ -140,6 +163,7 @@ export function getArtifactTransition(
       decision_status: "proceed",
       notes:
         "Transitioned primitive_selection → architecture_validation after accepted StateDecisionPacket (outcome=proceed)",
+      legal_transition_ok: pkt.outcome === "proceed",
     };
   }
 
@@ -152,6 +176,7 @@ export function getArtifactTransition(
       decision_status: "proceed",
       notes:
         "Transitioned architecture_validation → risk_governance_validation after accepted StateDecisionPacket (outcome=proceed)",
+      legal_transition_ok: pkt.outcome === "proceed",
     };
   }
 
@@ -164,6 +189,7 @@ export function getArtifactTransition(
       decision_status: "proceed",
       notes:
         "Transitioned risk_governance_validation → commercial_packaging after accepted StateDecisionPacket (outcome=proceed)",
+      legal_transition_ok: pkt.outcome === "proceed",
     };
   }
 
@@ -176,6 +202,7 @@ export function getArtifactTransition(
       decision_status: "proceed",
       notes:
         "Transitioned commercial_packaging → claims_validation after accepted StateDecisionPacket (outcome=proceed)",
+      legal_transition_ok: pkt.outcome === "proceed",
     };
   }
 
@@ -188,6 +215,7 @@ export function getArtifactTransition(
       decision_status: "proceed",
       notes:
         "Transitioned claims_validation → release_decision after accepted StateDecisionPacket (outcome=proceed)",
+      legal_transition_ok: pkt.outcome === "proceed",
     };
   }
 
@@ -215,30 +243,32 @@ export async function submitArtifactWithLifecycle(
 ): Promise<Artifact> {
   const artifact = await submitArtifact(db, bucket, session.session_id, req);
 
-  // Persist delivery truth before emitting events
-  await appendDeliveryIntegrityEvent(db, session, artifact.id, req.delivery);
-
   // Record orchestration-owned artifact attempt lineage — always, not only when parser_verdict is
   // supplied. When no parser_verdict is present the default all-passing verdict causes QUALITY_ISSUE
   // to be assigned as the fallback reason for any repair attempt.
-  const defaultParserVerdict = {
+  const defaultParserVerdict: ParserVerdict = {
     schema_valid: true,
     required_sections_present: true,
     stage_matches_expected: true,
     reentry_ready: true,
   };
+  const parserVerdict = req.parser_verdict ?? defaultParserVerdict;
+  const reviewVerdict: ReviewVerdict = req.review_verdict ?? { status: "NOT_REQUIRED" };
   await recordArtifactAttempt(db, {
     run_id: session.session_id,
     stage: session.pipeline_state,
     artifact_id: artifact.id,
     artifact_type: req.artifact_type,
     created_by_role: req.agent_id ?? "unknown",
-    parser_verdict: req.parser_verdict ?? defaultParserVerdict,
-    review_verdict: req.review_verdict ?? { status: "NOT_REQUIRED" },
+    parser_verdict: parserVerdict,
+    review_verdict: reviewVerdict,
     scope_fingerprint_changed: req.scope_fingerprint_changed ?? false,
     transition_context: req.transition_context ?? {},
     override_flag: false,
   });
+
+  // Persist delivery truth with the current caller-facing delivery envelope.
+  await appendDeliveryIntegrityEvent(db, session, artifact.id, req.delivery);
 
   await decisionlogService.appendDecisionLog(db, session.session_id, {
     agent_id: req.agent_id ?? "unknown",
@@ -248,45 +278,40 @@ export async function submitArtifactWithLifecycle(
     notes: `Artifact ${req.artifact_type} submitted (id=${artifact.id})`,
   });
 
-  const transition = getArtifactTransition(session, req);
-  if (transition) {
-    await stateService.updateSessionState(
-      db,
-      session.session_id,
-      transition.pipeline_state,
-      transition.decision_status
-    );
-    await decisionlogService.appendDecisionLog(db, session.session_id, {
-      agent_id: req.agent_id ?? "unknown",
-      action: "pipeline.transition",
-      pipeline_state: transition.pipeline_state,
-      decision_status: transition.decision_status,
-      notes: transition.notes,
-    });
-    // Record orchestration-owned stage entry for the stage we are transitioning into.
-    await recordStageEntry(
-      db,
-      { ...session, pipeline_state: transition.pipeline_state },
-      { entered_by: req.agent_id ?? "unknown" }
-    );
-    // Record handoff outcome at the real handoff boundary: when a pipeline transition is
-    // evaluated. Only transition-triggering artifacts cross a stage boundary; intermediate
-    // work artifacts do not. HandoffOutcomeInput is derived from orchestration-owned signals
-    // only — caller input does not control whether this row is written.
-    const pv = req.parser_verdict;
-    const rv = req.review_verdict;
-    const tc = req.transition_context;
-    await recordHandoffOutcome(db, session, {
-      schema_valid: pv?.schema_valid ?? true,
-      fields_present: pv?.required_sections_present ?? true,
+  const transitionCandidate = getTransitionCandidate(session, req);
+  if (transitionCandidate) {
+    const handoff = await recordHandoffOutcome(db, session, {
+      parser_verdict_ok: parserVerdict.stage_matches_expected,
+      review_verdict_ok:
+        reviewVerdict.status !== "REJECTED" && reviewVerdict.blocking !== true,
+      legal_transition_ok: transitionCandidate.legal_transition_ok,
+      reentry_ready: parserVerdict.reentry_ready,
       owner_resolved: true,
-      review_verdict_ok: rv ? rv.status !== "REJECTED" && rv.blocking !== true : true,
-      reentry_ready: pv?.reentry_ready ?? true,
-      parser_verdict_ok: pv
-        ? pv.schema_valid && pv.required_sections_present && pv.stage_matches_expected
-        : true,
-      legal_transition_ok: !(tc?.handoff_rejected ?? false),
+      schema_valid: parserVerdict.schema_valid,
+      fields_present: parserVerdict.required_sections_present,
     });
+
+    if (handoff.outcome === "COMPLETED") {
+      await stateService.updateSessionState(
+        db,
+        session.session_id,
+        transitionCandidate.pipeline_state,
+        transitionCandidate.decision_status
+      );
+      await recordStageEntry(db, {
+        session_id: session.session_id,
+        pipeline_state: transitionCandidate.pipeline_state,
+        artifact_id: artifact.id,
+      });
+
+      await decisionlogService.appendDecisionLog(db, session.session_id, {
+        agent_id: req.agent_id ?? "unknown",
+        action: "pipeline.transition",
+        pipeline_state: transitionCandidate.pipeline_state,
+        decision_status: transitionCandidate.decision_status,
+        notes: transitionCandidate.notes,
+      });
+    }
   }
 
   return artifact;

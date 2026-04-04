@@ -2,7 +2,7 @@ import type { Env, CreateSessionRequest, ReentryRequest } from "../types/index.j
 import { VALID_REQUESTOR_TYPES } from "../types/index.js";
 import * as stateService from "../services/state.js";
 import * as decisionlogService from "../services/decisionlog.js";
-import { recordStageEntry } from "../services/delivery-integrity.js";
+import * as deliveryIntegrityService from "../services/delivery-integrity.js";
 import { errorResponse, requireJson } from "../router.js";
 
 export async function handleCreateSession(
@@ -28,6 +28,11 @@ export async function handleCreateSession(
     external_ref: externalRef,
   });
 
+  await deliveryIntegrityService.recordStageEntry(env.DECISIONS_DB, {
+    session_id: session.session_id,
+    pipeline_state: session.pipeline_state,
+  });
+
   await decisionlogService.appendDecisionLog(env.DECISIONS_DB, session.session_id, {
     agent_id: "system",
     action: "session.created",
@@ -48,6 +53,23 @@ export async function handleGetSession(
     return errorResponse("Session not found", "NOT_FOUND", 404);
   }
   return Response.json({ ok: true, data: session });
+}
+
+export async function handleGetDeliverySummary(
+  session_id: string,
+  env: Env
+): Promise<Response> {
+  const session = await stateService.getSession(env.DECISIONS_DB, session_id);
+  if (!session) {
+    return errorResponse("Session not found", "NOT_FOUND", 404);
+  }
+
+  const summary = await deliveryIntegrityService.getDeliverySummary(
+    env.DECISIONS_DB,
+    session
+  );
+
+  return Response.json({ ok: true, data: summary });
 }
 
 export async function handleTriggerReentry(
@@ -72,6 +94,13 @@ export async function handleTriggerReentry(
     "unresolved"
   );
 
+  if (updated) {
+    await deliveryIntegrityService.recordStageEntry(env.DECISIONS_DB, {
+      session_id,
+      pipeline_state: updated.pipeline_state,
+    });
+  }
+
   await decisionlogService.appendDecisionLog(env.DECISIONS_DB, session_id, {
     agent_id: body.agent_id,
     action: "session.reentry",
@@ -79,13 +108,6 @@ export async function handleTriggerReentry(
     decision_status: "unresolved",
     notes: `Reentry from ${body.from_state ?? session.pipeline_state} to ${body.to_state}: ${body.reason}`,
   });
-
-  // Record orchestration-owned stage entry for the stage we are re-entering.
-  await recordStageEntry(
-    env.DECISIONS_DB,
-    { ...session, pipeline_state: body.to_state },
-    { entered_by: body.agent_id }
-  );
 
   return Response.json({ ok: true, data: updated });
 }

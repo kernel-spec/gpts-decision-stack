@@ -2,6 +2,7 @@ import type { Env } from "./types/index.js";
 import { handleHealth } from "./handlers/health.js";
 import {
   handleCreateSession,
+  handleGetDeliverySummary,
   handleGetSession,
   handleTriggerReentry,
 } from "./handlers/session.js";
@@ -85,6 +86,14 @@ export async function route(request: Request, env: Env): Promise<Response> {
   if (artifactMatch) {
     const session_id = artifactMatch[1];
     if (method === "POST") return handleSubmitArtifact(request, session_id, env);
+    return methodNotAllowed();
+  }
+
+  // /session/{session_id}/delivery
+  const deliveryMatch = path.match(/^\/session\/([^/]+)\/delivery$/);
+  if (deliveryMatch) {
+    const session_id = deliveryMatch[1];
+    if (method === "GET") return handleGetDeliverySummary(session_id, env);
     return methodNotAllowed();
   }
 
