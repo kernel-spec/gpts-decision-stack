@@ -215,7 +215,7 @@ export async function appendDeliveryIntegrityEvent(
 // 5. HANDOFF_REJECTED
 // 6. SCOPE_CHANGE
 // 7. QUALITY_ISSUE
-function classifyReplacementReason(
+export function classifyReplacementReason(
   parser: ParserVerdict,
   review: ReviewVerdict,
   scopeChanged: boolean,

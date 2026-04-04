@@ -7,13 +7,9 @@ import type {
   ReviewVerdict,
 } from "../types/index.js";
 import * as decisionlogService from "./decisionlog.js";
-import * as stateService from "./state.js";
-import {
-  appendDeliveryIntegrityEvent,
-  recordArtifactAttempt,
-  recordStageEntry,
-} from "./delivery-integrity.js";
-import { recordHandoffOutcome } from "./handoff.js";
+import { executeArtifactLifecycleTransaction } from "./lifecycle-transaction.js";
+import type { TransitionCandidate as _TransitionCandidate } from "./lifecycle-transaction.js";
+export type { TransitionCandidate } from "./lifecycle-transaction.js";
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -68,12 +64,7 @@ type ArtifactTransition = {
   notes: string;
 } | null;
 
-type TransitionCandidate = {
-  pipeline_state: Session["pipeline_state"];
-  decision_status: Session["decision_status"];
-  notes: string;
-  legal_transition_ok: boolean;
-} | null;
+type TransitionCandidate = _TransitionCandidate | null;
 
 type StateDecisionPacketPayload = {
   state_id?: string;
@@ -243,9 +234,6 @@ export async function submitArtifactWithLifecycle(
 ): Promise<Artifact> {
   const artifact = await submitArtifact(db, bucket, session.session_id, req);
 
-  // Record orchestration-owned artifact attempt lineage — always, not only when parser_verdict is
-  // supplied. When no parser_verdict is present the default all-passing verdict causes QUALITY_ISSUE
-  // to be assigned as the fallback reason for any repair attempt.
   const defaultParserVerdict: ParserVerdict = {
     schema_valid: true,
     required_sections_present: true,
@@ -254,9 +242,14 @@ export async function submitArtifactWithLifecycle(
   };
   const parserVerdict = req.parser_verdict ?? defaultParserVerdict;
   const reviewVerdict: ReviewVerdict = req.review_verdict ?? { status: "NOT_REQUIRED" };
-  await recordArtifactAttempt(db, {
-    run_id: session.session_id,
-    stage: session.pipeline_state,
+  const transitionCandidate = getTransitionCandidate(session, req);
+
+  // All orchestration truth writes execute as a single D1 batch (atomic).
+  // If the batch fails, no truth tables are partially written.
+  const lifecycle_id = newId();
+  const txResult = await executeArtifactLifecycleTransaction(db, {
+    lifecycle_id,
+    session,
     artifact_id: artifact.id,
     artifact_type: req.artifact_type,
     created_by_role: req.agent_id ?? "unknown",
@@ -264,12 +257,82 @@ export async function submitArtifactWithLifecycle(
     review_verdict: reviewVerdict,
     scope_fingerprint_changed: req.scope_fingerprint_changed ?? false,
     transition_context: req.transition_context ?? {},
-    override_flag: false,
+    transition_candidate: transitionCandidate,
+    delivery_input: req.delivery,
   });
 
-  // Persist delivery truth with the current caller-facing delivery envelope.
-  await appendDeliveryIntegrityEvent(db, session, artifact.id, req.delivery);
+  // Event emission is best-effort: truth is already persisted via the batch.
+  // Emission failures do not roll back the batch.
+  try {
+    for (const ev of txResult.lineage_events) {
+      console.log(JSON.stringify({ ...ev }));
+    }
+  } catch {
+    // non-critical
+  }
 
+  try {
+    if (txResult.handoff) {
+      if (txResult.handoff.outcome === "COMPLETED") {
+        console.log(
+          JSON.stringify({
+            event: "handoff_completed",
+            event_id: txResult.handoff.event_id,
+            session_id: session.session_id,
+            pipeline_state: session.pipeline_state,
+            classified_at: txResult.handoff.classified_at,
+          })
+        );
+      } else {
+        console.log(
+          JSON.stringify({
+            event: "handoff_failed",
+            event_id: txResult.handoff.event_id,
+            session_id: session.session_id,
+            pipeline_state: session.pipeline_state,
+            failure_reason: txResult.handoff.failure_reason,
+            classified_at: txResult.handoff.classified_at,
+          })
+        );
+      }
+    }
+  } catch {
+    // non-critical
+  }
+
+  try {
+    if (txResult.stage_entry) {
+      if (txResult.loop_signal) {
+        console.log(
+          JSON.stringify({
+            event: "stage_loop_detected",
+            stage_entry_id: txResult.stage_entry.stage_entry_id,
+            loop_signal_id: txResult.loop_signal.loop_signal_id,
+            session_id: session.session_id,
+            pipeline_state: txResult.stage_entry.pipeline_state,
+            loop_type: "SAME_STAGE_REPEAT",
+            entry_count: txResult.stage_entry.entry_count,
+            created_at: txResult.stage_entry.created_at,
+          })
+        );
+      } else {
+        console.log(
+          JSON.stringify({
+            event: "stage_entry_created",
+            stage_entry_id: txResult.stage_entry.stage_entry_id,
+            session_id: session.session_id,
+            pipeline_state: txResult.stage_entry.pipeline_state,
+            entry_count: txResult.stage_entry.entry_count,
+            created_at: txResult.stage_entry.created_at,
+          })
+        );
+      }
+    }
+  } catch {
+    // non-critical
+  }
+
+  // Decision log writes are append-only audit records (non-critical, sequential).
   await decisionlogService.appendDecisionLog(db, session.session_id, {
     agent_id: req.agent_id ?? "unknown",
     action: "artifact.submitted",
@@ -278,40 +341,14 @@ export async function submitArtifactWithLifecycle(
     notes: `Artifact ${req.artifact_type} submitted (id=${artifact.id})`,
   });
 
-  const transitionCandidate = getTransitionCandidate(session, req);
-  if (transitionCandidate) {
-    const handoff = await recordHandoffOutcome(db, session, {
-      parser_verdict_ok: parserVerdict.stage_matches_expected,
-      review_verdict_ok:
-        reviewVerdict.status !== "REJECTED" && reviewVerdict.blocking !== true,
-      legal_transition_ok: transitionCandidate.legal_transition_ok,
-      reentry_ready: parserVerdict.reentry_ready,
-      owner_resolved: true,
-      schema_valid: parserVerdict.schema_valid,
-      fields_present: parserVerdict.required_sections_present,
+  if (txResult.state_updated && transitionCandidate !== null) {
+    await decisionlogService.appendDecisionLog(db, session.session_id, {
+      agent_id: req.agent_id ?? "unknown",
+      action: "pipeline.transition",
+      pipeline_state: transitionCandidate.pipeline_state,
+      decision_status: transitionCandidate.decision_status,
+      notes: transitionCandidate.notes,
     });
-
-    if (handoff.outcome === "COMPLETED") {
-      await stateService.updateSessionState(
-        db,
-        session.session_id,
-        transitionCandidate.pipeline_state,
-        transitionCandidate.decision_status
-      );
-      await recordStageEntry(db, {
-        session_id: session.session_id,
-        pipeline_state: transitionCandidate.pipeline_state,
-        artifact_id: artifact.id,
-      });
-
-      await decisionlogService.appendDecisionLog(db, session.session_id, {
-        agent_id: req.agent_id ?? "unknown",
-        action: "pipeline.transition",
-        pipeline_state: transitionCandidate.pipeline_state,
-        decision_status: transitionCandidate.decision_status,
-        notes: transitionCandidate.notes,
-      });
-    }
   }
 
   return artifact;

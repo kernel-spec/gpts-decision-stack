@@ -45,6 +45,12 @@ function createMockDb(sessions: SessionRow[] = []) {
               if (sql.includes("FROM artifact_lineage") && sql.includes("ORDER BY attempt DESC")) {
                 return null as T;
               }
+              if (sql.includes("FROM delivery_integrity_events")) {
+                return null as T;
+              }
+              if (sql.includes("FROM stage_entries") && sql.includes("ORDER BY entry_count DESC")) {
+                return null as T;
+              }
               if (sql.includes("COUNT(*)") && sql.includes("FROM stage_entries")) {
                 return { cnt: 0 } as T;
               }
@@ -60,6 +66,11 @@ function createMockDb(sessions: SessionRow[] = []) {
           };
         },
       };
+    },
+    async batch(stmts: Array<{ run(): Promise<unknown> }>) {
+      const results = [];
+      for (const s of stmts) results.push(await s.run());
+      return results;
     },
   };
 

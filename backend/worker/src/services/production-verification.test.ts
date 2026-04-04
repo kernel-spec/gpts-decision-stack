@@ -441,7 +441,7 @@ function createFullMockDb(session: Session): { db: Env["DECISIONS_DB"]; state: D
                 let classified_by: string;
                 let classified_at: string;
 
-                if (params.length === 7) {
+                if (params.length >= 7) {
                   [
                     entry_id,
                     session_id,
@@ -562,6 +562,11 @@ function createFullMockDb(session: Session): { db: Env["DECISIONS_DB"]; state: D
           };
         },
       };
+    },
+    async batch(stmts: Array<{ run(): Promise<unknown> }>) {
+      const results = [];
+      for (const s of stmts) results.push(await s.run());
+      return results;
     },
   };
 

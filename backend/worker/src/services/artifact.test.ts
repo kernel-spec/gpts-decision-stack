@@ -66,18 +66,6 @@ function createArtifactMockDb(session: Session) {
         bind(...params: unknown[]) {
           return {
             async first<T>() {
-              // getSession (called by updateSessionState after a transition)
-              if (sql.includes("FROM sessions s") && sql.includes("WHERE s.session_id")) {
-                return {
-                  session_id: session.session_id,
-                  requestor_type: session.requestor_type,
-                  pipeline_state: session.pipeline_state,
-                  decision_status: session.decision_status,
-                  created_at: session.created_at,
-                  updated_at: session.updated_at,
-                  veto_active: 0,
-                } as T;
-              }
               // delivery_integrity_events loop-check
               if (sql.includes("FROM delivery_integrity_events")) {
                 return null as T;
@@ -86,13 +74,9 @@ function createArtifactMockDb(session: Session) {
               if (sql.includes("FROM artifact_lineage") && sql.includes("ORDER BY attempt DESC")) {
                 return null as T;
               }
-              // stage_entries count
-              if (sql.includes("COUNT(*)") && sql.includes("FROM stage_entries")) {
-                const [session_id, pipeline_state] = params as [string, string];
-                const cnt = stageEntries.filter(
-                  (r) => r.session_id === session_id && r.pipeline_state === pipeline_state
-                ).length;
-                return { cnt } as T;
+              // stage_entries max entry_count for target stage
+              if (sql.includes("FROM stage_entries") && sql.includes("ORDER BY entry_count DESC")) {
+                return null as T;
               }
               return null as T;
             },
@@ -117,6 +101,9 @@ function createArtifactMockDb(session: Session) {
                   classified_at,
                 });
               }
+              // stage_entries INSERT: 8 params (with artifact_id + lifecycle_id)
+              // or 7 params (with artifact_id, no lifecycle_id — legacy path)
+              // or 6 params (without artifact_id — reentry/create-session path)
               if (sql.includes("INSERT INTO stage_entries")) {
                 let entry_id: string;
                 let session_id: string;
@@ -125,7 +112,7 @@ function createArtifactMockDb(session: Session) {
                 let classified_by: string;
                 let classified_at: string;
 
-                if (params.length === 7) {
+                if (params.length >= 7) {
                   [
                     entry_id,
                     session_id,
@@ -159,6 +146,11 @@ function createArtifactMockDb(session: Session) {
           };
         },
       };
+    },
+    async batch(stmts: Array<{ run(): Promise<unknown> }>) {
+      const results = [];
+      for (const s of stmts) results.push(await s.run());
+      return results;
     },
   };
 
