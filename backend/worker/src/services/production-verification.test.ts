@@ -133,6 +133,17 @@ type DbState = {
   decisionLog: Array<Record<string, unknown>>;
 };
 
+/**
+ * Creates a comprehensive mock DB that tracks all relevant production tables.
+ *
+ * @param session - The session to pre-seed in the sessions table. The mock DB
+ *   starts with this session row already present and handles UPDATE sessions
+ *   to reflect in-memory pipeline_state/decision_status changes.
+ * @returns `db` — the mock DB instance to pass to service functions; `state` —
+ *   a reference to the live in-memory store so tests can inspect rows written
+ *   to artifacts, artifact_lineage, delivery_integrity_events, handoff_events,
+ *   stage_entries, stage_loop_signals, and decision_log.
+ */
 function createFullMockDb(session: Session): { db: Env["DECISIONS_DB"]; state: DbState } {
   const state: DbState = {
     sessions: new Map<string, SessionRow>([
@@ -714,6 +725,15 @@ describe("FLOW C — Failed transition", () => {
  * Creates a minimal mock DB that only handles artifact_lineage queries.
  * Used for tests that call recordArtifactAttempt in isolation, without
  * needing the full multi-table mock required for submitArtifactWithLifecycle.
+ *
+ * @param seed - Optional initial rows to pre-populate artifact_lineage.
+ *   Use this to simulate prior attempts so the next call to
+ *   recordArtifactAttempt will assign attempt > 1 (repair scenario).
+ * @returns `db` — the mock DB instance; `rows` — the live in-memory lineage
+ *   array so tests can inspect persisted rows after each call.
+ *
+ * Prefer createFullMockDb when testing submitArtifactWithLifecycle or any
+ * flow that touches multiple tables (handoff_events, stage_entries, etc.).
  */
 function createLineageMockDb(seed: LineageRow[] = []): {
   db: Env["DECISIONS_DB"];
@@ -1110,9 +1130,12 @@ describe("ADVERSARIAL 3 — repair without replacement_reason is rejected", () =
   it("rejects caller-supplied replacement_reason — orchestration owns this field", () => {
     // validateDeliveryInput is the service-layer boundary that prevents callers from
     // injecting or overriding the replacement_reason.
-    const result = validateDeliveryInput(
-      { replacement_reason: "QUALITY_ISSUE" } as unknown as Parameters<typeof validateDeliveryInput>[0],
-    );
+    //
+    // The input type intentionally excludes replacement_reason to enforce the
+    // constraint at compile time; this test uses a Record cast to simulate what a
+    // caller might attempt at runtime (e.g., via JSON deserialization bypassing TS types).
+    const adversarialInput: Record<string, unknown> = { replacement_reason: "QUALITY_ISSUE" };
+    const result = validateDeliveryInput(adversarialInput as Parameters<typeof validateDeliveryInput>[0]);
     expect(result).not.toBeNull();
     expect(result).toMatch(/replacement_reason.*orchestration/i);
   });
