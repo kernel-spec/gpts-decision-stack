@@ -92,6 +92,9 @@ export async function getRunDeliverySummary(
     .bind(session_id)
     .first<{ outcome: string } | null>();
 
+  // 5. handoff_status comes exclusively from handoff_events (orchestration-classified).
+  //    delivery_integrity_events is not used as a fallback — caller-supplied handoff_status
+  //    values from that table must not leak into the operator read model.
   // 5. Only orchestration-classified handoff truth is allowed in this read model.
   const handoff_status: string | null = latestHandoff?.outcome ?? null;
 

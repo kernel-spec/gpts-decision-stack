@@ -355,6 +355,9 @@ describe("getRunDeliverySummary", () => {
     );
     const result = await getRunDeliverySummary(db, "sess-001");
     expect(result).not.toBeNull();
+    // handoff_status is null when no handoff_events row exists —
+    // caller-supplied values from delivery_integrity_events must not leak into the read model
+    expect(result!.handoff_status).toBeNull();
     expect(result!.handoff_status).toBeNull();
     expect(result!.next_action_code).toBe("UNKNOWN");
   });
