@@ -129,7 +129,8 @@ The following secrets must be configured in the repository settings before any w
 | `CLOUDFLARE_API_TOKEN` | `deploy-worker.yml`, `deploy-workers.yaml` | Cloudflare API authentication for wrangler |
 | `CLOUDFLARE_ACCOUNT_ID` | `deploy-worker.yml`, `deploy-workers.yaml` | Cloudflare account identifier for wrangler |
 | `DEV_WORKER_URL` | `dev-runtime-evidence.yaml`, `dev-acceptance-evidence.yaml` | Base URL of the deployed dev Worker (e.g. `https://gpts-decision-stack-dev.<subdomain>.workers.dev`) |
-| `DEV_API_KEY` | `dev-runtime-evidence.yaml`, `dev-acceptance-evidence.yaml` | `API_KEY_SECRET` value set on the dev Worker |
+| `DEV_API_KEY` | `deploy-worker.yml`, `deploy-workers.yaml`, `dev-runtime-evidence.yaml`, `dev-acceptance-evidence.yaml` | `API_KEY_SECRET` value set on the dev Worker — used both during deploy (to set the secret) and during evidence runs (to authenticate requests) |
+| `PROD_API_KEY` | `deploy-workers.yaml` | `API_KEY_SECRET` value set on the prod Worker — used during prod deploy to set the Worker Secret |
 
 > **Never commit actual secret values to the repository.** Set them via GitHub → Settings → Secrets and variables → Actions.
 

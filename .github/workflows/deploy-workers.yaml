@@ -213,6 +213,13 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      - name: Set Worker Secret API_KEY_SECRET (dev)
+        run: printf '%s' "$DEV_API_KEY" | npx wrangler secret put API_KEY_SECRET --env dev
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          DEV_API_KEY: ${{ secrets.DEV_API_KEY }}
+
   deploy-prod:
     name: Deploy to Production
     needs: validate
@@ -317,3 +324,10 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Set Worker Secret API_KEY_SECRET (prod)
+        run: printf '%s' "$PROD_API_KEY" | npx wrangler secret put API_KEY_SECRET --env prod
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROD_API_KEY: ${{ secrets.PROD_API_KEY }}
