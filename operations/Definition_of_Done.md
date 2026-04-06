@@ -54,7 +54,7 @@ Repozitář je DEPLOY-READY STACK pokud navíc existují a jsou ověřeny:
 - [ ] QA gate report s `overall_status: PASS`
 - [ ] Acceptance testy prošly evaluací (ne pouze definicí)
 
-**Aktuální stav:** NESPLNĚNO — backend binding je IMPLEMENTATION-BACKED, ale acceptance testy nebyly evaluovány oproti live backendu (PROV-002) a QA gate report stále eviduje `overall_status: FAIL` (fail-closed governance).
+**Aktuální stav:** SPLNĚNO — backend binding je IMPLEMENTATION-BACKED, acceptance testy (AC-001 až AC-012) byly evaluovány oproti live dev backendu (PROV-002 uzavřen), produkční infrastruktura je provisionována a verifikována (PROV-001 uzavřen). `qa/final-gate-report.yaml` eviduje `overall_status: PASS`, `bundle_classification: DEPLOY-READY STACK`.
 
 ---
 
