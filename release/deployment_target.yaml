@@ -26,6 +26,20 @@ backend_service:
       URL se nastaví po deploymentu. Nejedná se o placeholder skutečně
       provisioned produkční infrastruktury — jde o konfigurační šablonu.
 
+  staging:
+    worker_name: gpts-decision-stack-staging
+    d1_database: gpts-decision-stack-db-staging
+    r2_bucket: gpts-decision-stack-artifacts-staging
+    kv_namespace: POLICY_STORE (staging)
+    url: PROVISION_REQUIRED
+    provision_status: BLOCKED
+    note: >
+      Staging Cloudflare resources not yet provisioned. No real resource IDs
+      exist in this repository. To unblock: provision D1 database, R2 bucket,
+      and KV namespace; fill in real IDs in [env.staging] in wrangler.toml;
+      add STAGING_API_KEY secret to GitHub Actions environment 'staging'.
+      Do not mark staging as PASS until evidence confirms live deployment.
+
   prod:
     worker_name: gpts-decision-stack-worker
     d1_database: gpts-decision-stack-db

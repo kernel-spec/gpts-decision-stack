@@ -10,6 +10,7 @@ on:
         type: choice
         options:
           - dev
+          - staging
           - prod
 
 env:
@@ -212,6 +213,43 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: validate
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'staging'
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: backend/worker
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: "Guard: staging not yet provisioned"
+        shell: bash
+        run: |
+          set -euo pipefail
+          # This guard fails until [env.staging] is uncommented in wrangler.toml
+          # with real Cloudflare resource IDs (D1 database_id, KV namespace id).
+          # Steps to unblock:
+          #   1. wrangler d1 create gpts-decision-stack-db-staging
+          #   2. wrangler r2 bucket create gpts-decision-stack-artifacts-staging
+          #   3. wrangler kv namespace create POLICY_STORE_STAGING
+          #   4. Uncomment [env.staging] in backend/worker/wrangler.toml
+          #      and fill in the real resource IDs.
+          #   5. Add STAGING_API_KEY to GitHub Actions environment 'staging'.
+          #   6. Remove or skip this guard step.
+          if ! grep -q '^\[env\.staging\]' ./wrangler.toml; then
+            echo "::error::Staging infrastructure is not provisioned."
+            echo "::error::[env.staging] block in backend/worker/wrangler.toml is commented out."
+            echo "::error::Provision the Cloudflare resources and fill in real IDs before deploying to staging."
+            exit 1
+          fi
 
   deploy-prod:
     name: Deploy to Production
