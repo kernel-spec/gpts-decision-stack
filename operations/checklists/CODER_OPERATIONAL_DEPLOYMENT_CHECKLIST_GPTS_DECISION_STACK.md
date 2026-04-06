@@ -1,7 +1,7 @@
 # CODER OPERATIONAL DEPLOYMENT CHECKLIST — GPTS-DECISION-STACK
 
-**Version:** 1.1.0
-**Produced from:** Repository reality as of `qa/final-gate-report.yaml` (report_updated: 2026-03-25)
+**Version:** 1.2.0
+**Produced from:** Repository reality as of `qa/final-gate-report.yaml` (report_updated: 2026-03-25); document updated 2026-04-06
 **Classification:** Operational execution document — not a design specification
 **Canonical status authority:** `qa/final-gate-report.yaml`
 **Canonical checklist path:** `operations/checklists/CODER_OPERATIONAL_DEPLOYMENT_CHECKLIST_GPTS_DECISION_STACK.md`
@@ -106,7 +106,7 @@ Verify physical existence of every item below. Existence alone is necessary but 
 - [ ] `actions/auth.md` exists and describes the authentication model
 
 ### 3.3 Knowledge and Rules
-- [ ] `knowledge/core/` exists with all 7 core files:
+- [ ] `knowledge/core/` exists with all 8 core files:
   - [ ] `00_ControlPlane_Charter.md`
   - [ ] `01_CanonicalStates.yaml`
   - [ ] `02_TransitionRules.yaml`
