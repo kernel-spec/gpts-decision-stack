@@ -114,7 +114,7 @@ This includes:
 ### Operations + governance
 - `operations/evidence/` — runtime and acceptance evidence
 - `operations/gates/` — promotion gate artifacts
-- `operations/checklists/` — local/dev/staging/prod checklists
+- `operations/checklists/` — local/dev/staging/prod checklists; canonical coder deployment checklist at `operations/checklists/CODER_OPERATIONAL_DEPLOYMENT_CHECKLIST_GPTS_DECISION_STACK.md`
 - `qa/final-gate-report.yaml` — authoritative gate status
 
 ### Custom GPT layer

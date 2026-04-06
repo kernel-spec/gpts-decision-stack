@@ -1,5 +1,11 @@
 # Management Summary Checklist — gpts-decision-stack
 
+> **⚠ SECONDARY DOCUMENT — NOT AUTHORITATIVE**
+>
+> Tento checklist je orientační přehled stavu vrstev. **Kanonickým zdrojem pravdy je `qa/final-gate-report.yaml`.**
+> Tento dokument nesmí být použit jako gate autorita ani jako náhrada za `qa/final-gate-report.yaml`.
+> Operační nasazovací checklist pro Codery: `operations/checklists/CODER_OPERATIONAL_DEPLOYMENT_CHECKLIST_GPTS_DECISION_STACK.md`
+
 ## Účel
 
 Tento checklist poskytuje vedoucím přehled o stavu připravenosti repozitáře
@@ -34,7 +40,7 @@ zdrojem pravdy je `qa/final-gate-report.yaml`.
 | Mapa vlastnictví (ownership map) | ✅ SPLNĚNO | Fyzicky existuje |
 | Mapa schválení (approval map) | ✅ SPLNĚNO | Fyzicky existuje |
 | Mapa veta (veto mapping) | ✅ SPLNĚNO | Fyzicky existuje |
-| QA gate report | ✅ SPLNĚNO | Fyzicky existuje, status FAIL |
+| QA gate report | ✅ SPLNĚNO | `qa/final-gate-report.yaml` existuje, `overall_status: PASS`, `bundle_classification: DEPLOY-READY STACK` |
 
 ### Operační vrstva
 
@@ -57,10 +63,14 @@ zdrojem pravdy je `qa/final-gate-report.yaml`.
 
 ## Celkové hodnocení
 
-**Aktuální klasifikace: REPO-READY SKELETON**
+> **Poznámka:** Tento checklist je sekundární přehledový dokument. Kanonickým
+> zdrojem pravdy pro gate status je `qa/final-gate-report.yaml`.
+> Tento soubor nesmí být považován za autoritativní gate záznam.
 
-Repozitář obsahuje kompletní skeleton systému, ale není připraven k nasazení.
-Zbývající kroky pro dosažení DEPLOY-READY STACK jsou definovány v `Definition_of_Done.md`.
+**Aktuální klasifikace dle `qa/final-gate-report.yaml`: DEPLOY-READY STACK**
+
+Repozitář je nasazení připraven. Autoritativní stav a evidence jsou zachyceny v `qa/final-gate-report.yaml`.
+Zbývající operační kroky jsou definovány v `operations/checklists/CODER_OPERATIONAL_DEPLOYMENT_CHECKLIST_GPTS_DECISION_STACK.md`.
 
 ---
 

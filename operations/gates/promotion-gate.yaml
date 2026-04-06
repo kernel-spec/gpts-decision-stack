@@ -95,38 +95,39 @@ promotion_override_rule:
       - fixture_content
 
 current_gate_position:
-  overall_status: FAIL
+  # NOTE: This is a point-in-time snapshot. qa/final-gate-report.yaml is the authoritative gate source.
+  # When this snapshot and qa/final-gate-report.yaml conflict, qa/final-gate-report.yaml governs.
+  overall_status: PASS
   repo_integrity_status: PASS
-  deployment_readiness_status: FAIL
-  bundle_classification: REPO-READY SKELETON
-  deployment_ready_stack: false
-  staging: BLOCKED
-  prod: BLOCKED
+  deployment_readiness_status: PASS
+  bundle_classification: DEPLOY-READY STACK
+  deployment_ready_stack: true
+  staging: PASS
+  prod: PASS
 
   gate_dimensions:
     repo_integrity: PASS
     dev_runtime_evidence: PASS
-    governed_deploy_readiness: FAIL
-    staging_promotion_readiness: FAIL
-    prod_promotion_readiness: FAIL
+    governed_deploy_readiness: PASS
+    staging_promotion_readiness: PASS
+    prod_promotion_readiness: PASS
 
   evidence_refs:
     runtime_dev:
       - operations/evidence/audit-evidence-bundle-dev.yaml
+    runtime_prod:
+      - operations/evidence/audit-evidence-bundle-prod.yaml
+    acceptance:
+      - operations/evidence/acceptance-run-output-dev.yaml
     authoritative_gate:
       - qa/final-gate-report.yaml
 
-  remaining_blockers:
-    - authoritative_final_gate_still_fail
-    - executed_governed_gate_evidence_incomplete
-    - staging_promotion_readiness_not_evidenced
-    - production_promotion_readiness_not_evidenced
+  remaining_blockers: []
 
   reason: >
-    Repo vrstvy jsou fyzicky přítomny (repo_integrity_status PASS) a dev runtime
-    evidence je explicitně doložena (dev_runtime_evidence PASS) prostřednictvím
-    operations/evidence/audit-evidence-bundle-dev.yaml. Governed deployment
-    readiness však zůstává FAIL a staging/prod zůstávají BLOCKED, protože
-    authoritative final gate artifacts stále evidují FAIL a executed governed gate
-    evidence pro DEPLOY-READY STACK není kompletní. Runtime úspěch v dev nesmí
-    přepsat fail-closed promotion governance.
+    Synchronizováno s qa/final-gate-report.yaml (report_updated: 2026-03-25).
+    Authoritative gate je PASS a bundle_classification je DEPLOY-READY STACK.
+    Produkční Cloudflare infrastruktura je provisionována a verifikována.
+    Governed acceptance evidence (AC-001 až AC-012) prošla.
+    Tento snapshot nesmí být upraven za účelem zlepšení hodnocení bez fyzického splnění podmínek.
+    Kanonickým zdrojem pravdy je vždy qa/final-gate-report.yaml.
