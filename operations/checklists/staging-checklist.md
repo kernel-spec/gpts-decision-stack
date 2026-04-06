@@ -1,5 +1,20 @@
 # Staging Checklist
 
+## Status
+
+> **STAGING IS BLOCKED — INFRASTRUCTURE NOT PROVISIONED**
+>
+> Staging Cloudflare resources (D1 database, R2 bucket, KV namespace) have NOT
+> been created. No real resource IDs exist for the staging environment.
+> `[env.staging]` in `backend/worker/wrangler.toml` remains commented out.
+> The `STAGING_API_KEY` secret does not exist in GitHub Actions.
+>
+> **No checklist item may be marked PASS until staging infrastructure is
+> provisioned and live evidence is collected.**
+>
+> To unblock staging, see `release/deployment_target.yaml` (staging section)
+> and `operations/gates/promotion-gate.yaml` (STAGING-BLOCK-001).
+
 ## Purpose
 
 Run a full release rehearsal with governance reality enabled.

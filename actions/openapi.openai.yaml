@@ -4,7 +4,10 @@ info:
   version: "1.0.0"
   description: >
     Builder-safe OpenAI Actions schema for the gpts-decision-stack
-    Cloudflare Worker backend.
+    Cloudflare Worker backend. This file is a subset of the canonical
+    actions/openapi.yaml, limited to endpoints importable by the OpenAI
+    Custom GPT Builder. The full contract (all endpoints, full schemas,
+    security definitions) lives in actions/openapi.yaml.
 
 servers:
   - url: https://gpts-decision-stack-dev.victorain92.workers.dev
