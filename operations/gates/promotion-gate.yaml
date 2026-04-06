@@ -102,14 +102,20 @@ current_gate_position:
   deployment_readiness_status: PASS
   bundle_classification: DEPLOY-READY STACK
   deployment_ready_stack: true
-  staging: PASS
+  staging: BLOCKED
   prod: PASS
+
+  staging_block_reason: >
+    Staging Cloudflare resources have NOT been provisioned. No real resource IDs
+    (D1, R2, KV) exist for the staging environment; [env.staging] in wrangler.toml
+    remains commented out. staging: BLOCKED until provisioning is completed and
+    live evidence is collected. Do NOT change to PASS without actual staging evidence.
 
   gate_dimensions:
     repo_integrity: PASS
     dev_runtime_evidence: PASS
     governed_deploy_readiness: PASS
-    staging_promotion_readiness: PASS
+    staging_promotion_readiness: BLOCKED
     prod_promotion_readiness: PASS
 
   evidence_refs:
@@ -122,12 +128,21 @@ current_gate_position:
     authoritative_gate:
       - qa/final-gate-report.yaml
 
-  remaining_blockers: []
+  remaining_blockers:
+    - id: STAGING-BLOCK-001
+      description: >
+        Staging Cloudflare infrastructure not provisioned. Blocked until D1 database,
+        R2 bucket, and KV namespace are created; real IDs are entered in
+        [env.staging] in backend/worker/wrangler.toml; STAGING_API_KEY secret is
+        added to the GitHub Actions 'staging' environment; and live staging evidence
+        is collected.
 
   reason: >
     Synchronizováno s qa/final-gate-report.yaml (report_updated: 2026-03-25).
-    Authoritative gate je PASS a bundle_classification je DEPLOY-READY STACK.
+    Prod gate je PASS a bundle_classification je DEPLOY-READY STACK.
     Produkční Cloudflare infrastruktura je provisionována a verifikována.
     Governed acceptance evidence (AC-001 až AC-012) prošla.
+    Staging je explicitně BLOCKED — staging Cloudflare resources nebyly
+    provisionovány a žádná staging evidence neexistuje.
     Tento snapshot nesmí být upraven za účelem zlepšení hodnocení bez fyzického splnění podmínek.
     Kanonickým zdrojem pravdy je vždy qa/final-gate-report.yaml.
