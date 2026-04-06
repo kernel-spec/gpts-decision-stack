@@ -95,9 +95,8 @@ promotion_override_rule:
       - fixture_content
 
 current_gate_position:
-  # NOTE: qa/final-gate-report.yaml is the authoritative gate source.
-  # This section is a synchronized snapshot — it must not be used as a competing authority.
-  # When qa/final-gate-report.yaml and this snapshot conflict, qa/final-gate-report.yaml governs.
+  # NOTE: This is a point-in-time snapshot. qa/final-gate-report.yaml is the authoritative gate source.
+  # When this snapshot and qa/final-gate-report.yaml conflict, qa/final-gate-report.yaml governs.
   overall_status: PASS
   repo_integrity_status: PASS
   deployment_readiness_status: PASS

@@ -559,8 +559,8 @@ The handoff package must include:
 - [ ] **Deployed commit SHA** — the exact Git commit SHA that is deployed to each environment (dev, prod)
 - [ ] **Environment target** — explicit statement of which environments have been deployed (dev, prod, or staging)
 - [ ] **Worker URLs** — the live URLs for each deployed environment
-  - Dev: `https://gpts-decision-stack-dev.<account>.workers.dev` (or custom domain)
-  - Prod: `https://gpts-decision-stack.<account>.workers.dev` (or custom domain)
+  - Dev: `https://gpts-decision-stack-dev.{ACCOUNT_SUBDOMAIN}.workers.dev` (or custom domain if configured)
+  - Prod: `https://gpts-decision-stack.{ACCOUNT_SUBDOMAIN}.workers.dev` (or custom domain if configured)
 - [ ] **Evidence references** — list of evidence files in `operations/evidence/` that cover this deployment
 - [ ] **Secret/config mapping confirmation** — a statement (without exposing secret values) confirming:
   - `API_KEY_SECRET` is set on each deployed Worker
