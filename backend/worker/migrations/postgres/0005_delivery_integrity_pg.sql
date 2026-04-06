@@ -1,3 +1,7 @@
+-- SUPERSEDED
+-- This file is a historical draft and must not be applied to any environment.
+-- Superseded by: 20260329_001_create_delivery_integrity_tables_pg.sql
+--
 -- PostgreSQL migration for delivery integrity instrumentation (append-only tables)
 -- Applies orchestration-owned lineage, handoff, stage entry, and loop signals with strict constraints
 

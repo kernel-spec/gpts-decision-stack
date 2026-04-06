@@ -11,7 +11,7 @@ info:
 
 servers:
   - url: https://gpts-decision-stack.victorain92.workers.dev
-    description: Development backend service (Cloudflare Workers)
+    description: Production backend service (Cloudflare Workers)
 
 security:
   - ApiKeyAuth: []
@@ -125,6 +125,101 @@ components:
         truth_completeness:
           type: string
           enum: [FULL, PARTIAL, MISSING]
+
+    RunDeliveryHistoryEntry:
+      type: object
+      required: [artifact_id, artifact_type, stage, attempt, replacement_reason, is_repair_attempt, created_at]
+      properties:
+        artifact_id:
+          type: string
+        artifact_type:
+          type: string
+        stage:
+          type: string
+        attempt:
+          type: integer
+          minimum: 1
+        replacement_reason:
+          type: string
+          nullable: true
+          enum:
+            - INVALID_SCHEMA
+            - MISSING_REQUIRED_SECTION
+            - STAGE_MISMATCH
+            - REVIEW_BLOCK
+            - HANDOFF_REJECTED
+            - SCOPE_CHANGE
+            - QUALITY_ISSUE
+            - null
+        is_repair_attempt:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    RunDeliveryHistory:
+      type: object
+      required: [session_id, lineage, loop_signals, handoff_outcomes]
+      properties:
+        session_id:
+          type: string
+        lineage:
+          type: array
+          items:
+            $ref: "#/components/schemas/RunDeliveryHistoryEntry"
+        loop_signals:
+          type: array
+          items:
+            type: object
+            required: [pipeline_state, entry_count, loop_type, created_at]
+            properties:
+              pipeline_state:
+                type: string
+              entry_count:
+                type: integer
+                minimum: 2
+              loop_type:
+                type: string
+                enum: [SAME_STAGE_REPEAT, TWO_NODE_LOOP]
+              created_at:
+                type: string
+                format: date-time
+        handoff_outcomes:
+          type: array
+          items:
+            type: object
+            required: [pipeline_state, outcome, failure_reason, classified_at]
+            properties:
+              pipeline_state:
+                type: string
+              outcome:
+                type: string
+                enum: [COMPLETED, FAILED]
+              failure_reason:
+                type: string
+                nullable: true
+              classified_at:
+                type: string
+                format: date-time
+
+    RunNextAction:
+      type: object
+      required: [session_id, next_action_code]
+      properties:
+        session_id:
+          type: string
+        next_action_code:
+          type: string
+          nullable: true
+          enum:
+            - AWAITING_TRUTH
+            - NO_ACTIONABLE_NEXT_STEP
+            - REPAIR_REQUIRED
+            - HANDOFF_FAILED
+            - LOOP_DETECTED
+            - HANDOFF_COMPLETED
+            - UNKNOWN
+            - null
 
     ArtifactSubmission:
       type: object
@@ -1246,6 +1341,110 @@ paths:
         "401":
           description: Unauthorized.
 
+  /operator/session/{session_id}/delivery-summary:
+    get:
+      operationId: getOperatorDeliverySummary
+      summary: Get operator delivery summary for a session
+      description: >
+        Returns orchestration-derived delivery truth for the operator read model,
+        including current stage, current attempt, latest handoff status, loop flag,
+        next action code, and truth completeness. This endpoint is the canonical
+        operator surface for delivery state; it does not require UI-side joins.
+      tags: [operator]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Operator delivery summary for the session.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, data]
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  data:
+                    $ref: "#/components/schemas/DeliverySummary"
+        "404":
+          description: Session not found.
+        "401":
+          description: Unauthorized.
+
+  /operator/session/{session_id}/delivery-history:
+    get:
+      operationId: getOperatorDeliveryHistory
+      summary: Get full delivery history for a session
+      description: >
+        Returns the complete orchestration-derived delivery history for the session,
+        including artifact lineage, loop signals, and handoff outcomes. All records
+        are orchestration-classified and append-only.
+      tags: [operator]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Full delivery history for the session.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, data]
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  data:
+                    $ref: "#/components/schemas/RunDeliveryHistory"
+        "404":
+          description: Session not found.
+        "401":
+          description: Unauthorized.
+
+  /operator/session/{session_id}/next-action:
+    get:
+      operationId: getOperatorNextAction
+      summary: Get operator next action code for a session
+      description: >
+        Returns the canonical next-action code derived from Worker-backed delivery
+        truth. The next_action_code is null when no actionable state is available.
+        This endpoint is the canonical operator surface for next-step guidance and
+        must not be inferred from model output.
+      tags: [operator]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Next action code for the session.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, data]
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+                  data:
+                    $ref: "#/components/schemas/RunNextAction"
+        "404":
+          description: Session not found.
+        "401":
+          description: Unauthorized.
+
 tags:
   - name: system
     description: Service health and metadata.
@@ -1255,3 +1454,5 @@ tags:
     description: Veto and manual approval governance operations.
   - name: founder
     description: Founder-console actions layered above Worker-backed canonical state.
+  - name: operator
+    description: Operator-facing read model for delivery truth, history, and next-action guidance.
