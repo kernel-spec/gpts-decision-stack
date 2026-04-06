@@ -31,14 +31,14 @@ backend_service:
     d1_database: gpts-decision-stack-db-staging
     r2_bucket: gpts-decision-stack-artifacts-staging
     kv_namespace: POLICY_STORE (staging)
-    url: PROVISION_REQUIRED
-    provision_status: BLOCKED
+    url: DEPLOY_REQUIRED
+    provision_status: PROVISIONED
     note: >
-      Staging Cloudflare resources not yet provisioned. No real resource IDs
-      exist in this repository. To unblock: provision D1 database, R2 bucket,
-      and KV namespace; fill in real IDs in [env.staging] in wrangler.toml;
-      add STAGING_API_KEY secret to GitHub Actions environment 'staging'.
-      Do not mark staging as PASS until evidence confirms live deployment.
+      Cloudflare resources provisioned: D1 database_id 26d32c6f-fdcf-4ca4-b439-f3db7aa2f495,
+      R2 bucket gpts-decision-stack-artifacts-staging, KV namespace id 7a55bedc6fa949c8afbe620d665ac79d.
+      wrangler.toml [env.staging] is active. GitHub environment 'staging' must exist with
+      CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets set. Worker URL is assigned after
+      first successful deployment via deploy-workers.yaml.
 
   prod:
     worker_name: gpts-decision-stack-worker

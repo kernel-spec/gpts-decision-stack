@@ -230,26 +230,94 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
-      - name: "Guard: staging not yet provisioned"
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: backend/worker/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Preflight Cloudflare auth (staging)
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "::error::Missing secret CLOUDFLARE_API_TOKEN for deploy-staging."
+            exit 1
+          fi
+
+          if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "::error::Missing secret CLOUDFLARE_ACCOUNT_ID for deploy-staging."
+            exit 1
+          fi
+
+          if ! npx wrangler whoami; then
+            echo "::error::Cloudflare auth preflight failed in deploy-staging. Verify CLOUDFLARE_API_TOKEN permissions and CLOUDFLARE_ACCOUNT_ID."
+            exit 1
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Guard D1 migration scope (staging)
         shell: bash
         run: |
           set -euo pipefail
-          # This guard fails until [env.staging] is uncommented in wrangler.toml
-          # with real Cloudflare resource IDs (D1 database_id, KV namespace id).
-          # Steps to unblock:
-          #   1. wrangler d1 create gpts-decision-stack-db-staging
-          #   2. wrangler r2 bucket create gpts-decision-stack-artifacts-staging
-          #   3. wrangler kv namespace create POLICY_STORE_STAGING
-          #   4. Uncomment [env.staging] in backend/worker/wrangler.toml
-          #      and fill in the real resource IDs.
-          #   5. Add STAGING_API_KEY to GitHub Actions environment 'staging'.
-          #   6. Remove or skip this guard step.
-          if ! grep -q '^\[env\.staging\]' ./wrangler.toml; then
-            echo "::error::Staging infrastructure is not provisioned."
-            echo "::error::[env.staging] block in backend/worker/wrangler.toml is commented out."
-            echo "::error::Provision the Cloudflare resources and fill in real IDs before deploying to staging."
+
+          D1_DIR="migrations"
+
+          if [ ! -d "$D1_DIR" ]; then
+            echo "::error::D1 migration directory not found: $D1_DIR"
             exit 1
           fi
+
+          if find "$D1_DIR" -maxdepth 1 -type f -name '*_pg.sql' | grep -q .; then
+            echo "::error::Postgres-only migration file found in D1 scope:"
+            find "$D1_DIR" -maxdepth 1 -type f -name '*_pg.sql' -print
+            echo "::error::Move Postgres migrations to migrations/postgres/"
+            exit 1
+          fi
+
+          PG_MARKERS_REGEX='TIMESTAMPTZ|DEFAULT[[:space:]]+NOW\(|::|SERIAL|CREATE[[:space:]]+INDEX.*USING|ALTER[[:space:]]+TABLE.*TYPE|USING[[:space:]]+gin|USING[[:space:]]+btree|gen_random_uuid|jsonb|RETURNING'
+
+          offending_files="$(find "$D1_DIR" -maxdepth 1 -type f -name '*.sql' -print0 | xargs -0 -r grep -nE "$PG_MARKERS_REGEX" || true)"
+
+          if [ -n "$offending_files" ]; then
+            echo "::error::Postgres dialect markers detected in D1 migration scope:"
+            echo "$offending_files"
+            echo "::error::Only D1/SQLite-compatible SQL is allowed in migrations/"
+            echo "::error::Move Postgres-specific migrations to migrations/postgres/"
+            exit 1
+          fi
+
+          PG_DIR="migrations/postgres"
+          if [ -d "$PG_DIR" ]; then
+            if find "$PG_DIR" -maxdepth 1 -type f -name '*.sql' ! -name '*_pg.sql' | grep -q .; then
+              echo "::error::Migration file in $PG_DIR/ is missing the _pg.sql suffix:"
+              find "$PG_DIR" -maxdepth 1 -type f -name '*.sql' ! -name '*_pg.sql' -print
+              echo "::error::All files in $PG_DIR/ must end with _pg.sql"
+              exit 1
+            fi
+          fi
+
+      - name: Apply D1 migrations (staging)
+        run: |
+          set -euo pipefail
+          npx wrangler d1 migrations apply gpts-decision-stack-db-staging --env staging --remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy to Staging
+        run: |
+          set -euo pipefail
+          npx wrangler deploy --env staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   deploy-prod:
     name: Deploy to Production
