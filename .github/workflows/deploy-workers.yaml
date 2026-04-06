@@ -244,7 +244,7 @@ jobs:
           #      and fill in the real resource IDs.
           #   5. Add STAGING_API_KEY to GitHub Actions environment 'staging'.
           #   6. Remove or skip this guard step.
-          if ! grep -q '^\[env\.staging\]' wrangler.toml; then
+          if ! grep -q '^\[env\.staging\]' ./wrangler.toml; then
             echo "::error::Staging infrastructure is not provisioned."
             echo "::error::[env.staging] block in backend/worker/wrangler.toml is commented out."
             echo "::error::Provision the Cloudflare resources and fill in real IDs before deploying to staging."

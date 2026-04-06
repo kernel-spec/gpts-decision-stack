@@ -47,7 +47,7 @@ id = "02dbad5ba7dd496f8f44865fba72ebed"
 # Steps:
 #   wrangler d1 create gpts-decision-stack-db-staging
 #   wrangler r2 bucket create gpts-decision-stack-artifacts-staging
-#   wrangler kv namespace create POLICY_STORE_STAGING
+#   wrangler kv namespace create POLICY_STORE --env staging
 #   wrangler secret put API_KEY_SECRET --env staging
 #
 # [env.staging]
