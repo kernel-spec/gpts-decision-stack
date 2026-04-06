@@ -42,6 +42,30 @@ bucket_name = "gpts-decision-stack-artifacts-dev"
 binding = "POLICY_STORE"
 id = "02dbad5ba7dd496f8f44865fba72ebed"
 
+# ---------- Staging environment ----------
+# PROVISION_REQUIRED: Uncomment and fill in real Cloudflare resource IDs before activating.
+# Steps:
+#   wrangler d1 create gpts-decision-stack-db-staging
+#   wrangler r2 bucket create gpts-decision-stack-artifacts-staging
+#   wrangler kv namespace create POLICY_STORE_STAGING
+#   wrangler secret put API_KEY_SECRET --env staging
+#
+# [env.staging]
+# name = "gpts-decision-stack-staging"
+#
+# [[env.staging.d1_databases]]
+# binding = "DECISIONS_DB"
+# database_name = "gpts-decision-stack-db-staging"
+# database_id = "PROVISION_REQUIRED"
+#
+# [[env.staging.r2_buckets]]
+# binding = "ARTIFACTS_BUCKET"
+# bucket_name = "gpts-decision-stack-artifacts-staging"
+#
+# [[env.staging.kv_namespaces]]
+# binding = "POLICY_STORE"
+# id = "PROVISION_REQUIRED"
+
 # ---------- Production environment ----------
 
 [env.prod]
