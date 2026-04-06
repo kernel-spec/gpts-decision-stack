@@ -143,6 +143,9 @@ backend_binding:
 
 operations:
   checklists:
+    - operations/checklists/CODER_OPERATIONAL_DEPLOYMENT_CHECKLIST_GPTS_DECISION_STACK.md
+    - operations/checklists/CODER_HANDOFF_PACKAGE_TEMPLATE.md
+    - operations/checklists/ENVIRONMENT_SECRET_ALIGNMENT_CHECKLIST.md
     - operations/checklists/local-checklist.md
     - operations/checklists/dev-checklist.md
     - operations/checklists/staging-checklist.md
@@ -160,6 +163,7 @@ operations:
     - operations/Definition_of_Done.md
     - operations/Management_Summary_Checklist.md
   evidence:
+    - operations/evidence/DEPLOYMENT_EVIDENCE_INDEX.md
     - operations/evidence/audit-evidence-bundle-dev.yaml
 
 qa:

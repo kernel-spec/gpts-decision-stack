@@ -4,7 +4,7 @@
 
 Systém `gpts-decision-stack` využívá API klíče pro autentizaci GPT agentů
 k backend službě. Každý GPT deployment slot obdrží unikátní API klíč spravovaný
-prostřednictvím Google Secret Manager.
+prostřednictvím GitHub Actions secrets a Wrangler secret injection do Cloudflare Worker.
 
 ## Metoda autentizace
 
@@ -12,18 +12,26 @@ prostřednictvím Google Secret Manager.
 |---|---|
 | Typ | API klíč |
 | HTTP header | `X-API-Key` |
-| Správa klíčů | Google Secret Manager |
-| Rotace | každých 90 dní |
-| Scope | jeden klíč per GPT deployment slot |
+| Správa klíčů | GitHub Actions secrets + Wrangler secret injection |
+| Rotace | dle bezpečnostní politiky; po rotaci musí být evidence re-run |
+| Scope | jeden klíč per prostředí (dev: `DEV_API_KEY`, prod: `PROD_API_KEY`) |
 
-## Injektování klíče do GPT slotu
+## Operační secret flow
 
-API klíč je injektován do GPT deployment slotu jako service secret v okamžiku
-nasazení. Klíč nesmí být součástí systémového promptu, nesmí být přenášen
-v konverzaci a nesmí být ukládán modelem.
+API klíč je spravován takto:
+
+1. **GitHub Actions secrets**: `DEV_API_KEY` a `PROD_API_KEY` jsou uloženy jako GitHub Actions secrets v repozitáři.
+2. **Wrangler secret injection**: Deployment workflow (`deploy-workers.yaml`) nastaví `API_KEY_SECRET` na příslušném Worker prostředí příkazem `wrangler secret put API_KEY_SECRET`.
+3. **Worker runtime**: Worker čte `API_KEY_SECRET` z binding prostředí Cloudflare Workers — nikoli z kódu ani ze systémového promptu.
+
+Klíč nesmí být součástí systémového promptu, nesmí být přenášen v konverzaci
+a nesmí být ukládán modelem.
 
 Injektování klíče probíhá výhradně prostřednictvím deployment procesu
 popsaného v `release/deployment_target.yaml`.
+
+Viz `operations/checklists/ENVIRONMENT_SECRET_ALIGNMENT_CHECKLIST.md` pro postup
+ověření souladu secrets a detekci driftu.
 
 ## Bezpečnostní pravidla
 
